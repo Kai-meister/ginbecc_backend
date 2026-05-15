@@ -250,6 +250,17 @@ public class MeetingServiceImpl implements MeetingService {
         activityLogService.log("DELETE", "Meeting", id, "លុបប្រជុំ");
     }
 
+    @Override
+    public boolean isOrganizer(Integer meetingId) {
+        return securityUtils.getCurrentUser()
+                .map(user -> meetingRepository.findById(meetingId)
+                        .map(m -> m.getOrganizer() != null
+                                && m.getOrganizer().getUserId()
+                                        .equals(user.getUserId()))
+                        .orElse(false))
+                .orElse(false);
+    }
+
     // Private Helpers
     private void validateMeetingRequest(MeetingRequest req,
                                         Integer excludeId) {

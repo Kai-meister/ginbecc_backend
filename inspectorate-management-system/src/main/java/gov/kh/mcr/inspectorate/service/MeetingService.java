@@ -32,4 +32,6 @@ public interface MeetingService {
     void updateAttendance(Integer meetingId, Integer attendeeId, AttendanceRequest request);
 
     void delete(Integer id);
+
+    boolean isOrganizer(Integer meetingId);
 }

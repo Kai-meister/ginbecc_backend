@@ -46,8 +46,52 @@ public class DataInitializer
         initUserStatuses();
         initRoles();
         initPermissions();
+        syncPermissions();
         initSuperAdmin();
         log.info(" DataInitializer បានបញ្ចប់");
+    }
+
+    /**
+     * Idempotent migration: backfills permissions/assignments that may be
+     * missing on databases seeded before they existed. Safe to run every
+     * startup — only inserts rows that are absent.
+     */
+    private void syncPermissions() {
+        ensurePermission("MEETING_BOOK", "MEETING");
+
+        grantIfMissing("OFFICER", "MEETING_BOOK");
+        grantIfMissing("AUDITOR", "MEETING_VIEW");
+        grantIfMissing("AUDITOR", "MEETING_BOOK");
+    }
+
+    private void ensurePermission(String name, String module) {
+        permissionRepository.findByPermissionName(name)
+                .orElseGet(() -> {
+                    log.info(" Adding missing permission: " + name);
+                    return permissionRepository.save(
+                            Permission.builder()
+                                    .permissionName(name)
+                                    .module(module)
+                                    .build());
+                });
+    }
+
+    private void grantIfMissing(String roleName, String permName) {
+        roleRepository.findByRoleName(roleName).ifPresent(role -> {
+            java.util.List<String> current = rolePermissionRepository
+                    .findPermissionNamesByRoleId(role.getRoleId());
+            if (current.contains(permName)) return;
+            permissionRepository.findByPermissionName(permName)
+                    .ifPresent(perm -> {
+                        rolePermissionRepository.save(
+                                RolePermission.builder()
+                                        .role(role)
+                                        .permission(perm)
+                                        .build());
+                        log.info(" Granted " + permName
+                                + " to " + roleName);
+                    });
+        });
     }
 
     private void initOfficerStatuses() {
@@ -291,6 +335,7 @@ public class DataInitializer
                 {"MEETING_MANAGE","MEETING"},
                 {"MEETING_VIEW","MEETING"},
                 {"MEETING_ATTEND","MEETING"},
+                {"MEETING_BOOK","MEETING"},
                 {"ANNOUNCEMENT_VIEW","ANNOUNCEMENT"},
                 {"ANNOUNCEMENT_CREATE","ANNOUNCEMENT"},
                 {"ANNOUNCEMENT_UPDATE","ANNOUNCEMENT"},
@@ -349,11 +394,13 @@ public class DataInitializer
         assignPermsToRole("OFFICER", new String[]{
                 "SELF_PROFILE_VIEW","SELF_PROFILE_EDIT",
                 "MEETING_VIEW","MEETING_ATTEND",
+                "MEETING_BOOK",
                 "DOC_VIEW_OWN","DASHBOARD_OWN",
                 "NOTIFICATION","ANNOUNCEMENT_VIEW"});
 
         assignPermsToRole("AUDITOR", new String[]{
                 "AUDIT_VIEW","REPORT_EXPORT",
+                "MEETING_VIEW","MEETING_BOOK",
                 "DASHBOARD_OWN","NOTIFICATION"});
 
         log.info("Permissions (25) + Assignments");
