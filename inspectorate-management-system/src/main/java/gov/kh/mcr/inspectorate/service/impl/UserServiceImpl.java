@@ -138,12 +138,6 @@ public class UserServiceImpl implements UserService {
                     .ifPresent(user::setRole);
         }
 
-        if (request.getPassword() != null
-                && !request.getPassword().isBlank()) {
-            user.setPasswordHash(
-                    passwordEncoder.encode(request.getPassword()));
-        }
-
         securityUtils.getCurrentUser()
                 .ifPresent(user::setUpdatedBy);
 
