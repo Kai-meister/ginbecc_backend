@@ -81,7 +81,7 @@ public class MeetingController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('MEETING_MANAGE') or hasAuthority('MEETING_BOOK')")
+    @PreAuthorize("hasAuthority('MEETING_MANAGE')")
     public ResponseEntity<ApiResponse<MeetingResponse>> create(
             @Valid @RequestBody MeetingRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -111,8 +111,7 @@ public class MeetingController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('MEETING_MANAGE') "
-            + "or (hasAuthority('MEETING_BOOK') and @meetingServiceImpl.isOrganizer(#id))")
+    @PreAuthorize("hasAuthority('MEETING_MANAGE')")
     public ResponseEntity<ApiResponse<MeetingResponse>> update(
             @PathVariable Integer id,
             @Valid @RequestBody MeetingRequest request) {
@@ -121,8 +120,7 @@ public class MeetingController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('MEETING_MANAGE') "
-            + "or (hasAuthority('MEETING_BOOK') and @meetingServiceImpl.isOrganizer(#id))")
+    @PreAuthorize("hasAuthority('MEETING_MANAGE')")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable Integer id) {
         meetingService.delete(id);
