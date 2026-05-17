@@ -74,6 +74,9 @@ minio:
   secret-key: ${MINIO_SECRET_KEY:password123}
   bucket: ${MINIO_BUCKET:officer-files}
 
+app:
+  public-url: ${APP_PUBLIC_URL:http://localhost:8080}
+
 springdoc:
     api-docs:
       path: /v3/api-docs

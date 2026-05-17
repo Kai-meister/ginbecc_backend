@@ -11,8 +11,8 @@ import java.util.List;
 @Configuration
 public class OpenApiConfig {
 
-    @Value("${server.port:8080}")
-    private String serverPort;
+    @Value("${app.public-url:http://localhost:8080}")
+    private String publicUrl;
 
     @Bean
     public OpenAPI openAPI() {
@@ -30,11 +30,8 @@ public class OpenApiConfig {
                                 .email("admin@system.kh")))
                 .servers(List.of(
                         new Server()
-                                .url("http://localhost:" + serverPort)
-                                .description("Local Development"),
-                        new Server()
-                                .url("http://localhost")
-                                .description("Via Nginx")))
+                                .url(publicUrl)
+                                .description("API Server")))
                 .addSecurityItem(
                         new SecurityRequirement().addList("bearerAuth"))
                 .components(new Components()
