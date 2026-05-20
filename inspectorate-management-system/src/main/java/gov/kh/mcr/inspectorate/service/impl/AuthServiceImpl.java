@@ -92,6 +92,18 @@ public class AuthServiceImpl implements AuthService {
                 user.getUserId(),
                 "ចូលប្រព័ន្ធ: " + user.getEmail());
 
+        String ip = (String) httpRequest
+                .getAttribute("clientIp");
+        String ua = (String) httpRequest
+                .getAttribute("userAgent");
+
+        activityLogService.logWithRequest(
+                "LOGIN", "User",
+                user.getUserId(),
+                "ចូលប្រព័ន្ធ: " + user.getEmail(),
+                ip, ua);
+
+
         return LoginResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
@@ -330,4 +342,7 @@ public class AuthServiceImpl implements AuthService {
         }
         userRepository.save(user);
     }
+    private final
+    jakarta.servlet.http.HttpServletRequest
+            httpRequest;
 }

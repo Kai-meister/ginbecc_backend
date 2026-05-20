@@ -1,17 +1,25 @@
 package gov.kh.mcr.inspectorate.service;
-
+import gov.kh.mcr.inspectorate.dto.response.ActivityLogResponse;
 import gov.kh.mcr.inspectorate.dto.response.PageResponse;
-import gov.kh.mcr.inspectorate.entity.ActivityLog;
 
 import java.time.LocalDateTime;
 
 public interface ActivityLogService {
 
-    void log(String action, String entityType,
-             Integer entityId, String details);
+    void log(String action,
+             String entityType,
+             Integer entityId,
+             String details);
 
+    void logWithRequest(
+            String action,
+            String entityType,
+            Integer entityId,
+            String details,
+            String ipAddress,
+            String userAgent);
 
-    PageResponse<ActivityLog> getLogs(
+    PageResponse<ActivityLogResponse> getLogs(
             Integer userId,
             String action,
             String entityType,
@@ -19,6 +27,5 @@ public interface ActivityLogService {
             LocalDateTime to,
             int page, int size);
 
-
-    ActivityLog getById(Integer id);
+    ActivityLogResponse getById(Integer id);
 }

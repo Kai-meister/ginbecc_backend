@@ -347,10 +347,14 @@ public class DataInitializer
                 "ATTACHMENT_MANAGE"});
 
         assignPermsToRole("OFFICER", new String[]{
-                "SELF_PROFILE_VIEW","SELF_PROFILE_EDIT",
-                "MEETING_VIEW","MEETING_ATTEND",
-                "DOC_VIEW_OWN","DASHBOARD_OWN",
-                "NOTIFICATION","ANNOUNCEMENT_VIEW"});
+                "SELF_PROFILE_VIEW",
+                "SELF_PROFILE_EDIT",
+                "MEETING_VIEW",
+                "MEETING_ATTEND",
+                "DOC_VIEW_OWN",
+                "DASHBOARD_OWN",
+                "NOTIFICATION",
+                "ANNOUNCEMENT_VIEW"});
 
         assignPermsToRole("AUDITOR", new String[]{
                 "AUDIT_VIEW","REPORT_EXPORT",

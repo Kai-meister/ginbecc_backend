@@ -110,14 +110,12 @@ public class ApprovalServiceImpl implements ApprovalService {
     public ApprovalResponse decide(Integer id, ApprovalDecisionRequest request) {
         Approval approval = findById(id);
 
-        LookupDocumentStatus newStatus =
-                lookupStatusRepository
+        LookupDocumentStatus newStatus = lookupStatusRepository
                         .findById(request.getStatusCode())
                         .orElseThrow(() -> new ResourceNotFoundException(
                                 "ស្ថានភាព", request.getStatusCode()));
 
-        securityUtils.getCurrentUser()
-                .ifPresent(approval::setApprovedBy);
+        securityUtils.getCurrentUser().ifPresent(approval::setApprovedBy);
 
         approval.setStatusCode(newStatus);
         approval.setComment(request.getComment());
@@ -128,19 +126,24 @@ public class ApprovalServiceImpl implements ApprovalService {
         documentRepository.save(doc);
 
         if (approval.getRequestedBy() != null
-                && approval.getRequestedBy().getOfficer() != null) {
-            boolean approved =
-                    "APPROVED".equals(request.getStatusCode());
-            notificationService.createNotification(
+                && approval.getRequestedBy()
+                .getOfficer() != null) {
+
+            boolean approved = DocumentStatusCode
+                    .isApproved(request.getStatusCode());
+
+            notificationService.createByOfficerId(
                     approval.getRequestedBy()
-                            .getOfficer().getOfficerId(),
+                            .getOfficer()
+                            .getOfficerId(),
                     "លទ្ធផលអនុម័ត",
-                    (approved ? "បានអនុម័ត: " : "បានបដិសេធ: ")
+                    (approved
+                            ? "ឯកសារបានអនុម័ត: "
+                            : "ឯកសារបានបដិសេធ: ")
                             + doc.getDocumentName(),
                     "DOCUMENT",
-                    doc.getDocumentId());
-        }
-
+                    doc.getDocumentId(),
+                    "DOCUMENT");}
         activityLogService.log("UPDATE", "Approval",
                 id, "សម្រេច: " + request.getStatusCode());
 

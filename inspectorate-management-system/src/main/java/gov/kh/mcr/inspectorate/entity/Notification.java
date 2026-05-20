@@ -1,5 +1,4 @@
 package gov.kh.mcr.inspectorate.entity;
-
 import gov.kh.mcr.inspectorate.enums.NotificationType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -11,13 +10,15 @@ import java.time.LocalDateTime;
         indexes = {
                 @Index(name = "idx_notif_user",
                         columnList = "user_id"),
-                @Index(name = "idx_notif_read",
-                        columnList = "is_read")
+                @Index(name = "idx_notif_user_read",
+                        columnList = "user_id,is_read"),
+                @Index(name = "idx_notif_created",
+                        columnList = "created_at"),
+                @Index(name = "idx_notif_type_ref",
+                        columnList = "type,reference_id")
         })
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
 @Builder
 public class Notification {
 
@@ -34,15 +35,19 @@ public class Notification {
             length = 255, nullable = false)
     private String title;
 
-    @Column(name = "message", columnDefinition = "TEXT")
+    @Column(name = "message",
+            columnDefinition = "TEXT")
     private String message;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
+    @Column(name = "type", length = 30, nullable = false)
     private NotificationType type;
 
     @Column(name = "reference_id")
     private Integer referenceId;
+
+    @Column(name = "reference_type", length = 50)
+    private String referenceType;
 
     @Column(name = "is_read", nullable = false)
     @Builder.Default

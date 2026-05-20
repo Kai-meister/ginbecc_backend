@@ -209,12 +209,14 @@ public class MeetingServiceImpl implements MeetingService {
                                 .role(req.getRole())
                                 .build());
 
-                notificationService.createNotification(
+                notificationService.createByOfficerId(
                         officer.getOfficerId(),
                         "ការអញ្ជើញប្រជុំ",
-                        "អញ្ជើញ: " + meeting.getTitle(),
+                        "អញ្ជើញ: " + meeting.getTitle()
+                                + " (" + meeting.getMeetingDate() + ")",
                         "MEETING",
-                        meeting.getMeetingId());
+                        meeting.getMeetingId(),
+                        "MEETING");
             }
         });
     }

@@ -12,6 +12,7 @@ public interface ActivityLogRepository
 
     @Query("""
         SELECT a FROM ActivityLog a
+        LEFT JOIN FETCH a.user u
         WHERE (:userId IS NULL
                OR a.user.userId = :userId)
         AND   (:action IS NULL
@@ -31,4 +32,22 @@ public interface ActivityLogRepository
             @Param("from")       LocalDateTime from,
             @Param("to")         LocalDateTime to,
             Pageable pageable);
+
+    @Query("""
+        SELECT a.entityType, COUNT(a)
+        FROM ActivityLog a
+        WHERE a.createdAt >= :from
+        GROUP BY a.entityType
+        ORDER BY COUNT(a) DESC
+        """)
+    java.util.List<Object[]> countByEntityType(
+            @Param("from") LocalDateTime from);
+
+    @Modifying
+    @Query("""
+        DELETE FROM ActivityLog a
+        WHERE a.createdAt < :before
+        """)
+    int deleteOlderThan(
+            @Param("before") LocalDateTime before);
 }

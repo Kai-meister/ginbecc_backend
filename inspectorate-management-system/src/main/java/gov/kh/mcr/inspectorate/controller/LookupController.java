@@ -8,12 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
-/**
- * ពន្យល់:
- *  - Public endpoints (no auth required)
- *  - Frontend ហៅ onLoad ដើម្បី populate Dropdowns
- *  - Cached ក្នុង Redis — Response លឿន
- */
 @RestController
 @RequestMapping("/api/v1/lookups")
 @RequiredArgsConstructor

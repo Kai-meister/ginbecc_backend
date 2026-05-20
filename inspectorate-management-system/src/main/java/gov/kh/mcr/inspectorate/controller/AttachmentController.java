@@ -165,8 +165,7 @@ public class AttachmentController {
                     defaultValue = "OFFICER")
             String type) {
 
-        AttachmentRefType refType =
-                parseRefType(type);
+        AttachmentRefType refType = parseRefType(type);
 
         return ResponseEntity.ok(
                 ApiResponse.success(

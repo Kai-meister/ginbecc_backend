@@ -1,4 +1,5 @@
 package gov.kh.mcr.inspectorate.entity;
+
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -11,13 +12,16 @@ import java.time.LocalDateTime;
                         columnList = "user_id"),
                 @Index(name = "idx_log_action",
                         columnList = "action"),
+                @Index(name = "idx_log_entity",
+                        columnList = "entity_type,entity_id"),
                 @Index(name = "idx_log_created",
-                        columnList = "created_at")
+                        columnList = "created_at"),
+                // Composite — filter + sort
+                @Index(name = "idx_log_user_created",
+                        columnList = "user_id,created_at")
         })
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
 @Builder
 public class ActivityLog {
 
@@ -42,6 +46,12 @@ public class ActivityLog {
 
     @Column(name = "details", columnDefinition = "TEXT")
     private String details;
+
+    @Column(name = "ip_address", length = 50)
+    private String ipAddress;
+
+    @Column(name = "user_agent", length = 255)
+    private String userAgent;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

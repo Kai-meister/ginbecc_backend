@@ -7,8 +7,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface NotificationRepository
-        extends JpaRepository<Notification,
-        Integer> {
+        extends JpaRepository<Notification, Integer> {
 
     Page<Notification> findByUser_UserId(
             Integer userId, Pageable pageable);
@@ -30,4 +29,17 @@ public interface NotificationRepository
         """)
     int markAllAsRead(
             @Param("userId") Integer userId);
+
+    @Modifying
+    @Query("""
+        DELETE FROM Notification n
+        WHERE n.user.userId = :userId
+        AND   n.createdAt < :before
+        """)
+    int deleteOldByUser(
+            @Param("userId") Integer userId,
+            @Param("before")
+            java.time.LocalDateTime before);
+
+//    long countByUser_UserId(Integer userId);
 }
