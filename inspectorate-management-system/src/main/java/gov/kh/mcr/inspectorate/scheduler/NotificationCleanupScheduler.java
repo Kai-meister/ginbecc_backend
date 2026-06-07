@@ -18,37 +18,25 @@ public class NotificationCleanupScheduler {
             notifRepository;
     private final ActivityLogRepository
             logRepository;
-    private final UserRepository
-            userRepository;
+//    private final UserRepository
+//            userRepository;
 
+    //  Cleanup read > 30 days
     @Scheduled(cron = "0 0 2 * * *")
     @Transactional
     public void cleanupOldNotifications() {
-        LocalDateTime cutoff = LocalDateTime.now()
-                .minusDays(30);
 
-        // Delete read notifications > 30 days
-        userRepository.findAll()
-                .forEach(user -> {
-                    int deleted =
-                            notifRepository
-                                    .deleteOldByUser(
-                                            user.getUserId(),
-                                            cutoff);
-                    if (deleted > 0) {
-                        log.debug(
-                                "Deleted {} old notifs"
-                                        + " for user: {}",
-                                deleted,
-                                user.getEmail());
-                    }
-                });
+        LocalDateTime cutoff =
+                LocalDateTime.now().minusDays(30);
+
+        int deleted =
+                notifRepository.deleteOldRead(cutoff);
 
         log.info(
-                "Notification cleanup done"
-                        + " (before {})", cutoff);
+                "Notification cleanup:"
+                        + " deleted {} (before {})",
+                deleted, cutoff);
     }
-
     // Cleanup audit logs > 1 year
     // Run: 03:00 AM on 1st of month
     @Scheduled(cron = "0 0 3 1 * *")

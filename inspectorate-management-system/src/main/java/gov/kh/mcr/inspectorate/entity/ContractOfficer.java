@@ -64,6 +64,8 @@ public class ContractOfficer {
 
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
+    @Column(name = "days_until_expiry")
+    private Long daysUntilExpiry;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

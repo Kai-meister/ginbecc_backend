@@ -22,7 +22,9 @@ public class DepartmentController {
 
     private final DepartmentService departmentService;
 
+    // GET /departments
     @GetMapping
+    @PreAuthorize("hasAuthority('DEPARTMENT_VIEW')")
     public ResponseEntity<ApiResponse<
             List<DepartmentResponse>>>
     getAll(
@@ -36,7 +38,9 @@ public class DepartmentController {
                         departmentService.getAll(status, keyword),
                         "ទទួលបន្ជីនាយកដ្ឋាន"));
     }
+    // GET /departments/{id}
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('DEPARTMENT_VIEW')")
     public ResponseEntity<ApiResponse<
             DepartmentResponse>>
     getById(
@@ -49,8 +53,9 @@ public class DepartmentController {
                         "ទទួលបាននាយកដ្ឋាន"));
     }
 
+    // POST /departments
     @PostMapping
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('DEPARTMENT_MANAGE')")
     public ResponseEntity<ApiResponse<
             DepartmentResponse>>
     create(
@@ -64,8 +69,9 @@ public class DepartmentController {
                         "បង្កើតនាយកដ្ឋានជោគជ័យ"));
     }
 
+    // PUT /departments/{id}
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('DEPARTMENT_MANAGE')")
     public ResponseEntity<ApiResponse<
     DepartmentResponse>>
     update(
@@ -81,8 +87,9 @@ public class DepartmentController {
                         "កែប្រែជោគជ័យ"));
     }
 
+    // DELETE /departments/{id}
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('DEPARTMENT_MANAGE')")
     public ResponseEntity<ApiResponse<Void>>
     delete(
             @PathVariable

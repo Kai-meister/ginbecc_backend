@@ -1,5 +1,6 @@
 package gov.kh.mcr.inspectorate.service.impl;
 
+import gov.kh.mcr.inspectorate.dto.request.ActivityLogContext;
 import gov.kh.mcr.inspectorate.dto.request.ContractOfficerRequest;
 import gov.kh.mcr.inspectorate.dto.request.StatusRequest;
 import gov.kh.mcr.inspectorate.dto.response.ContractOfficerResponse;
@@ -7,6 +8,7 @@ import gov.kh.mcr.inspectorate.dto.response.PageResponse;
 import gov.kh.mcr.inspectorate.entity.ContractOfficer;
 import gov.kh.mcr.inspectorate.entity.Department;
 import gov.kh.mcr.inspectorate.entity.LookupOfficerStatus;
+import gov.kh.mcr.inspectorate.enums.ActiveStatus;
 import gov.kh.mcr.inspectorate.exception.BusinessException;
 import gov.kh.mcr.inspectorate.exception.DuplicateResourceException;
 import gov.kh.mcr.inspectorate.exception.ResourceNotFoundException;
@@ -14,13 +16,17 @@ import gov.kh.mcr.inspectorate.mapper.ContractOfficerMapper;
 import gov.kh.mcr.inspectorate.repository.ContractOfficerRepository;
 import gov.kh.mcr.inspectorate.repository.DepartmentRepository;
 import gov.kh.mcr.inspectorate.repository.LookupOfficerStatusRepository;
+import gov.kh.mcr.inspectorate.security.SecurityUtils;
 import gov.kh.mcr.inspectorate.service.ActivityLogService;
 import gov.kh.mcr.inspectorate.service.ContractOfficerService;
 import gov.kh.mcr.inspectorate.util.DateUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -36,6 +42,7 @@ public class ContractOfficerServiceImpl
     private final LookupOfficerStatusRepository lookupStatusRepository;
     private final ContractOfficerMapper contractOfficerMapper;
     private final ActivityLogService activityLogService;
+    private final SecurityUtils securityUtils;
 
     @Override
     @Transactional(readOnly = true)
@@ -52,7 +59,7 @@ public class ContractOfficerServiceImpl
                     contractOfficerRepository
                             .findExpiring(expiryDate)
                             .stream()
-                            .map(this::toResponseWithDays)
+                            .map(contractOfficerMapper::toResponse)
                             .toList();
 
             return PageResponse
@@ -90,7 +97,7 @@ public class ContractOfficerServiceImpl
         }
 
         return PageResponse.of(
-                result.map(this::toResponseWithDays));
+                result.map(contractOfficerMapper::toResponse));
     }
 
     @Override
@@ -112,44 +119,8 @@ public class ContractOfficerServiceImpl
     @Override
     public ContractOfficerResponse create(
             ContractOfficerRequest request) {
-        if (contractOfficerRepository.existsByContractOfficerCode(
-                request.getContractOfficerCode())) {
-            throw new DuplicateResourceException(
-                    "លេខកូដ ["
-                            + request.getContractOfficerCode()
-                            + "] មានស្ទួន");
-        }
 
-        ContractOfficer entity =
-                contractOfficerMapper.toEntity(request);
-        entity.setDepartment(
-                findDepartment(request.getDepartmentId()));
-        entity.setStatusCode(
-                findStatus(request.getStatusCode()));
-
-        if (request.getStartDate().isAfter(request.getEndDate())) {
-            throw new BusinessException(
-                    "ថ្ងៃចាប់ផ្តើម ត្រូវតែមុន ថ្ងៃបញ្ចប់");
-        }
-
-        ContractOfficer saved =
-                contractOfficerRepository.save(entity);
-        activityLogService.log("CREATE", "ContractOfficer",
-                saved.getContractOfficerId(),
-                "បង្កើតមន្ត្រីកិច្ចសន្យា: "
-                        + saved.getFullNameKh());
-
-        return contractOfficerMapper.toResponse(saved);
-    }
-
-    @Override
-    public ContractOfficerResponse update(
-            Integer id, ContractOfficerRequest request) {
-        ContractOfficer entity = findById(id);
-
-        if (!entity.getContractOfficerCode()
-                .equals(request.getContractOfficerCode())
-                && contractOfficerRepository
+        if (contractOfficerRepository
                 .existsByContractOfficerCode(
                         request.getContractOfficerCode())) {
             throw new DuplicateResourceException(
@@ -158,23 +129,82 @@ public class ContractOfficerServiceImpl
                             + "] មានស្ទួន");
         }
 
-        entity.setFullNameKh(request.getFullNameKh());
-        entity.setFullNameEn(request.getFullNameEn());
-        entity.setGender(request.getGender());
-        entity.setJobLevel(request.getJobLevel());
-        entity.setJobDescription(request.getJobDescription());
-        entity.setStartDate(request.getStartDate());
-        entity.setEndDate(request.getEndDate());
-        entity.setDepartment(
-                findDepartment(request.getDepartmentId()));
-        entity.setStatusCode(
+        ContractOfficer contract =
+        contractOfficerMapper.toEntity(request);
+
+        // Fix — Check dept ACTIVE
+        contract.setDepartment(
+                findActiveDept(
+                        request.getDepartmentId()));
+
+        contract.setStatusCode(
                 findStatus(request.getStatusCode()));
 
-        activityLogService.log("UPDATE", "ContractOfficer",
-                id, "កែប្រែ: " + entity.getFullNameKh());
+        ContractOfficer saved =
+                contractOfficerRepository.save(contract);
+
+        activityLogService.log(
+                "CREATE", "ContractOfficer",
+                saved.getContractOfficerId(),
+                "បង្កើត: " + saved.getFullNameKh(),
+                buildContext());
 
         return contractOfficerMapper.toResponse(
-                contractOfficerRepository.save(entity));
+                contractOfficerRepository.save(contract));
+    }
+
+    @Override
+    public ContractOfficerResponse update(
+            Integer id,
+            ContractOfficerRequest request) {
+
+        ContractOfficer contract = findById(id);
+
+        // Fix — Check dept ACTIVE on update
+        if (!contract.getDepartment()
+                .getDepartmentId()
+                .equals(request.getDepartmentId())) {
+            contract.setDepartment(
+                    findActiveDept(
+                            request.getDepartmentId()));
+        }
+
+        contract.setStatusCode(
+                findStatus(request.getStatusCode()));
+
+        contractOfficerMapper.updateEntity(
+                request, contract);
+
+        activityLogService.log(
+                "UPDATE", "ContractOfficer",
+                id,
+                "កែប្រែ: "
+                        + contract.getFullNameKh(),buildContext());
+
+        return contractOfficerMapper.toResponse(
+                contractOfficerRepository.save(contract));
+    }
+
+    // ── Fix: findActiveDept ───────────────────────
+    private Department findActiveDept(Integer id) {
+
+        Department dept =
+                departmentRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "នាយកដ្ឋាន", id));
+
+        if (dept.getStatus() != ActiveStatus.ACTIVE) {
+            throw new BusinessException(
+                    "នាយកដ្ឋាន \""
+                            + dept.getDepartmentName()
+                            + "\" មិនអាចប្រើបាន"
+                            + " (ស្ថានភាព: "
+                            + dept.getStatus().name()
+                            + ")");
+        }
+
+        return dept;
     }
 
     @Override
@@ -196,6 +226,20 @@ public class ContractOfficerServiceImpl
                 id, "លុបមន្ត្រីកិច្ចសន្យា");
     }
 
+    private ActivityLogContext buildContext() {
+        HttpServletRequest request = getCurrentRequest();
+        return securityUtils.buildLogContext(request);
+    }
+    private HttpServletRequest getCurrentRequest() {
+        try {
+            return ((ServletRequestAttributes)
+                    RequestContextHolder
+                            .currentRequestAttributes())
+                    .getRequest();
+        } catch (Exception e) {
+            return null;
+        }
+    }
     private ContractOfficer findById(Integer id) {
         return contractOfficerRepository.findById(id)
                 .orElseThrow(() ->
@@ -215,14 +259,14 @@ public class ContractOfficerServiceImpl
                         new ResourceNotFoundException("ស្ថានភាព", code));
     }
 
-    private ContractOfficerResponse toResponseWithDays(
-            ContractOfficer c) {
-        ContractOfficerResponse dto =
-                contractOfficerMapper.toResponse(c);
-        if (c.getEndDate() != null) {
-            dto.setDaysUntilExpiry(
-                    DateUtils.daysUntil(c.getEndDate()));
-        }
-        return dto;
-    }
+//    private ContractOfficerResponse toResponseWithDays(
+//            ContractOfficer c) {
+//        ContractOfficerResponse dto =
+//                contractOfficerMapper.toResponse(c);
+//        if (c.getEndDate() != null) {
+//            dto.setDaysUntilExpiry(
+//                    DateUtils.daysUntil(c.getEndDate()));
+//        }
+//        return dto;
+    //}
 }

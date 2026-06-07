@@ -8,16 +8,18 @@ import lombok.*;
 @Builder
 public class UserRequest {
 
-    @NotNull(message = "តួនាទីចាំបាច់")
-    private Integer roleId;
-
+    // officerId (nullable)
+    // null = Admin user (no officer linked)
     private Integer officerId;
 
-    @NotBlank(message = "ឈ្មោះខ្មែរចាំបាច់")
-    @Size(max = 150)
+    @NotNull(message = "Role ចាំបាច់")
+    private Integer roleId;
+
+    @NotBlank(message = "ឈ្មោះ KH ចាំបាច់")
+    @Size(max = 255)
     private String userNameKh;
 
-    @Size(max = 150)
+    @Size(max = 255)
     private String userNameEn;
 
     @NotBlank(message = "Email ចាំបាច់")
@@ -25,19 +27,17 @@ public class UserRequest {
     @Size(max = 150)
     private String email;
 
-    @Size(max = 20)
-    @Pattern(regexp = "^[0-9+\\-\\s]*$",
-            message = "លេខទូរស័ព្ទមានតែខ្ទង់")
-    private String phone;
-
     @Size(min = 8, max = 100,
             message = "Password ១-១០០ តួ, យ៉ាងតិច 8")
     @Pattern(
             regexp = "^(?=.*[A-Z])(?=.*[a-z])"
                     + "(?=.*\\d)(?=.*[@#$%!&*])"
                     + ".{8,}$",
-            message = "Password ត្រូវមានអក្សរធំ/តូច/ខ្ទង்/@#$%!")
+            message = "Password ត្រូវមានអក្សរធំ/តូច/សញ្ញា/@#$%!")
     private String password;
+
+    @Size(max = 20)
+    private String phone;
 
     @NotBlank(message = "ស្ថានភាពចាំបាច់")
     private String statusCode;

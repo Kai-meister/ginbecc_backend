@@ -76,10 +76,10 @@ public class JwtTokenProvider {
                 : null;
     }
 
-    public String getRoleFromToken(String token) {
-        return (String) parseClaims(token)
-                .get("role");
-    }
+//    public String getRoleFromToken(String token) {
+//        return (String) parseClaims(token)
+//                .get("role");
+//    }
 
 
     public boolean validateToken(String token) {
@@ -99,15 +99,15 @@ public class JwtTokenProvider {
             return false;
         }
     }
-
-    public boolean isRefreshToken(String token) {
-        try {
-            return "REFRESH".equals(
-                    parseClaims(token).get("type"));
-        } catch (Exception ex) {
-            return false;
-        }
-    }
+//
+//    public boolean isRefreshToken(String token) {
+//        try {
+//            return "REFRESH".equals(
+//                    parseClaims(token).get("type"));
+//        } catch (Exception ex) {
+//            return false;
+//        }
+//    }
 
     public long getRemainingExpiry(String token) {
         try {

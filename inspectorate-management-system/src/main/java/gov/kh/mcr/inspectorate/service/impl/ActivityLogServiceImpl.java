@@ -1,8 +1,10 @@
 package gov.kh.mcr.inspectorate.service.impl;
 
+import gov.kh.mcr.inspectorate.dto.request.ActivityLogContext;
 import gov.kh.mcr.inspectorate.dto.response.ActivityLogResponse;
 import gov.kh.mcr.inspectorate.dto.response.PageResponse;
 import gov.kh.mcr.inspectorate.entity.ActivityLog;
+import gov.kh.mcr.inspectorate.entity.User;
 import gov.kh.mcr.inspectorate.exception.ResourceNotFoundException;
 import gov.kh.mcr.inspectorate.mapper.ActivityLogMapper;
 import gov.kh.mcr.inspectorate.repository.ActivityLogRepository;
@@ -12,11 +14,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -25,63 +29,50 @@ import java.time.LocalDateTime;
 public class ActivityLogServiceImpl
         implements ActivityLogService {
 
-    private final ActivityLogRepository logRepository;
-    private final UserRepository        userRepository;
+    private final ActivityLogRepository logRepo;
+    private final UserRepository userRepo;
     private final ActivityLogMapper logMapper;
 
+    // log() with explicit Context
+    // Context extract ពី main thread
+    // Pass ទៅ @Async thread
     @Override
     @Async
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void log(String action, String entityType, Integer entityId, String details) {
-
-        logWithRequest(action, entityType, entityId, details, null, null);
-    }
-    @Override
-    @Async
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logWithRequest(
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW)
+    public void log(
             String action,
             String entityType,
             Integer entityId,
             String details,
-            String ipAddress,
-            String userAgent) {
+            ActivityLogContext context) {
 
         try {
-            var auth = SecurityContextHolder
-                    .getContext().getAuthentication();
+            ActivityLog.ActivityLogBuilder builder =
+                    ActivityLog.builder()
+                            .action(action)
+                            .entityType(entityType)
+                            .entityId(entityId)
+                            .details(details);
 
-            if (auth == null
-                    || !auth.isAuthenticated()
-                    || "anonymousUser".equals(
-                    auth.getPrincipal())) {
+            // ប្រើ context (not SecurityContext)
+            if (context != null) {
 
-                // Save without user ref
-                logRepository.save(
-                        ActivityLog.builder()
-                                .action(action)
-                                .entityType(entityType)
-                                .entityId(entityId)
-                                .details(details)
-                                .ipAddress(ipAddress)
-                                .userAgent(userAgent)
-                                .build());
-                return;
+                // Set IP + UserAgent
+                builder
+                        .ipAddress(context.getIpAddress())
+                        .userAgent(context.getUserAgent())
+                        .userEmail(context.getUserEmail());
+
+                // Set User FK
+                if (context.getUserId() != null) {
+                    userRepo.findById(
+                                    context.getUserId())
+                            .ifPresent(builder::user);
+                }
             }
 
-            userRepository
-                    .findByEmail(auth.getName())
-                    .ifPresent(user ->
-                            logRepository.save(
-                                    ActivityLog.builder()
-                                            .user(user)
-                                            .action(action)
-                                            .entityType(entityType)
-                                            .entityId(entityId)
-                                            .details(details)
-                                            .ipAddress(ipAddress)
-                                            .userAgent(userAgent)
-                                            .build()));
+            logRepo.save(builder.build());
 
         } catch (Exception ex) {
             log.error(
@@ -90,9 +81,73 @@ public class ActivityLogServiceImpl
         }
     }
 
+
+    // log() auto-detect from SecurityContext
+    // ប្រើក្នុង @Async method ខ្លួនឯង
+    // SecurityContext propagate បាន
+    // (InheritableThreadLocal mode)
+    @Override
+    @Async
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW)
+    public void log(
+            String action,
+            String entityType,
+            Integer entityId,
+            String details) {
+
+        try {
+            Authentication auth =
+                    SecurityContextHolder
+                            .getContext()
+                            .getAuthentication();
+
+            if (auth == null
+                    || !auth.isAuthenticated()
+                    || "anonymousUser".equals(
+                    auth.getPrincipal())) {
+
+                // System log — no user
+                logRepo.save(
+                        ActivityLog.builder()
+                                .action(action)
+                                .entityType(entityType)
+                                .entityId(entityId)
+                                .details(details)
+                                .userEmail("SYSTEM")
+                                .build());
+                return;
+            }
+
+            String email = auth.getName();
+
+            Optional<User> userOpt =
+                    userRepo.findByEmail(email);
+
+            ActivityLog.ActivityLogBuilder builder =
+                    ActivityLog.builder()
+                            .action(action)
+                            .entityType(entityType)
+                            .entityId(entityId)
+                            .details(details)
+                            .userEmail(email);
+
+            userOpt.ifPresent(builder::user);
+
+            logRepo.save(builder.build());
+
+        } catch (Exception ex) {
+            log.error(
+                    "ActivityLog save failed: {}",
+                    ex.getMessage());
+        }
+    }
+
+    // GET LOGS
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<ActivityLogResponse> getLogs(
+    public PageResponse<ActivityLogResponse>
+    getLogs(
             Integer userId,
             String action,
             String entityType,
@@ -105,20 +160,22 @@ public class ActivityLogServiceImpl
                 Sort.by("createdAt").descending());
 
         return PageResponse.of(
-                logRepository.findWithFilters(
+                logRepo.findWithFilters(
                                 userId, action,
                                 entityType, from, to,
                                 pageable)
                         .map(logMapper::toResponse));
     }
+
+
+    // GET BY ID
     @Override
     @Transactional(readOnly = true)
     public ActivityLogResponse getById(Integer id) {
         return logMapper.toResponse(
-                logRepository.findById(id)
+                logRepo.findById(id)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
                                         "Log", id)));
     }
-
 }

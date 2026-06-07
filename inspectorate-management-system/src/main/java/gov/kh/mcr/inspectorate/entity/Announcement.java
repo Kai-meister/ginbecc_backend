@@ -1,4 +1,5 @@
 package gov.kh.mcr.inspectorate.entity;
+
 import gov.kh.mcr.inspectorate.enums.Priority;
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,16 +23,21 @@ import java.time.LocalDateTime;
 public class Announcement {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(
+            strategy = GenerationType.IDENTITY)
     @Column(name = "announcement_id")
     private Integer announcementId;
 
+    // Announcement File (pdf/image/...)
+    // Set after: POST /announcements/{id}/attachment
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "attachment_path_id")
-    private Attachment attachmentPath;
+    @JoinColumn(name = "attachment_id",
+            nullable = true)
+    private Attachment attachment;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
+    @JoinColumn(name = "created_by",
+            nullable = false)
     private User createdBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -43,7 +49,8 @@ public class Announcement {
     private String title;
 
     @Column(name = "content",
-            columnDefinition = "TEXT", nullable = false)
+            columnDefinition = "TEXT",
+            nullable = false)
     private String content;
 
     @Column(name = "publish_at")
@@ -55,12 +62,14 @@ public class Announcement {
     private LookupAnnouncementStatus statusCode;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "priority", nullable = false)
+    @Column(name = "priority",
+            nullable = false)
     @Builder.Default
     private Priority priority = Priority.MEDIUM;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at",
+            updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp

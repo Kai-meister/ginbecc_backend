@@ -18,11 +18,11 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class AuditLogController {
 
-    private final ActivityLogService
-            activityLogService;
+    private final ActivityLogService activityLogService;
 
+    // GET /audit-logs
     @GetMapping
-    @PreAuthorize("hasAuthority('AUDIT_VIEW')")
+    @PreAuthorize("hasAuthority('LOG_VIEW')")
     public ResponseEntity<ApiResponse<
             PageResponse<ActivityLogResponse>>>
     getLogs(
@@ -47,8 +47,7 @@ public class AuditLogController {
             @RequestParam(defaultValue = "20")
             int size) {
 
-        return ResponseEntity.ok(
-                ApiResponse.success(
+        return ResponseEntity.ok(ApiResponse.success(
                         activityLogService.getLogs(
                                 userId, action,
                                 entityType, from, to,
@@ -56,8 +55,9 @@ public class AuditLogController {
                         "ប្រវត្តិសកម្មភាព"));
     }
 
+    // GET /audit-logs/{id}
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('AUDIT_VIEW')")
+    @PreAuthorize("hasAuthority('LOG_VIEW')")
     public ResponseEntity<ApiResponse<
     ActivityLogResponse>>
     getById(

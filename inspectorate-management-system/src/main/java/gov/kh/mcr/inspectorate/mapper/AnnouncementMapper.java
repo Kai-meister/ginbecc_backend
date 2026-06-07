@@ -9,7 +9,6 @@ import org.mapstruct.*;
 public interface AnnouncementMapper {
 
     @Mapping(target = "announcementId",  ignore = true)
-    @Mapping(target = "attachmentPath",  ignore = true)
     @Mapping(target = "createdBy",       ignore = true)
     @Mapping(target = "meeting",         ignore = true)
     @Mapping(target = "statusCode",      ignore = true)
@@ -24,7 +23,7 @@ public interface AnnouncementMapper {
     @Mapping(target = "statusLabel",
             source = "statusCode.labelKh")
     @Mapping(target = "attachmentUrl",
-            source = "attachmentPath.filePath")
+            source = "attachment.filePath")
     @Mapping(target = "totalRecipients", ignore = true)
     @Mapping(target = "readCount",       ignore = true)
     AnnouncementResponse toResponse(Announcement entity);
@@ -32,7 +31,6 @@ public interface AnnouncementMapper {
     @BeanMapping(nullValuePropertyMappingStrategy =
             NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "announcementId",  ignore = true)
-    @Mapping(target = "attachmentPath",  ignore = true)
     @Mapping(target = "createdBy",       ignore = true)
     @Mapping(target = "meeting",         ignore = true)
     @Mapping(target = "statusCode",      ignore = true)

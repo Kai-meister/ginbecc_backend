@@ -9,12 +9,9 @@ import java.util.Optional;
 
 @Repository
 public interface PositionRepository extends JpaRepository<Position, Integer> {
-
-
     boolean existsByPositionCode(String code);
 
-    List<Position> findByPositionNameContainingIgnoreCase(
-            String keyword);
+    List<Position> findByPositionNameContainingIgnoreCase(String keyword);
 
     List<Position> findAllByOrderByPositionNameAsc();
 }

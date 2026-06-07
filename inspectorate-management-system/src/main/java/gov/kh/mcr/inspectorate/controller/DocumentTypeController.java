@@ -18,7 +18,9 @@ public class DocumentTypeController {
 
     private final DocumentTypeService documentTypeService;
 
+    // GET /document-types
     @GetMapping
+    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
     public ResponseEntity<ApiResponse<List<DocumentTypeResponse>>>
     getAll() {
         return ResponseEntity.ok(ApiResponse.success(
@@ -26,7 +28,9 @@ public class DocumentTypeController {
                 "ទទួលបន្ជីប្រភេទឯកសារ"));
     }
 
+    // GET /document-types/{id}
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('DOCUMENT_VIEW')")
     public ResponseEntity<ApiResponse<DocumentTypeResponse>> getById(
             @PathVariable Integer id) {
         return ResponseEntity.ok(ApiResponse.success(
@@ -34,8 +38,9 @@ public class DocumentTypeController {
                 "ទទួលបានប្រភេទឯកសារ"));
     }
 
+    // POST /document-types
     @PostMapping
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('DOCUMENT_TYPE_MANAGE')")
     public ResponseEntity<ApiResponse<DocumentTypeResponse>> create(
             @Valid @RequestBody DocumentTypeRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -44,8 +49,9 @@ public class DocumentTypeController {
                         "បង្កើតជោគជ័យ"));
     }
 
+    // PUT /document-types/{id}
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('DOCUMENT_TYPE_MANAGE')")
     public ResponseEntity<ApiResponse<DocumentTypeResponse>> update(
             @PathVariable Integer id,
             @Valid @RequestBody DocumentTypeRequest request) {
@@ -54,8 +60,9 @@ public class DocumentTypeController {
                 "កែប្រែជោគជ័យ"));
     }
 
+    // DELETE /document-types/{id}
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('DOCUMENT_TYPE_MANAGE')")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable Integer id) {
         documentTypeService.delete(id);

@@ -10,21 +10,35 @@ import java.time.LocalDateTime;
 public interface ActivityLogRepository
         extends JpaRepository<ActivityLog, Integer> {
 
-    @Query("""
-        SELECT a FROM ActivityLog a
-        LEFT JOIN FETCH a.user u
-        WHERE (:userId IS NULL
-               OR a.user.userId = :userId)
-        AND   (:action IS NULL
-               OR a.action = :action)
-        AND   (:entityType IS NULL
-               OR a.entityType = :entityType)
-        AND   (:from IS NULL
-               OR a.createdAt >= :from)
-        AND   (:to IS NULL
-               OR a.createdAt <= :to)
-        ORDER BY a.createdAt DESC
-        """)
+//    @Query("""
+//        SELECT a FROM ActivityLog a
+//        LEFT JOIN FETCH a.user u
+//        WHERE (:userId IS NULL
+//               OR a.user.userId = :userId)
+//        AND   (:action IS NULL
+//               OR a.action = :action)
+//        AND   (:entityType IS NULL
+//               OR a.entityType = :entityType)
+//        AND   (:from IS NULL
+//               OR a.createdAt >= :from)
+//        AND   (:to IS NULL
+//               OR a.createdAt <= :to)
+//        ORDER BY a.createdAt DESC
+//        """)
+@Query("""
+SELECT a
+FROM ActivityLog a
+LEFT JOIN FETCH a.user
+WHERE
+(:userId IS NULL OR a.user.userId = :userId)
+AND (:action IS NULL OR a.action = :action)
+AND (:entityType IS NULL OR a.entityType = :entityType)
+AND (CAST(:from AS java.time.LocalDateTime) IS NULL
+     OR a.createdAt >= :from)
+AND (CAST(:to AS java.time.LocalDateTime) IS NULL
+     OR a.createdAt <= :to)
+ORDER BY a.createdAt DESC
+""")
     Page<ActivityLog> findWithFilters(
             @Param("userId")     Integer userId,
             @Param("action")     String action,

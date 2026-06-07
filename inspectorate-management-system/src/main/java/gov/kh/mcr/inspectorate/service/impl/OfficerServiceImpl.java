@@ -1,25 +1,37 @@
 package gov.kh.mcr.inspectorate.service.impl;
 
+import gov.kh.mcr.inspectorate.dto.request.ActivityLogContext;
 import gov.kh.mcr.inspectorate.dto.request.OfficerRequest;
 import gov.kh.mcr.inspectorate.dto.request.StatusRequest;
+import gov.kh.mcr.inspectorate.dto.response.AttachmentResponse;
 import gov.kh.mcr.inspectorate.dto.response.OfficerResponse;
 import gov.kh.mcr.inspectorate.dto.response.PageResponse;
 import gov.kh.mcr.inspectorate.entity.Department;
 import gov.kh.mcr.inspectorate.entity.LookupOfficerStatus;
 import gov.kh.mcr.inspectorate.entity.Officer;
 import gov.kh.mcr.inspectorate.entity.Position;
+import gov.kh.mcr.inspectorate.enums.ActiveStatus;
+import gov.kh.mcr.inspectorate.enums.AttachmentRefType;
+import gov.kh.mcr.inspectorate.exception.BusinessException;
 import gov.kh.mcr.inspectorate.exception.DuplicateResourceException;
 import gov.kh.mcr.inspectorate.exception.ResourceNotFoundException;
 import gov.kh.mcr.inspectorate.mapper.OfficerMapper;
 import gov.kh.mcr.inspectorate.repository.*;
 import gov.kh.mcr.inspectorate.security.SecurityUtils;
 import gov.kh.mcr.inspectorate.service.ActivityLogService;
+import gov.kh.mcr.inspectorate.service.AttachmentService;
+import gov.kh.mcr.inspectorate.service.MinioService;
 import gov.kh.mcr.inspectorate.service.OfficerService;
 import gov.kh.mcr.inspectorate.util.DateUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -29,24 +41,155 @@ import java.util.List;
 public class OfficerServiceImpl implements OfficerService {
 
     private final OfficerRepository officerRepository;
-    private final DepartmentRepository departmentRepository;
+    private final DepartmentRepository deptRepository;
     private final PositionRepository positionRepository;
-    private final LookupOfficerStatusRepository lookupStatusRepository;
+    private final LookupOfficerStatusRepository statusRepository;
     private final OfficerMapper officerMapper;
     private final SecurityUtils securityUtils;
     private final ActivityLogService activityLogService;
+    private final AttachmentService attachmentService;
     private final AttachmentRepository attachmentRepository;
+    private final MinioService minioService;
 
+    @Override
+    public OfficerResponse create(
+            OfficerRequest request) {
+
+        if (officerRepository.existsByOfficerCode(
+                request.getOfficerCode())) {
+            throw new DuplicateResourceException(
+                    "លេខកូដ ["
+                            + request.getOfficerCode()
+                            + "] មានស្ទួន");
+        }
+
+        Officer officer =
+                officerMapper.toEntity(request);
+
+        // Fix — Check dept ACTIVE
+        officer.setDepartment(
+                findActiveDept(
+                        request.getDepartmentId()));
+
+        officer.setPosition(
+                findPos(request.getPositionId()));
+        officer.setStatusCode(
+                findStatus(request.getStatusCode()));
+
+        Officer saved = officerRepository.save(officer);
+
+        activityLogService.log(
+                "CREATE", "Officer",
+                saved.getOfficerId(),
+                "បង្កើត: " + saved.getFullNameKh(),
+                buildContext());
+
+        return toResponseWithAge(saved);
+    }
+
+    @Override
+    public OfficerResponse update(
+            Integer id,
+            OfficerRequest request) {
+
+        Officer officer = findById(id);
+
+        // Fix — Check dept ACTIVE on update too
+        if (!officer.getDepartment()
+                .getDepartmentId()
+                .equals(request.getDepartmentId())) {
+            officer.setDepartment(
+                    findActiveDept(
+                            request.getDepartmentId()));
+        }
+
+        officer.setPosition(
+                findPos(request.getPositionId()));
+        officer.setStatusCode(
+                findStatus(request.getStatusCode()));
+
+        officerMapper.updateEntity(request, officer);
+
+        activityLogService.log(
+                "UPDATE", "Officer",
+                id,
+                "កែប្រែ: "
+                        + officer.getFullNameKh(),
+                buildContext());
+
+        return toResponseWithAge(
+                officerRepository.save(officer));
+    }
+
+    // ── Fix: findActiveDept ───────────────────────
+    private Department findActiveDept(Integer id) {
+
+        // ១. Check exists
+        Department dept =
+                deptRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "នាយកដ្ឋាន", id));
+
+        // ២. Check ACTIVE status
+        if (dept.getStatus() != ActiveStatus.ACTIVE) {
+            throw new BusinessException(
+                    "នាយកដ្ឋាន \""
+                            + dept.getDepartmentName()
+                            + "\" មិនអាចប្រើបាន"
+                            + " (ស្ថានភាព: "
+                            + dept.getStatus().name()
+                            + ")");
+        }
+
+        return dept;
+    }
+
+    @Override
+    public void delete(Integer id) {
+        findById(id);
+        officerRepository.deleteById(id);
+
+        activityLogService.log(
+                "DELETE", "Officer",
+                id, "លុបមន្ត្រី",
+                buildContext());           // ← Fix
+    }
+
+    // ── Fix: buildContext() ───────────────────────
+    // Extract context ពី main thread
+    // ហើយ pass ទៅ @Async log()
+    private ActivityLogContext buildContext() {
+        HttpServletRequest request =
+                getCurrentRequest();
+        return securityUtils.buildLogContext(request);
+    }
+
+    // ── Get current HTTP Request ──────────────────
+    private HttpServletRequest getCurrentRequest() {
+        try {
+            return ((ServletRequestAttributes)
+                    RequestContextHolder
+                            .currentRequestAttributes())
+                    .getRequest();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // ── Other helpers ─────────────────────────────
     @Override
     @Transactional(readOnly = true)
     public PageResponse<OfficerResponse> getAll(
             int page, int size,
             Integer deptId, String status) {
 
-        Pageable pageable = PageRequest.of(page, size,
+        Pageable pageable = PageRequest.of(
+                page, size,
                 Sort.by("createdAt").descending());
 
         Page<Officer> result;
+
         if (deptId != null && status != null) {
             result = officerRepository
                     .findByDepartment_DepartmentIdAndStatusCode_StatusCode(
@@ -57,7 +200,8 @@ public class OfficerServiceImpl implements OfficerService {
                             deptId, pageable);
         } else if (status != null) {
             result = officerRepository
-                    .findByStatusCode_StatusCode(status, pageable);
+                    .findByStatusCode_StatusCode(
+                            status, pageable);
         } else {
             result = officerRepository.findAll(pageable);
         }
@@ -73,95 +217,28 @@ public class OfficerServiceImpl implements OfficerService {
     }
 
     @Override
-    public OfficerResponse create(OfficerRequest request) {
-        if (officerRepository.existsByOfficerCode(
-                request.getOfficerCode())) {
-            throw new DuplicateResourceException(
-                    "លេខកូដ ["
-                            + request.getOfficerCode() + "] មានស្ទួន");
-        }
-
-        Officer officer = officerMapper.toEntity(request);
-        officer.setDepartment(
-                findDepartment(request.getDepartmentId()));
-        officer.setPosition(
-                findPosition(request.getPositionId()));
-        officer.setStatusCode(
-                findStatus(request.getStatusCode()));
-
-        Officer saved = officerRepository.save(officer);
-        activityLogService.log("CREATE", "Officer",
-                saved.getOfficerId(),
-                "បង្កើត: " + saved.getFullNameKh());
-
-        return toResponseWithAge(saved);
-    }
-
-    @Override
-    public OfficerResponse update(Integer id,
-                                  OfficerRequest request) {
-        Officer officer = findById(id);
-
-        // Self-edit: only phone + address
-        if (!securityUtils.hasPermission("OFFICER_MANAGE")
-                && securityUtils.hasPermission(
-                "SELF_PROFILE_EDIT")) {
-
-            officer.setPhone(request.getPhone());
-            officer.setCurrentAddress(
-                    request.getCurrentAddress());
-
-        } else {
-            // Full update for OFFICER_MANAGE
-            if (!officer.getOfficerCode()
-                    .equals(request.getOfficerCode())
-                    && officerRepository.existsByOfficerCode(
-                    request.getOfficerCode())) {
-                throw new DuplicateResourceException(
-                        "លេខកូដ ["
-                                + request.getOfficerCode()
-                                + "] មានស្ទួន");
-            }
-            officerMapper.updateEntity(request, officer);
-            officer.setDepartment(
-                    findDepartment(request.getDepartmentId()));
-            officer.setPosition(
-                    findPosition(request.getPositionId()));
-            officer.setStatusCode(
-                    findStatus(request.getStatusCode()));
-        }
-
-        activityLogService.log("UPDATE", "Officer", id,
-                "កែប្រែ: " + officer.getFullNameKh());
-
-        return toResponseWithAge(
-                officerRepository.save(officer));
-    }
-
-    @Override
     public OfficerResponse updateStatus(
             Integer id, StatusRequest request) {
         Officer officer = findById(id);
         officer.setStatusCode(
                 findStatus(request.getStatusCode()));
-        activityLogService.log("UPDATE", "Officer", id,
-                "ស្ថានភាព → " + request.getStatusCode());
+
+        activityLogService.log(
+                "UPDATE", "Officer",
+                id,
+                "ស្ថានភាព → "
+                        + request.getStatusCode(),
+                buildContext());           // ← Fix
+
         return toResponseWithAge(
                 officerRepository.save(officer));
     }
 
     @Override
-    public void delete(Integer id) {
-        findById(id);
-        officerRepository.deleteById(id);
-        activityLogService.log("DELETE", "Officer",
-                id, "លុបមន្ត្រី");
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public List<OfficerResponse> getNearRetirement() {
-        LocalDate cutoff = LocalDate.now().minusYears(55);
+        LocalDate cutoff =
+                LocalDate.now().minusYears(55);
         return officerRepository
                 .findNearRetirement(cutoff)
                 .stream()
@@ -172,24 +249,29 @@ public class OfficerServiceImpl implements OfficerService {
     private Officer findById(Integer id) {
         return officerRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("មន្ត្រី", id));
+                        new ResourceNotFoundException(
+                                "មន្ត្រី", id));
     }
 
-    private Department findDepartment(Integer id) {
-        return departmentRepository.findById(id)
+    private Department findDept(Integer id) {
+        return deptRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "នាយកដ្ឋាន", id));
     }
 
-    private Position findPosition(Integer id) {
-        return positionRepository.findById(id)
+    private Position findPos(
+            Integer id) {
+        return positionRepository
+                .findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("តំណែង", id));
+                        new ResourceNotFoundException(
+                                "តំណែង", id));
     }
 
-    private LookupOfficerStatus findStatus(String code) {
-        return lookupStatusRepository.findById(code)
+    private LookupOfficerStatus findStatus(
+            String code) {
+        return statusRepository.findById(code)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "ស្ថានភាព", code));
@@ -199,27 +281,64 @@ public class OfficerServiceImpl implements OfficerService {
             Officer o) {
         OfficerResponse dto =
                 officerMapper.toResponse(o);
-        dto.setAge(DateUtils.calculateAge(o.getDob()));
+        dto.setAge(DateUtils.calculateAge(
+                o.getDob()));
         return dto;
     }
 
 
+// Fix — ក្នុង OfficerServiceImpl.java
+
     @Override
-    public OfficerResponse updateProfileImage(Integer officerId, Integer attachmentId) {
+    public OfficerResponse uploadProfileImage(
+            Integer officerId,
+            MultipartFile file) {
+
+        // ១. Validate officer exists
         Officer officer = findById(officerId);
 
+        // ២. Upload image → get attachment
+        AttachmentResponse attachmentResponse =
+                attachmentService.upload(
+                        file,
+                        AttachmentRefType.OFFICER,
+                        officerId);
+
+        // ៣. Auto-link → officer.profileAttachment
         attachmentRepository
-                .findById(attachmentId)
-                .ifPresent(officer::setProfileAttachment);
+                .findById(
+                        attachmentResponse.getAttachmentId())
+                .ifPresent(att -> {
+                    officer.setProfileAttachment(att);
+                    officerRepository.save(officer);
+                });
 
         activityLogService.log(
-                "UPDATE", "Officer", officerId,
-                "ផ្លាស់ប្ដូររូបភាព Profile");
+                "UPDATE", "Officer",
+                officerId,
+                "Upload Profile Image: "
+                        + attachmentResponse.getOriginalName(),
+                buildContext());
 
         return toResponseWithAge(
                 officerRepository.save(officer));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public String getProfileImageUrl(
+            Integer officerId) {
+
+        Officer officer = findById(officerId);
+
+        if (officer.getProfileAttachment() == null) {
+            return null; // No image
+        }
+
+        return minioService.getPresignedUrl(
+                officer.getProfileAttachment()
+                        .getFilePath());
+    }
 
 
 }

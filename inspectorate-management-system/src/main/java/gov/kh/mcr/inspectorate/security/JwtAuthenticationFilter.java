@@ -48,8 +48,8 @@ public class JwtAuthenticationFilter
                                 .loadUserByUsername(email);
 
                 var auth = new UsernamePasswordAuthenticationToken(
-                                userDetails, null,
-                                userDetails.getAuthorities());
+                        userDetails, null,
+                        userDetails.getAuthorities());
 
                 auth.setDetails(
                         new WebAuthenticationDetailsSource()

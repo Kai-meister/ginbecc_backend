@@ -24,30 +24,26 @@ public class MinioServiceImpl implements MinioService {
     @Value("${minio.bucket}")
     private String bucket;
 
+    // Fix MinioServiceImpl.uploadFile()
+// ប្រើ toPathPrefix() ដោយផ្ទាល់
+
     @Override
     public String uploadFile(
             MultipartFile file,
-            String refTypeCodeOrPrefix,
+            String refTypePrefix, // "officer" / "meeting-room"
             Integer refId) {
         try {
             createBucketIfNotExists();
 
-            String prefix;
-            try {
-                prefix = AttachmentRefType
-                        .fromCode(refTypeCodeOrPrefix)
-                        .toPathPrefix();
-            } catch (IllegalArgumentException ex) {
-                // Already lowercase prefix
-                prefix = refTypeCodeOrPrefix
-                        .toLowerCase()
-                        .replace("_", "-");
-            }
-
             String ext = getExt(
                     file.getOriginalFilename());
+
+            // Path pattern:
+            // officer/5/{UUID}.jpg
+            // meeting-room/2/{UUID}.jpg
+            // meeting-minute/7/{UUID}.pdf
             String objectName =
-                    prefix
+                    refTypePrefix          // ← toPathPrefix()
                             + "/" + refId
                             + "/" + UUID.randomUUID()
                             + "." + ext;
@@ -63,15 +59,12 @@ public class MinioServiceImpl implements MinioService {
                                     file.getContentType())
                             .build());
 
-            log.info("MinIO uploaded: {}",
-                    objectName);
+            log.info("Uploaded: {}", objectName);
             return objectName;
 
         } catch (Exception ex) {
-            log.error("MinIO upload error", ex);
             throw new BusinessException(
-                    "Upload File មានបញ្ហា: "
-                            + ex.getMessage());
+                    "Upload មានបញ្ហា: " + ex.getMessage());
         }
     }
 

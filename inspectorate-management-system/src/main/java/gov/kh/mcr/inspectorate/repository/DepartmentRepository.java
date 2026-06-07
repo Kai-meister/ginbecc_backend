@@ -1,6 +1,5 @@
 package gov.kh.mcr.inspectorate.repository;
 
-
 import gov.kh.mcr.inspectorate.entity.Department;
 import gov.kh.mcr.inspectorate.enums.ActiveStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,16 +14,9 @@ public interface DepartmentRepository
     List<Department> findByStatus(
             ActiveStatus status);
 
-    Optional<Department> findByDepartmentCode(
-            String code);
-
-    boolean existsByDepartmentCode(String code);
-
-
     List<Department>
     findByDepartmentNameContainingIgnoreCase(
             String keyword);
-
 
     List<Department>
     findByStatusAndDepartmentNameContainingIgnoreCase(
@@ -32,4 +24,14 @@ public interface DepartmentRepository
 
     List<Department>
     findAllByOrderByDepartmentNameAsc();
+
+    Optional<Department>
+    findByDepartmentCode(String code);
+
+    boolean existsByDepartmentCode(String code);
+
+    // Find active only
+    Optional<Department>
+    findByDepartmentIdAndStatus(
+            Integer id, ActiveStatus status);
 }

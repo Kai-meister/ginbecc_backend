@@ -16,9 +16,6 @@ public class DocumentRequest {
 
     @NotNull(message = "ប្រភេទឯកសារចាំបាច់")
     private Integer documentTypeId;
-
-    private Integer attachmentId;
-
     @NotBlank(message = "ឈ្មោះឯកសារចាំបាច់")
     @Size(max = 255)
     private String documentName;
@@ -28,8 +25,8 @@ public class DocumentRequest {
 
     private String    note;
 
-    @NotBlank(message = "ស្ថានភាពចាំបាច់")
-    private String    statusCode;
+//    @NotBlank(message = "ស្ថានភាពចាំបាច់")
+//    private String    statusCode;
 
     private LocalDate expiryDate;
 }

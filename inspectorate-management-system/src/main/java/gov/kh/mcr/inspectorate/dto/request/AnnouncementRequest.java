@@ -11,7 +11,6 @@ import java.util.List;
 @Builder
 public class AnnouncementRequest {
 
-    private Integer attachmentPathId;
     private Integer meetingId;
 
     @NotBlank(message = "ចំណងជើងចាំបាច់")

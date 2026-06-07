@@ -1,6 +1,7 @@
 package gov.kh.mcr.inspectorate.dto.request;
 
-import gov.kh.mcr.inspectorate.enums.NotificationType;
+import gov.kh.mcr.inspectorate.enums
+        .NotificationType;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import java.util.List;
@@ -10,13 +11,13 @@ import java.util.List;
 @Builder
 public class NotificationCreateRequest {
 
-    private Integer officerId;
-    private Integer userId;
+    // Target 1
+    private Integer       officerId;
+    private Integer       userId;
     private List<Integer> officerIds;
 
     @NotBlank(message = "ចំណងជើងចាំបាច់")
-    @Size(max = 255,
-            message = "ចំណងជើងអតិបរមា 255 តួ")
+    @Size(max = 255)
     private String title;
 
     @NotBlank(message = "ខ្លឹមសារចាំបាច់")
@@ -26,6 +27,4 @@ public class NotificationCreateRequest {
     private NotificationType type;
 
     private Integer referenceId;
-
-    private String referenceType;
 }

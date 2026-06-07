@@ -20,8 +20,9 @@ import org.springframework.web.bind.annotation.*;
 public class ContractOfficerController {
 
     private final ContractOfficerService service;
+    // GET /contract-officers
     @GetMapping
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('CONTRACT_OFFICER_VIEW')")
     public ResponseEntity<ApiResponse<
             PageResponse<ContractOfficerResponse>>>
     getAll(
@@ -45,8 +46,9 @@ public class ContractOfficerController {
                         "ទទួលបន្ជីមន្ត្រីកិច្ចសន្យា"));
     }
 
+    // GET /contract-officers/{id}
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('CONTRACT_OFFICER_VIEW')")
     public ResponseEntity<ApiResponse<
     ContractOfficerResponse>>
     getById(
@@ -59,8 +61,9 @@ public class ContractOfficerController {
                         "ទទួលបានមន្ត្រីកិច្ចសន្យា"));
     }
 
+    // POST /contract-officers
     @PostMapping
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('CONTRACT_OFFICER_CREATE')")
     public ResponseEntity<ApiResponse<
     ContractOfficerResponse>>
     create(
@@ -73,8 +76,9 @@ public class ContractOfficerController {
                         service.create(req),
                         "បង្កើតជោគជ័យ"));
     }
+    // PUT /contract-officers/{id}
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('CONTRACT_OFFICER_UPDATE')")
     public ResponseEntity<ApiResponse<
     ContractOfficerResponse>>
     update(
@@ -89,8 +93,9 @@ public class ContractOfficerController {
                         "កែប្រែជោគជ័យ"));
     }
 
+    // PATCH /contract-officers/{id}/status
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('CONTRACT_OFFICER_UPDATE')")
     public ResponseEntity<ApiResponse<
     ContractOfficerResponse>>
     updateStatus(
@@ -105,8 +110,9 @@ public class ContractOfficerController {
                         "ផ្លាស់ប្ដូរស្ថានភាព"));
     }
 
+    // DELETE /contract-officers/{id}
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('CONTRACT_OFFICER_DELETE')")
     public ResponseEntity<ApiResponse<Void>>
     delete(
             @PathVariable

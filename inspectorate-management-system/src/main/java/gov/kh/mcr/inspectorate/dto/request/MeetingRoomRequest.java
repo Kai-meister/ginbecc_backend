@@ -24,5 +24,4 @@ public class MeetingRoomRequest {
     private RoomStatus status;
 
     private String  facilities;
-    private Integer imageAttachmentId;
 }

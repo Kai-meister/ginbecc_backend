@@ -62,7 +62,7 @@ services:
 
   backend:
     build:
-      context: .
+      context: ./server
       dockerfile: Dockerfile
     container_name: officer_backend
     environment:
@@ -71,10 +71,10 @@ services:
       SPRING_DATASOURCE_PASSWORD: vannoy
       SPRING_DATA_REDIS_HOST:     redis
       SPRING_DATA_REDIS_PORT:     6379
-      SPRING_DATA_REDIS_PASSWORD: redis123
+      SPRING_DATA_REDIS_PASSWORD: ''
       MINIO_URL:                  http://minio:9000
       MINIO_ACCESS_KEY:           admin
-      MINIO_SECRET_KEY:           password123
+      MINIO_SECRET_KEY:           password1234
       JWT_SECRET: YourSuperSecretKeyThatIsAtLeast256BitsLong!
       JWT_EXPIRATION:         86400000
       JWT_REFRESH_EXPIRATION: 604800000
@@ -97,7 +97,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - backend
     networks:

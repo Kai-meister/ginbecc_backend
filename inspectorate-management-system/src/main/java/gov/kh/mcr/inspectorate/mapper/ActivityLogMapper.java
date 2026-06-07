@@ -1,5 +1,4 @@
 package gov.kh.mcr.inspectorate.mapper;
-
 import gov.kh.mcr.inspectorate.dto.response.ActivityLogResponse;
 import gov.kh.mcr.inspectorate.entity.ActivityLog;
 import org.mapstruct.*;
@@ -13,11 +12,12 @@ public interface ActivityLogMapper {
     @Mapping(target = "userNameKh",
             source = "user.userNameKh")
     @Mapping(target = "userEmail",
-            source = "user.email")
+            source = "userEmail")
     @Mapping(target = "actionLabel",
-            expression = "java(getActionLabel(entity.getAction()))")
-    ActivityLogResponse toResponse(
-            ActivityLog entity);
+            expression =
+                    "java(getActionLabel("
+                            + "entity.getAction()))")
+    ActivityLogResponse toResponse(ActivityLog entity);
 
     default String getActionLabel(String action) {
         if (action == null) return "";
@@ -27,9 +27,11 @@ public interface ActivityLogMapper {
             case "DELETE"          -> "លុប";
             case "LOGIN"           -> "ចូលប្រព័ន្ធ";
             case "LOGOUT"          -> "ចាកចេញ";
-            case "CHANGE_PASSWORD" -> "ប្ដូរ Password";
-            case "RESET_PASSWORD"  -> "Reset Password";
-            default                -> action;
+            case "CHANGE_PASSWORD" ->
+                    "ប្ដូរ Password";
+            case "RESET_PASSWORD"  ->
+                    "Reset Password";
+            default -> action;
         };
     }
 }

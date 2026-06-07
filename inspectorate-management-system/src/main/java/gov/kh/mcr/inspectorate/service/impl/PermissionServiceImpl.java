@@ -15,13 +15,11 @@ import java.util.List;
 public class PermissionServiceImpl
         implements PermissionService {
 
-    private final PermissionRepository
-            permissionRepository;
+    private final PermissionRepository permissionRepository;
 
     @Override
     public List<Permission> getAll() {
-        return permissionRepository
-                .findAllByOrderByModuleAscPermissionNameAsc();
+        return permissionRepository.findAllByOrderByModuleAscPermissionNameAsc();
     }
 
     @Override

@@ -6,12 +6,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface LookupUserStatusRepository
-        extends JpaRepository<LookupUserStatus,
-        String> {
+public interface LookupUserStatusRepository extends JpaRepository<LookupUserStatus, String> {
 
-    List<LookupUserStatus>
-    findByIsActiveTrueOrderBySortOrderAsc();
+    List<LookupUserStatus> findByIsActiveTrueOrderBySortOrderAsc();
 
-    boolean existsByStatusCode(String statusCode);
+//    boolean existsByStatusCode(String statusCode);
 }

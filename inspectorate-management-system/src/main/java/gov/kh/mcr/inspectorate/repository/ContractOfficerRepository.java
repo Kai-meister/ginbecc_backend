@@ -17,7 +17,7 @@ public interface ContractOfficerRepository
     Page<ContractOfficer>
     findByStatusCode_StatusCode(
             String status, Pageable pageable);
-
+    long countByDepartment_DepartmentId(Integer departmentId);
 
     Page<ContractOfficer>
     findByDepartment_DepartmentId(

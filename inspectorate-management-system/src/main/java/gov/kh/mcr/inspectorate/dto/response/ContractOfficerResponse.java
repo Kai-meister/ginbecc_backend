@@ -24,6 +24,7 @@ public class ContractOfficerResponse {
     private LocalDate startDate;
     private LocalDate endDate;
     private Long daysUntilExpiry;
+    private String expiryLabel;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

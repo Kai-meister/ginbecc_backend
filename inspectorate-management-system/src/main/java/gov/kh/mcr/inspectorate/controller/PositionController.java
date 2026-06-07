@@ -18,7 +18,9 @@ public class PositionController {
 
     private final PositionService positionService;
 
+    // GET /positions
     @GetMapping
+    @PreAuthorize("hasAuthority('POSITION_VIEW')")
     public ResponseEntity<ApiResponse<
     List<PositionResponse>>> getAll(@RequestParam(required = false) String keyword) {
 
@@ -26,7 +28,9 @@ public class PositionController {
                         positionService.getAll(keyword),
                         "ទទួលបន្ជីតំណែង"));
     }
+    // GET /positions/{id}
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('POSITION_VIEW')")
     public ResponseEntity<ApiResponse<
     PositionResponse>>
     getById(
@@ -39,8 +43,9 @@ public class PositionController {
                         "ទទួលបានតំណែង"));
     }
 
+    // POST /positions
     @PostMapping
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('POSITION_MANAGE')")
     public ResponseEntity<ApiResponse<PositionResponse>> create(
             @Valid @RequestBody PositionRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -49,8 +54,9 @@ public class PositionController {
                         "បង្កើតជោគជ័យ"));
     }
 
+    // PUT /positions/{id}
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('POSITION_MANAGE')")
     public ResponseEntity<ApiResponse<PositionResponse>> update(
             @PathVariable Integer id,
             @Valid @RequestBody PositionRequest request) {
@@ -59,8 +65,9 @@ public class PositionController {
                 "កែប្រែជោគជ័យ"));
     }
 
+    // DELETE /positions/{id}
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('POSITION_MANAGE')")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable Integer id) {
         positionService.delete(id);

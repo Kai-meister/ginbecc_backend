@@ -1,19 +1,28 @@
 package gov.kh.mcr.inspectorate.service.impl;
 
+import gov.kh.mcr.inspectorate.dto.request.ActivityLogContext;
 import gov.kh.mcr.inspectorate.dto.request.DepartmentRequest;
 import gov.kh.mcr.inspectorate.dto.response.DepartmentResponse;
 import gov.kh.mcr.inspectorate.entity.Department;
 import gov.kh.mcr.inspectorate.enums.ActiveStatus;
+import gov.kh.mcr.inspectorate.exception.BusinessException;
 import gov.kh.mcr.inspectorate.exception.DuplicateResourceException;
 import gov.kh.mcr.inspectorate.exception.ResourceNotFoundException;
 import gov.kh.mcr.inspectorate.mapper.DepartmentMapper;
+import gov.kh.mcr.inspectorate.repository.ContractOfficerRepository;
 import gov.kh.mcr.inspectorate.repository.DepartmentRepository;
+import gov.kh.mcr.inspectorate.repository.OfficerRepository;
+import gov.kh.mcr.inspectorate.security.SecurityUtils;
 import gov.kh.mcr.inspectorate.service.ActivityLogService;
 import gov.kh.mcr.inspectorate.service.DepartmentService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
 import java.util.List;
 
 @Service
@@ -25,6 +34,9 @@ public class DepartmentServiceImpl
     private final DepartmentRepository departmentRepository;
     private final DepartmentMapper departmentMapper;
     private final ActivityLogService activityLogService;
+    private final OfficerRepository    officerRepository;
+    private final ContractOfficerRepository contractOfficerRepository;
+    private final SecurityUtils securityUtils;
 
     @Override
     @Transactional(readOnly = true)
@@ -89,34 +101,102 @@ public class DepartmentServiceImpl
     }
 
     @Override
-    public DepartmentResponse update(
-            Integer id, DepartmentRequest request) {
+    public void delete(Integer id) {
 
         Department dept = findById(id);
+
+        // Check has Officers
+        long officerCount =
+                officerRepository
+                        .countByDepartment_DepartmentId(id);
+
+        if (officerCount > 0) {
+            throw new BusinessException(
+                    "មិនអាចលុបបាន — នាយកដ្ឋាននេះ"
+                            + " មានមន្ត្រី "
+                            + officerCount + " នាក់"
+                            + " — សូម Deactivate ជំនួស");
+        }
+
+        // Check has ContractOfficers
+        long contractCount =
+                contractOfficerRepository
+                        .countByDepartment_DepartmentId(id);
+
+        if (contractCount > 0) {
+            throw new BusinessException(
+                    "មិនអាចលុបបាន — នាយកដ្ឋាននេះ"
+                            + " មានមន្ត្រីកិច្ចសន្យា "
+                            + contractCount + " នាក់"
+                            + " — សូម Deactivate ជំនួស");
+        }
+
+        departmentRepository.deleteById(id);
+
+        activityLogService.log(
+                "DELETE", "Department",
+                id, "លុបនាយកដ្ឋាន",
+                buildContext());
+    }
+
+    @Override
+    public DepartmentResponse update(
+            Integer id,
+            DepartmentRequest request) {
+
+        Department dept = findById(id);
+
+        // Fix — Set INACTIVE → warn active officers
+        if (request.getStatus() == ActiveStatus.INACTIVE
+                && dept.getStatus() == ActiveStatus.ACTIVE) {
+
+            long count =
+                    officerRepository
+                            .countByDepartment_DepartmentId(id);
+
+            if (count > 0) {
+                throw new BusinessException(
+                        "នាយកដ្ឋាននេះ មានមន្ត្រីសកម្ម "
+                                + count + " នាក់"
+                                + " — មិនអាច Deactivate");
+            }
+        }
+
         departmentMapper.updateEntity(request, dept);
 
         activityLogService.log(
-                "UPDATE", "Department", id,
-                "កែប្រែ: "
-                        + dept.getDepartmentName());
+                "UPDATE", "Department",
+                id, "កែប្រែ: "
+                        + dept.getDepartmentName(),
+                buildContext());
 
         return departmentMapper.toResponse(
                 departmentRepository.save(dept));
     }
 
-    @Override
-    public void delete(Integer id) {
-        findById(id);
-        departmentRepository.deleteById(id);
-        activityLogService.log(
-                "DELETE", "Department",
-                id, "លុបនាយកដ្ឋាន");
-    }
+
 
     private Department findById(Integer id) {
         return departmentRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "នាយកដ្ឋាន", id));
+    }
+    private ActivityLogContext buildContext() {
+        HttpServletRequest request =
+                getCurrentRequest();
+        return securityUtils.buildLogContext(request);
+    }
+
+    // ── Get current HTTP Request ──────────────────
+    private HttpServletRequest getCurrentRequest() {
+        try {
+            return ((ServletRequestAttributes)
+                    RequestContextHolder
+                            .currentRequestAttributes())
+                    .getRequest();
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

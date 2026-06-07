@@ -18,21 +18,23 @@ public class RoleController {
 
     private final RoleService roleService;
 
+    // GET /roles
     @GetMapping
-    @PreAuthorize("hasAuthority('ROLE_ASSIGN')")
+    @PreAuthorize("hasAuthority('ROLE_VIEW')")
     public ResponseEntity<ApiResponse<List<RoleResponse>>> getAll() {
         return ResponseEntity.ok(ApiResponse.success(
                 roleService.getAll(), "ទទួលបន្ជីតួនាទី"));
     }
-
+    // GET /roles/{id}
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ASSIGN')")
+    @PreAuthorize("hasAuthority('ROLE_VIEW')")
     public ResponseEntity<ApiResponse<RoleResponse>> getById(
             @PathVariable Integer id) {
         return ResponseEntity.ok(ApiResponse.success(
                 roleService.getById(id), "ទទួលបានតួនាទី"));
     }
 
+    // POST /roles
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_ASSIGN')")
     public ResponseEntity<ApiResponse<RoleResponse>> create(
@@ -43,6 +45,7 @@ public class RoleController {
                         "បង្កើតជោគជ័យ"));
     }
 
+    // PUT /roles/{id}
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_ASSIGN')")
     public ResponseEntity<ApiResponse<RoleResponse>> update(

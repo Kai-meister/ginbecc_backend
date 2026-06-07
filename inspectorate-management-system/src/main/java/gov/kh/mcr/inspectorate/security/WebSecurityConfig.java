@@ -48,10 +48,9 @@ public class WebSecurityConfig {
                                 "/api/v1/meeting-rooms")
                         .authenticated()
                         .requestMatchers("/api/v1/audit-logs/**")
-                        .hasAuthority("AUDIT_VIEW")
+                        .hasAuthority("LOG_VIEW")
                         .requestMatchers("/api/v1/reports/**")
-                        .hasAnyAuthority(
-                                "REPORT_EXPORT","DAILY_REPORT")
+                        .hasAnyAuthority("REPORT_EXPORT","DAILY_REPORT","REPORT_ADVANCED")
                         .requestMatchers(HttpMethod.DELETE,
                                 "/api/v1/officers/**")
                         .hasAuthority("USER_DELETE")

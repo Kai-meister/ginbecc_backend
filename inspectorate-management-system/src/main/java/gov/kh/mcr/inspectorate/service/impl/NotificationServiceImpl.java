@@ -1,26 +1,32 @@
 package gov.kh.mcr.inspectorate.service.impl;
 
-import gov.kh.mcr.inspectorate.dto.request.NotificationCreateRequest;
-import gov.kh.mcr.inspectorate.dto.response.NotificationResponse;
-import gov.kh.mcr.inspectorate.dto.response.PageResponse;
-import gov.kh.mcr.inspectorate.entity.Notification;
-import gov.kh.mcr.inspectorate.entity.User;
-import gov.kh.mcr.inspectorate.enums.NotificationType;
-import gov.kh.mcr.inspectorate.exception.BusinessException;
-import gov.kh.mcr.inspectorate.exception.ResourceNotFoundException;
-import gov.kh.mcr.inspectorate.mapper.NotificationMapper;
-import gov.kh.mcr.inspectorate.repository.NotificationRepository;
-import gov.kh.mcr.inspectorate.repository.UserRepository;
-import gov.kh.mcr.inspectorate.service.NotificationService;
+import gov.kh.mcr.inspectorate.dto.request
+        .NotificationCreateRequest;
+import gov.kh.mcr.inspectorate.dto.response
+        .NotificationResponse;
+import gov.kh.mcr.inspectorate.dto.response
+        .PageResponse;
+import gov.kh.mcr.inspectorate.entity.*;
+import gov.kh.mcr.inspectorate.enums
+        .NotificationType;
+import gov.kh.mcr.inspectorate.exception.*;
+import gov.kh.mcr.inspectorate.mapper
+        .NotificationMapper;
+import gov.kh.mcr.inspectorate.repository.*;
+import gov.kh.mcr.inspectorate.service
+        .NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation
+        .Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-import java.util.ArrayList;
-import java.util.List;
+import org.springframework.transaction.annotation
+        .Propagation;
+import org.springframework.transaction.annotation
+        .Transactional;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -28,70 +34,77 @@ import java.util.List;
 @Transactional
 public class NotificationServiceImpl
         implements NotificationService {
-    private final NotificationRepository notifRepository;
-    private final UserRepository userRepository;
-    private final NotificationMapper notifMapper;
 
+    private final NotificationRepository notifRepo;
+    private final UserRepository         userRepo;
+    private final NotificationMapper     notifMapper;
+
+    // ─────────────────────────────────────────────
+    // CREATE — Admin single
+    // ─────────────────────────────────────────────
     @Override
     public NotificationResponse create(
-            NotificationCreateRequest request) {
+            NotificationCreateRequest req) {
 
-        // Validate — ត្រូវ specify target មួយ
-        validateTarget(request);
+        validateTarget(req);
+        User user = resolveUser(req);
 
-        // Resolve User
-        User user = resolveUser(request);
+        Notification saved =
+                notifRepo.save(build(user, req));
 
-        Notification saved = notifRepository.save(
-                buildNotification(user, request));
-
-        log.info("Notification created: [{}] → {}",
-                request.getType(),
-                user.getEmail());
+        log.info("Notification: [{}] → {}",
+                req.getType(), user.getEmail());
 
         return notifMapper.toResponse(saved);
     }
 
+    // ─────────────────────────────────────────────
+    // CREATE BULK — Admin sync (not async)
+    // Fix — Admin bulk ប្រើ sync
+    // ─────────────────────────────────────────────
     @Override
     public List<NotificationResponse> createBulk(
-            NotificationCreateRequest request) {
+            NotificationCreateRequest req) {
 
-        if (request.getOfficerIds() == null
-                || request.getOfficerIds().isEmpty()) {
+        if (req.getOfficerIds() == null
+                || req.getOfficerIds().isEmpty()) {
             throw new BusinessException(
-                    "officerIds ចាំបាច់សម្រាប់ Bulk");
+                    "officerIds ចាំបាច់");
         }
 
         List<NotificationResponse> results =
                 new ArrayList<>();
 
-        request.getOfficerIds().forEach(officerId -> {
-            userRepository
-                    .findByOfficer_OfficerId(officerId)
-                    .ifPresentOrElse(
-                            user -> {
-                                Notification saved =
-                                        notifRepository.save(
-                                                buildNotification(
-                                                        user, request));
-                                results.add(
+        req.getOfficerIds().forEach(oid -> {
+            try {
+                userRepo
+                        .findByOfficer_OfficerId(oid)
+                        .ifPresentOrElse(
+                                u -> results.add(
                                         notifMapper.toResponse(
-                                                saved));
-                            },
-                            () -> log.warn(
-                                    "No user for officer: {}",
-                                    officerId));
+                                                notifRepo.save(
+                                                        build(u, req)))),
+                                () -> log.warn(
+                                        "No user officer: {}",
+                                        oid));
+            } catch (Exception ex) {
+                // Log but continue other officers
+                log.error(
+                        "Bulk notif officer {}: {}",
+                        oid, ex.getMessage());
+            }
         });
 
-        log.info(
-                "Bulk notifications created:"
-                        + " {}/{} success",
+        log.info("Bulk: {}/{} sent",
                 results.size(),
-                request.getOfficerIds().size());
+                req.getOfficerIds().size());
 
         return results;
     }
 
+    // ─────────────────────────────────────────────
+    // CREATE BY OFFICER — @Async
+    // ─────────────────────────────────────────────
     @Override
     @Async
     @Transactional(
@@ -100,22 +113,33 @@ public class NotificationServiceImpl
             Integer officerId,
             String title,
             String message,
-            String type,
-            Integer referenceId,
-            String referenceType) {
+            NotificationType type,
+            Integer referenceId) {
 
-        userRepository
-                .findByOfficer_OfficerId(officerId)
-                .ifPresentOrElse(
-                        user -> save(
-                                user.getUserId(), title,
-                                message, type,
-                                referenceId, referenceType),
-                        () -> log.warn(
-                                "No user for officer: {}",
-                                officerId));
+        try {
+            userRepo
+                    .findByOfficer_OfficerId(officerId)
+                    .ifPresentOrElse(
+                            u -> save(u, title,
+                                    message, type,
+                                    referenceId),
+                            // Fix — log warn not silent
+                            () -> log.warn(
+                                    "createByOfficerId:"
+                                            + " No user for"
+                                            + " officer={}",
+                                    officerId));
+        } catch (Exception ex) {
+            log.error(
+                    "createByOfficerId failed"
+                            + " officer={}: {}",
+                    officerId, ex.getMessage());
+        }
     }
 
+    // ─────────────────────────────────────────────
+    // CREATE BY USER — @Async
+    // ─────────────────────────────────────────────
     @Override
     @Async
     @Transactional(
@@ -124,35 +148,36 @@ public class NotificationServiceImpl
             Integer userId,
             String title,
             String message,
-            String type,
-            Integer referenceId,
-            String referenceType) {
-
-        save(userId, title, message,
-                type, referenceId, referenceType);
-    }
-
-    @Override
-    @Async
-    @Transactional(
-            propagation = Propagation.REQUIRES_NEW)
-    public void createNotification(
-            Integer officerId,
-            String title,
-            String message,
-            String type,
+            NotificationType type,
             Integer referenceId) {
 
-        createByOfficerId(
-                officerId, title, message,
-                type, referenceId, type);
+        try {
+            userRepo.findById(userId)
+                    .ifPresentOrElse(
+                            u -> save(u, title,
+                                    message, type,
+                                    referenceId),
+                            () -> log.warn(
+                                    "createByUserId:"
+                                            + " No user={}",
+                                    userId));
+        } catch (Exception ex) {
+            log.error(
+                    "createByUserId failed"
+                            + " user={}: {}",
+                    userId, ex.getMessage());
+        }
     }
 
+    // ─────────────────────────────────────────────
+    // GET MY NOTIFICATIONS
+    // Fix — currentUserId ពី SecurityContext
+    // ─────────────────────────────────────────────
     @Override
     @Transactional(readOnly = true)
     public PageResponse<NotificationResponse>
     getMyNotifications(
-            Integer userId,
+            Integer currentUserId,
             Boolean isRead,
             int page, int size) {
 
@@ -162,161 +187,165 @@ public class NotificationServiceImpl
 
         Page<Notification> result =
                 isRead != null
-                        ? notifRepository
+                        ? notifRepo
                           .findByUser_UserIdAndIsRead(
-                                  userId, isRead, pageable)
-                        : notifRepository
-                          .findByUser_UserId(
-                                  userId, pageable);
+                                  currentUserId,
+                                  isRead, pageable)
+                        : notifRepo.findByUser_UserId(
+                        currentUserId, pageable);
 
         return PageResponse.of(
                 result.map(notifMapper::toResponse));
     }
 
+    // ─────────────────────────────────────────────
+    // GET BY ID
+    // Fix — owner check
+    // ─────────────────────────────────────────────
     @Override
     @Transactional(readOnly = true)
-    public NotificationResponse getById(Integer id) {
-        return notifMapper.toResponse(
-                notifRepository.findById(id)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "ការជូនដំណឹង", id)));
+    public NotificationResponse getById(
+            Integer notificationId,
+            Integer currentUserId) {
+
+        // Fix — find with owner check
+        Notification n = notifRepo
+                .findByNotificationIdAndUser_UserId(
+                        notificationId, currentUserId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "ការជូនដំណឹង",
+                                notificationId));
+
+        return notifMapper.toResponse(n);
     }
 
+    // ─────────────────────────────────────────────
+    // UNREAD COUNT
+    // ─────────────────────────────────────────────
     @Override
     @Transactional(readOnly = true)
-    public long getUnreadCount(Integer userId) {
-        return notifRepository
+    public long getUnreadCount(
+            Integer currentUserId) {
+        return notifRepo
                 .countByUser_UserIdAndIsRead(
-                        userId, false);
+                        currentUserId, false);
     }
 
+    // ─────────────────────────────────────────────
+    // MARK AS READ
+    // Fix — owner check + set readAt
+    // ─────────────────────────────────────────────
     @Override
-    public void markAsRead(Integer id) {
-        Notification n =
-                notifRepository.findById(id)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "ការជូនដំណឹង", id));
+    public void markAsRead(
+            Integer notificationId,
+            Integer currentUserId) {
+
+        // Fix — find with owner check
+        Notification n = notifRepo
+                .findByNotificationIdAndUser_UserId(
+                        notificationId, currentUserId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "ការជូនដំណឹង",
+                                notificationId));
 
         if (Boolean.TRUE.equals(n.getIsRead())) {
-            return;
+            return; // Already read
         }
 
+        // Fix — set both
         n.setIsRead(true);
-        notifRepository.save(n);
+        n.setReadAt(LocalDateTime.now());
+        notifRepo.save(n);
     }
 
+    // ─────────────────────────────────────────────
+    // MARK ALL AS READ
+    // Fix — pass now for readAt
+    // ─────────────────────────────────────────────
     @Override
-    public int markAllAsRead(Integer userId) {
-        return notifRepository
-                .markAllAsRead(userId);
+    public int markAllAsRead(
+            Integer currentUserId) {
+        return notifRepo.markAllAsRead(
+                currentUserId,
+                LocalDateTime.now());
     }
+
+    // ── Private Helpers ───────────────────────────
 
     private void validateTarget(
-            NotificationCreateRequest request) {
+            NotificationCreateRequest req) {
 
-        boolean hasOfficer =
-                request.getOfficerId() != null;
-        boolean hasUser =
-                request.getUserId() != null;
-        boolean hasBulk =
-                request.getOfficerIds() != null
-                        && !request.getOfficerIds().isEmpty();
-
-        long count = (hasOfficer ? 1 : 0)
-                + (hasUser   ? 1 : 0)
-                + (hasBulk   ? 1 : 0);
+        int count =
+                (req.getOfficerId() != null ? 1 : 0)
+                        + (req.getUserId()    != null ? 1 : 0)
+                        + (req.getOfficerIds() != null
+                        && !req.getOfficerIds().isEmpty()
+                        ? 1 : 0);
 
         if (count == 0) {
             throw new BusinessException(
                     "ត្រូវ specify target:"
                             + " officerId / userId"
-                            + " / officerIds (bulk)");
+                            + " / officerIds");
         }
-
         if (count > 1) {
             throw new BusinessException(
-                    "specify target តែ 1"
-                            + " officerId / userId"
-                            + " / officerIds");
+                    "specify target តែ ១");
         }
     }
 
     private User resolveUser(
-            NotificationCreateRequest request) {
+            NotificationCreateRequest req) {
 
-        if (request.getUserId() != null) {
-            return userRepository
-                    .findById(request.getUserId())
+        if (req.getUserId() != null) {
+            return userRepo
+                    .findById(req.getUserId())
                     .orElseThrow(() ->
                             new ResourceNotFoundException(
-                                    "User",
-                                    request.getUserId()));
+                                    "User", req.getUserId()));
         }
-
-        if (request.getOfficerId() != null) {
-            return userRepository
+        if (req.getOfficerId() != null) {
+            return userRepo
                     .findByOfficer_OfficerId(
-                            request.getOfficerId())
+                            req.getOfficerId())
                     .orElseThrow(() ->
                             new ResourceNotFoundException(
-                                    "User សម្រាប់ Officer",
-                                    request.getOfficerId()));
+                                    "User for Officer",
+                                    req.getOfficerId()));
         }
-
         throw new BusinessException(
                 "មិនអាច resolve User");
     }
 
-    private Notification buildNotification(
+    private Notification build(
             User user,
-            NotificationCreateRequest request) {
-
+            NotificationCreateRequest req) {
         return Notification.builder()
                 .user(user)
-                .title(request.getTitle())
-                .message(request.getMessage())
-                .type(request.getType())
-                .referenceId(request.getReferenceId())
-                .referenceType(
-                        request.getReferenceType() != null
-                                ? request.getReferenceType()
-                                : request.getType().name())
+                .title(req.getTitle())
+                .message(req.getMessage())
+                .type(req.getType())
+                .referenceId(req.getReferenceId())
                 .isRead(false)
                 .build();
     }
 
     private void save(
-            Integer userId,
+            User user,
             String title,
             String message,
-            String type,
-            Integer referenceId,
-            String referenceType) {
-
-        try {
-            userRepository.findById(userId)
-                    .ifPresentOrElse(
-                            user -> notifRepository.save(
-                                    Notification.builder()
-                                            .user(user)
-                                            .title(title)
-                                            .message(message)
-                                            .type(NotificationType
-                                                    .valueOf(type))
-                                            .referenceId(referenceId)
-                                            .referenceType(
-                                                    referenceType)
-                                            .isRead(false)
-                                            .build()),
-                            () -> log.warn(
-                                    "User not found: {}",
-                                    userId));
-        } catch (Exception ex) {
-            log.error(
-                    "Notification save failed: {}",
-                    ex.getMessage());
-        }
+            NotificationType type,
+            Integer referenceId) {
+        notifRepo.save(
+                Notification.builder()
+                        .user(user)
+                        .title(title)
+                        .message(message)
+                        .type(type)
+                        .referenceId(referenceId)
+                        .isRead(false)
+                        .build());
     }
 }

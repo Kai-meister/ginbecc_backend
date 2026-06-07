@@ -2,27 +2,33 @@ package gov.kh.mcr.inspectorate.service.impl;
 import gov.kh.mcr.inspectorate.dto.request.AnnouncementRequest;
 import gov.kh.mcr.inspectorate.dto.response.AnnouncementReadStatusResponse;
 import gov.kh.mcr.inspectorate.dto.response.AnnouncementResponse;
+import gov.kh.mcr.inspectorate.dto.response.AttachmentResponse;
 import gov.kh.mcr.inspectorate.dto.response.PageResponse;
 import gov.kh.mcr.inspectorate.entity.Announcement;
 import gov.kh.mcr.inspectorate.entity.AnnouncementRecipient;
+import gov.kh.mcr.inspectorate.enums.AttachmentRefType;
+import gov.kh.mcr.inspectorate.enums.NotificationType;
 import gov.kh.mcr.inspectorate.enums.Priority;
+import gov.kh.mcr.inspectorate.exception.BusinessException;
 import gov.kh.mcr.inspectorate.exception.ResourceNotFoundException;
 import gov.kh.mcr.inspectorate.mapper.AnnouncementMapper;
 import gov.kh.mcr.inspectorate.repository.*;
 import gov.kh.mcr.inspectorate.security.SecurityUtils;
-import gov.kh.mcr.inspectorate.service.ActivityLogService;
-import gov.kh.mcr.inspectorate.service.AnnouncementService;
-import gov.kh.mcr.inspectorate.service.NotificationService;
+import gov.kh.mcr.inspectorate.service.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class AnnouncementServiceImpl implements AnnouncementService {
 
     private final AnnouncementRepository announcementRepository;
@@ -34,7 +40,8 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     private final SecurityUtils securityUtils;
     private final ActivityLogService activityLogService;
     private final NotificationService notificationService;
-
+    private final AttachmentService attachmentService;
+    private final MinioService minioService;
     @Override
     @Transactional(readOnly = true)
     public PageResponse<AnnouncementResponse> getAll(
@@ -126,12 +133,6 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         lookupStatusRepository.findById(request.getStatusCode())
                 .ifPresent(announcement::setStatusCode);
 
-        if (request.getAttachmentPathId() != null) {
-            attachmentRepository
-                    .findById(request.getAttachmentPathId())
-                    .ifPresent(announcement::setAttachmentPath);
-        }
-
         Announcement saved = announcementRepository.save(announcement);
 
         if (request.getRecipientOfficerIds() != null) {
@@ -144,13 +145,15 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                                                 .officer(officer)
                                                 .isRead(false)
                                                 .build());
-                                notificationService.createNotification(
-                                        officerId,
-                                        "សេចក្តីប្រកាសថ្មី",
-                                        saved.getTitle(),
-                                        "ANNOUNCEMENT",
-                                        saved.getAnnouncementId());
-                            }));
+                                        notificationService.createByOfficerId(
+                                                officerId,
+                                                "សេចក្តីប្រកាសថ្មី",
+                                                announcement.getTitle(),
+                                                NotificationType.ANNOUNCEMENT, // ← Enum
+                                                announcement.getAnnouncementId());
+                            }
+                            )
+            );
         }
 
         activityLogService.log("CREATE", "Announcement",
@@ -177,11 +180,6 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                 .findById(request.getStatusCode())
                 .ifPresent(announcement::setStatusCode);
 
-        if (request.getAttachmentPathId() != null) {
-            attachmentRepository
-                    .findById(request.getAttachmentPathId())
-                    .ifPresent(announcement::setAttachmentPath);
-        }
 
         activityLogService.log("UPDATE", "Announcement",
                 id, "កែប្រែ: " + announcement.getTitle());
@@ -198,17 +196,45 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         return dto;
     }
 
+    // ── markAsRead — Fix owner check ─────────────
     @Override
-    public void markAsRead(Integer announcementId, Integer officerId) {
-        AnnouncementRecipient recipient = recipientRepository
-                .findByAnnouncement_AnnouncementIdAndOfficer_OfficerId(
-                        announcementId, officerId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "ព័ត៌មានទទួល", announcementId));
+    public void markAsRead(
+            Integer announcementId,
+            Integer currentOfficerId) {
+
+        // ១. Validate announcement exists
+        Announcement announcement =
+                findById(announcementId);
+
+        // ២. Fix — Check currentOfficerId valid
+        if (currentOfficerId == null) {
+            throw new BusinessException(
+                    "Admin មិនអាច mark read"
+                            + " — ត្រូវជា Officer");
+        }
+        AnnouncementRecipient recipient =
+                recipientRepository
+                        .findByAnnouncement_AnnouncementIdAndOfficer_OfficerId(
+                                announcementId,
+                                currentOfficerId)
+                        .orElseThrow(() ->
+                                new BusinessException(
+                                        "Officer នេះ"
+                                                + " មិនមែន Recipient"
+                                                + " នៃ Announcement នេះ"));
+
+        // ៤. Already read — skip
+        if (Boolean.TRUE.equals(
+                recipient.getIsRead())) {
+            return;
+        }
         recipient.setIsRead(true);
         recipient.setReadAt(LocalDateTime.now());
         recipientRepository.save(recipient);
+
+        log.info(
+                "Announcement {} read by officer {}",
+                announcementId, currentOfficerId);
     }
 
     @Override
@@ -224,5 +250,73 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "សេចក្តីប្រកាស", id));
+    }
+    // ក្នុង AnnouncementServiceImpl.java
+
+    @Override
+    public AnnouncementResponse uploadAttachment(
+            Integer announcementId,
+            MultipartFile file) {
+
+        // 1. Validate exists
+        Announcement announcement =
+                findById(announcementId);
+
+        // 1. Upload file
+        AttachmentResponse attachmentResponse =
+                attachmentService.upload(
+                        file,
+                        AttachmentRefType.ANNOUNCEMENT,
+                        announcementId);
+
+        // 1. Auto-link -> announcement.attachment
+        attachmentRepository
+                .findById(
+                        attachmentResponse.getAttachmentId())
+                .ifPresent(att -> {
+                    announcement.setAttachment(att);
+                    announcementRepository.save(announcement);
+                });
+
+        activityLogService.log(
+                "UPDATE", "Announcement",
+                announcementId,
+                "Upload File: "
+                        + attachmentResponse.getOriginalName());
+
+        AnnouncementResponse dto =
+                announcementMapper.toResponse(
+                        announcementRepository
+                                .save(announcement));
+
+        dto.setTotalRecipients(
+                (long) recipientRepository
+                        .findByAnnouncement_AnnouncementId(
+                                announcementId).size());
+
+        dto.setReadCount(
+                recipientRepository
+                        .countRead(announcementId));
+
+        return dto;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getAttachmentUrl(
+            Integer announcementId) {
+
+        Announcement announcement =
+                findById(announcementId);
+
+        if (announcement.getAttachment() == null) {
+            throw new ResourceNotFoundException(
+                    "សេចក្តីប្រកាស មិនមាន File",
+                    announcementId);
+        }
+
+        return minioService.getPresignedUrl(
+                announcement.getAttachment()
+                        .getFilePath());
     }
 }

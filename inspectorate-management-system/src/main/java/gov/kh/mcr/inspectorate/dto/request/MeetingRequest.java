@@ -11,34 +11,34 @@ import java.time.LocalTime;
 @Builder
 public class MeetingRequest {
 
-    private Integer roomId;
-
     @NotBlank(message = "ចំណងជើងចាំបាច់")
-    @Size(max = 255,
-            message = "ចំណងជើងអតិបរមា 255 តួ")
+    @Size(max = 255)
     private String title;
+
+    private String description;
+
+    @NotNull(message = "ប្រភេទប្រជុំចាំបាច់")
+    private MeetingType meetingType;
 
     @NotNull(message = "ថ្ងៃប្រជុំចាំបាច់")
     @FutureOrPresent(
-            message = "ថ្ងៃប្រជុំមិនអាចជាអតីតកាល")
+            message = "ថ្ងៃប្រជុំ"
+                    + "ត្រូវជាថ្ងៃនេះ ឬ ថ្ងៃអនាគត")
     private LocalDate meetingDate;
 
-    @NotNull(message = "ម៉ោងចាប់ផ្តើមចាំបាច់")
+    @NotNull(message = "ម៉ោងចាប់ផ្ដើមចាំបាច់")
     private LocalTime startTime;
 
     @NotNull(message = "ម៉ោងបញ្ចប់ចាំបាច់")
     private LocalTime endTime;
 
-    @NotNull(message = "ប្រភេទចាំបាច់")
-    private MeetingType meetingType;
+    // nullable — online meeting
+    private Integer roomId;
 
-    @Size(max = 500,
-            message = "Link អតិបរមា 500 តួ")
+    // nullable — physical meeting
     private String meetingLink;
 
-    @NotBlank(message = "ស្ថានភាពចាំបាច់")
+    @NotBlank(
+            message = "ស្ថានភាពចាំបាច់")
     private String statusCode;
-
-    private String agenda;
-    private String note;
 }

@@ -1,5 +1,6 @@
 package gov.kh.mcr.inspectorate.entity;
 
+import gov.kh.mcr.inspectorate.enums.AttachmentRefType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -9,24 +10,29 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "attachments",
         indexes = {
-                @Index(name = "idx_attach_ref",
-                        columnList = "reference_id,reference_type"),
-                @Index(name = "idx_attach_active",
+                @Index(
+                        name = "idx_attach_ref",
+                        columnList =
+                                "reference_id,reference_type"),
+                @Index(
+                        name = "idx_attach_active",
                         columnList = "is_active"),
-                @Index(name = "idx_attach_type",
+                @Index(
+                        name = "idx_attach_type",
                         columnList = "file_type")
         })
 @Getter @Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor @AllArgsConstructor
 @Builder
 public class Attachment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(
+            strategy = GenerationType.IDENTITY)
     @Column(name = "attachment_id")
     private Integer attachmentId;
 
+    // MinIO
     @Column(name = "file_path",
             length = 500, nullable = false)
     private String filePath;
@@ -34,17 +40,21 @@ public class Attachment {
     @Column(name = "reference_id")
     private Integer referenceId;
 
-    @Column(name = "original_name", length = 255)
+    @Column(name = "original_name",
+            length = 255)
     private String originalName;
 
-    @Column(name = "reference_type", length = 50)
-    private String referenceType;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reference_type",
+            length = 50, nullable = false)
+    private AttachmentRefType referenceType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uploaded_by")
     private User uploadedBy;
 
-    @Column(name = "is_active", nullable = false)
+    @Column(name = "is_active",
+            nullable = false)
     @Builder.Default
     private Boolean isActive = true;
 
@@ -55,7 +65,8 @@ public class Attachment {
     private String fileType;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at",
+            updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp

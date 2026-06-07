@@ -1,22 +1,20 @@
 package gov.kh.mcr.inspectorate.controller;
-import gov.kh.mcr.inspectorate.dto.request.AttendanceRequest;
-import gov.kh.mcr.inspectorate.dto.request.AttendeeRequest;
-import gov.kh.mcr.inspectorate.dto.request.MeetingRequest;
-import gov.kh.mcr.inspectorate.dto.response.ApiResponse;
-import gov.kh.mcr.inspectorate.dto.response.MeetingResponse;
-import gov.kh.mcr.inspectorate.dto.response.PageResponse;
-import gov.kh.mcr.inspectorate.dto.response.RoomAvailabilityResponse;
+
+import gov.kh.mcr.inspectorate.dto.request.*;
+import gov.kh.mcr.inspectorate.dto.response.*;
 import gov.kh.mcr.inspectorate.service.MeetingService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/api/v1/meetings")
 @RequiredArgsConstructor
@@ -24,107 +22,148 @@ public class MeetingController {
 
     private final MeetingService meetingService;
 
+    // GET /meetings
     @GetMapping
-    public ResponseEntity<ApiResponse<PageResponse<MeetingResponse>>> getAll(
-            @RequestParam(defaultValue = "0")  int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) Integer room_id) {
-        return ResponseEntity.ok(ApiResponse.success(
-                meetingService.getAll(page, size, status, room_id),
-                "ទទួលបន្ជីប្រជុំ"));
+    @PreAuthorize("hasAuthority('MEETING_VIEW')")
+    public ResponseEntity<ApiResponse<
+    PageResponse<MeetingResponse>>>
+    getAll(
+            @RequestParam(defaultValue = "0")
+            int page,
+            @RequestParam(defaultValue = "20")
+            int size,
+            @RequestParam(required = false)
+            String status,
+            @RequestParam(required = false)
+            Integer roomId) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        meetingService.getAll(
+                                page, size,
+                                status, roomId),
+                        "ទទួលបន្ជីប្រជុំ"));
     }
 
+    // GET /meetings/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<MeetingResponse>> getById(
-            @PathVariable Integer id) {
-        return ResponseEntity.ok(ApiResponse.success(
-                meetingService.getById(id), "ទទួលបានប្រជុំ"));
+    @PreAuthorize("hasAuthority('MEETING_VIEW')")
+    public ResponseEntity<ApiResponse<
+    MeetingResponse>>
+    getById(
+            @PathVariable
+            @Positive Integer id) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        meetingService.getById(id),
+                        "ទទួលបានប្រជុំ"));
     }
 
+    // GET /meetings/calendar
     @GetMapping("/calendar")
-    public ResponseEntity<ApiResponse<List<MeetingResponse>>> getCalendar(
-            @RequestParam int month, @RequestParam int year) {
-        return ResponseEntity.ok(ApiResponse.success(
-                meetingService.getCalendar(month, year), "ប្រតិទិន"));
+    @PreAuthorize("hasAuthority('MEETING_VIEW')")
+    public ResponseEntity<ApiResponse<
+    List<MeetingResponse>>>
+    getCalendar(
+            @RequestParam
+            @Min(1) @Max(12)
+            int month,
+            @RequestParam
+            int year) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        meetingService.getCalendar(
+                                month, year),
+                        "ប្រតិទិន"));
     }
 
-    @GetMapping("/rooms/{roomId}/availability")
-    public ResponseEntity<ApiResponse<RoomAvailabilityResponse>>
-    checkAvailability(
-            @PathVariable Integer roomId,
-            @RequestParam
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate date,
-            @RequestParam
-            @DateTimeFormat(iso = DateTimeFormat.ISO.TIME)
-            LocalTime startTime,
-            @RequestParam
-            @DateTimeFormat(iso = DateTimeFormat.ISO.TIME)
-            LocalTime endTime) {
-        return ResponseEntity.ok(ApiResponse.success(
-                meetingService.checkAvailability(
-                        roomId, date, startTime, endTime),
-                "ពិនិត្យ Availability"));
-    }
-
-    @GetMapping("/rooms/{roomId}/schedule")
-    public ResponseEntity<ApiResponse<List<MeetingResponse>>>
+    // GET /meetings/rooms/{id}/schedule
+    @GetMapping("/rooms/{id}/schedule")
+    @PreAuthorize("hasAuthority('ROOM_VIEW')")
+    public ResponseEntity<ApiResponse<
+    List<MeetingResponse>>>
     getRoomSchedule(
-            @PathVariable Integer roomId,
+            @PathVariable
+            @Positive Integer roomId,
             @RequestParam
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            @DateTimeFormat(
+                    iso = DateTimeFormat
+                            .ISO.DATE)
             LocalDate date) {
-        return ResponseEntity.ok(ApiResponse.success(
-                meetingService.getRoomSchedule(roomId, date),
-                "កាលវិភាគបន្ទប់"));
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        meetingService.getRoomSchedule(
+                                roomId, date),
+                        "កាលវិភាគបន្ទប់"));
     }
 
+    // POST /meetings
     @PostMapping
-    @PreAuthorize("hasAuthority('MEETING_MANAGE')")
-    public ResponseEntity<ApiResponse<MeetingResponse>> create(
-            @Valid @RequestBody MeetingRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('MEETING_CREATE')")
+    public ResponseEntity<ApiResponse<
+    MeetingResponse>>
+    create(
+            @Valid @RequestBody
+            MeetingRequest request) {
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         meetingService.create(request),
-                        "បង្កើតប្រជុំជោគជ័យ"));
+                        "បង្កើតជោគជ័យ"));
     }
 
-    @PostMapping("/{id}/attendees/bulk")
-    @PreAuthorize("hasAuthority('MEETING_MANAGE')")
-    public ResponseEntity<ApiResponse<Void>> addAttendeesBulk(
-            @PathVariable Integer id,
-            @RequestBody List<@Valid AttendeeRequest> requests) {
-        meetingService.addAttendeesBulk(id, requests);
-        return ResponseEntity.ok(
-                ApiResponse.success(null, "បន្ថែមអ្នកចូលរួម"));
-    }
-
-    @PutMapping("/{id}/attendees/{aid}/attendance")
-    public ResponseEntity<ApiResponse<Void>> updateAttendance(
-            @PathVariable Integer id,
-            @PathVariable Integer aid,
-            @Valid @RequestBody AttendanceRequest request) {
-        meetingService.updateAttendance(id, aid, request);
-        return ResponseEntity.ok(
-                ApiResponse.success(null, "ធ្វើបច្ចុប្បន្នភាពវត្តមាន"));
-    }
-
+    // PUT /meetings/{id}
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('MEETING_MANAGE')")
-    public ResponseEntity<ApiResponse<MeetingResponse>> update(
-            @PathVariable Integer id,
-            @Valid @RequestBody MeetingRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(
-                meetingService.update(id, request), "កែប្រែ"));
+    @PreAuthorize("hasAuthority('MEETING_UPDATE')")
+    public ResponseEntity<ApiResponse<
+    MeetingResponse>>
+    update(
+            @PathVariable
+            @Positive Integer id,
+            @Valid @RequestBody
+            MeetingRequest request) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        meetingService.update(
+                                id, request),
+                        "កែប្រែជោគជ័យ"));
     }
 
+    // PATCH /meetings/{id}/status
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAuthority('MEETING_UPDATE')")
+    public ResponseEntity<ApiResponse<
+    MeetingResponse>>
+    updateStatus(
+            @PathVariable
+            @Positive Integer id,
+            @RequestParam
+            @NotBlank
+            String statusCode) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        meetingService.updateStatus(
+                                id, statusCode),
+                        "ផ្លាស់ប្ដូរស្ថានភាព"));
+    }
+
+    // DELETE /meetings/{id}
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('MEETING_MANAGE')")
-    public ResponseEntity<ApiResponse<Void>> delete(
-            @PathVariable Integer id) {
+    @PreAuthorize("hasAuthority('MEETING_DELETE')")
+    public ResponseEntity<ApiResponse<Void>>
+    delete(
+            @PathVariable
+            @Positive Integer id) {
+
         meetingService.delete(id);
         return ResponseEntity.ok(
-                ApiResponse.success(null, "លុបជោគជ័យ"));
+                ApiResponse.success(
+                        null, "លុបជោគជ័យ"));
     }
 }
