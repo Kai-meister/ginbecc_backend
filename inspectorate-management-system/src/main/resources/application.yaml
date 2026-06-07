@@ -7,9 +7,9 @@ spring:
     name: inspectorate-management-system
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/officer_db
-    username: postgres
-    password: vannoy
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/officer_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:vannoy}
     driver-class-name: org.postgresql.Driver
 
     hikari:
@@ -73,6 +73,9 @@ minio:
   access-key: ${MINIO_ACCESS_KEY:admin}
   secret-key: ${MINIO_SECRET_KEY:password123}
   bucket: ${MINIO_BUCKET:officer-files}
+
+app:
+  public-url: ${APP_PUBLIC_URL:http://localhost:8080}
 
 springdoc:
     api-docs:
