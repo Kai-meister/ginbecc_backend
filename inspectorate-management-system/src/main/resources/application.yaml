@@ -74,6 +74,9 @@ minio:
   secret-key: ${MINIO_SECRET_KEY:password123}
   bucket: ${MINIO_BUCKET:officer-files}
 
+firebase:
+  credentials: ${FIREBASE_CREDENTIALS:}
+
 app:
   public-url: ${APP_PUBLIC_URL:http://localhost:8080}
 
