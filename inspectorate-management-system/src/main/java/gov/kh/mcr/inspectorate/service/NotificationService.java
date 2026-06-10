@@ -34,6 +34,14 @@ public interface NotificationService {
             NotificationType type,
             Integer referenceId);
 
+    // Broadcast to every ACTIVE user (in-app + FCM), skipping excludeUserId.
+    void createForAllActiveUsers(
+            String title,
+            String message,
+            NotificationType type,
+            Integer referenceId,
+            Integer excludeUserId);
+
     //  currentUserId for security check
     PageResponse<NotificationResponse>
     getMyNotifications(

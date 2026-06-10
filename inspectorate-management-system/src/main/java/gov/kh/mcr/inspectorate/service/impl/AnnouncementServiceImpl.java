@@ -6,6 +6,7 @@ import gov.kh.mcr.inspectorate.dto.response.AttachmentResponse;
 import gov.kh.mcr.inspectorate.dto.response.PageResponse;
 import gov.kh.mcr.inspectorate.entity.Announcement;
 import gov.kh.mcr.inspectorate.entity.AnnouncementRecipient;
+import gov.kh.mcr.inspectorate.enums.AnnouncementStatusCode;
 import gov.kh.mcr.inspectorate.enums.AttachmentRefType;
 import gov.kh.mcr.inspectorate.enums.NotificationType;
 import gov.kh.mcr.inspectorate.enums.Priority;
@@ -138,22 +139,24 @@ public class AnnouncementServiceImpl implements AnnouncementService {
         if (request.getRecipientOfficerIds() != null) {
             request.getRecipientOfficerIds().forEach(officerId ->
                     officerRepository.findById(officerId)
-                            .ifPresent(officer -> {
-                                recipientRepository.save(
+                            .ifPresent(officer ->
+                                    recipientRepository.save(
                                         AnnouncementRecipient.builder()
                                                 .announcement(saved)
                                                 .officer(officer)
                                                 .isRead(false)
-                                                .build());
-                                        notificationService.createByOfficerId(
-                                                officerId,
-                                                "សេចក្តីប្រកាសថ្មី",
-                                                announcement.getTitle(),
-                                                NotificationType.ANNOUNCEMENT, // ← Enum
-                                                announcement.getAnnouncementId());
-                            }
-                            )
+                                                .build()))
             );
+        }
+
+        // Trigger — broadcast to all active users when published
+        if (isPublished(saved)) {
+            notificationService.createForAllActiveUsers(
+                    "សេចក្តីប្រកាសថ្មី",
+                    saved.getTitle(),
+                    NotificationType.ANNOUNCEMENT,
+                    saved.getAnnouncementId(),
+                    securityUtils.getCurrentUserId());
         }
 
         activityLogService.log("CREATE", "Announcement",
@@ -174,6 +177,8 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             Integer id, AnnouncementRequest request) {
         Announcement announcement = findById(id);
 
+        boolean wasPublished = isPublished(announcement);
+
         announcementMapper.updateEntity(request, announcement);
 
         lookupStatusRepository
@@ -186,6 +191,16 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
         Announcement saved =
                 announcementRepository.save(announcement);
+
+        // Trigger — broadcast when an announcement transitions to PUBLISHED
+        if (!wasPublished && isPublished(saved)) {
+            notificationService.createForAllActiveUsers(
+                    "សេចក្តីប្រកាសថ្មី",
+                    saved.getTitle(),
+                    NotificationType.ANNOUNCEMENT,
+                    saved.getAnnouncementId(),
+                    securityUtils.getCurrentUserId());
+        }
 
         AnnouncementResponse dto =
                 announcementMapper.toResponse(saved);
@@ -250,6 +265,12 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "សេចក្តីប្រកាស", id));
+    }
+
+    private boolean isPublished(Announcement a) {
+        return a.getStatusCode() != null
+                && AnnouncementStatusCode.isPublished(
+                        a.getStatusCode().getStatusCode());
     }
     // ក្នុង AnnouncementServiceImpl.java
 

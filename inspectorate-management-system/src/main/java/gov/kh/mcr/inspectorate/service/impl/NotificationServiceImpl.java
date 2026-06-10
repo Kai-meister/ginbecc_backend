@@ -174,6 +174,41 @@ public class NotificationServiceImpl
         }
 
         // ─────────────────────────────────────────────
+        // CREATE FOR ALL ACTIVE USERS — @Async broadcast
+        // ─────────────────────────────────────────────
+        @Override
+        @Async
+        @Transactional(propagation = Propagation.REQUIRES_NEW)
+        public void createForAllActiveUsers(
+                        String title,
+                        String message,
+                        NotificationType type,
+                        Integer referenceId,
+                        Integer excludeUserId) {
+
+                try {
+                        userRepo.findAll().forEach(u -> {
+                                String status = u.getStatusCode() != null
+                                                ? u.getStatusCode().getStatusCode()
+                                                : "";
+                                if (!"ACTIVE".equals(status)) {
+                                        return;
+                                }
+                                if (excludeUserId != null
+                                                && excludeUserId.equals(
+                                                                u.getUserId())) {
+                                        return;
+                                }
+                                save(u, title, message, type, referenceId);
+                        });
+                } catch (Exception ex) {
+                        log.error(
+                                        "createForAllActiveUsers failed: {}",
+                                        ex.getMessage());
+                }
+        }
+
+        // ─────────────────────────────────────────────
         // GET MY NOTIFICATIONS
         // Fix — currentUserId ពី SecurityContext
         // ─────────────────────────────────────────────

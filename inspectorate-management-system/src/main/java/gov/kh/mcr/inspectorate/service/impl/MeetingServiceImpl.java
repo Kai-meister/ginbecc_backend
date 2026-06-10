@@ -5,6 +5,7 @@ import gov.kh.mcr.inspectorate.dto.response.*;
 import gov.kh.mcr.inspectorate.entity.*;
 import gov.kh.mcr.inspectorate.enums.AttendanceStatus;
 import gov.kh.mcr.inspectorate.enums.MeetingStatusCode;
+import gov.kh.mcr.inspectorate.enums.NotificationType;
 import gov.kh.mcr.inspectorate.exception.*;
 import gov.kh.mcr.inspectorate.mapper.AttendeeMapper;
 import gov.kh.mcr.inspectorate.mapper.MeetingMapper;
@@ -36,6 +37,7 @@ public class MeetingServiceImpl
     private final SecurityUtils                  securityUtils;
     private final ActivityLogService             activityLogService;
     private final AttendeeMapper attendeeMapper;
+    private final NotificationService            notificationService;
 
     // ─────────────────────────────────────────────
     // GET ALL
@@ -207,8 +209,15 @@ public class MeetingServiceImpl
                 id, "កែប្រែ: " + meeting.getTitle(),
                 buildContext());
 
-        return toResponseWithSummary(
-                meetingRepo.save(meeting));
+        Meeting saved = meetingRepo.save(meeting);
+
+        // Trigger — notify attendees the meeting was edited (e.g. rescheduled)
+        notifyAttendees(saved,
+                "ការប្រជុំមានការកែប្រែ",
+                "ការប្រជុំ \"" + saved.getTitle()
+                        + "\" ត្រូវបានកែប្រែ");
+
+        return toResponseWithSummary(saved);
     }
 
     // ─────────────────────────────────────────────
@@ -239,8 +248,12 @@ public class MeetingServiceImpl
                 "ស្ថានភាព → " + statusCode,
                 buildContext());
 
-        return toResponseWithSummary(
-                meetingRepo.save(meeting));
+        Meeting saved = meetingRepo.save(meeting);
+
+        // Triggers — notify on confirm / cancel / postpone / reschedule
+        notifyOnStatusChange(saved, statusCode);
+
+        return toResponseWithSummary(saved);
     }
 
     // ─────────────────────────────────────────────
@@ -393,6 +406,89 @@ public class MeetingServiceImpl
         return List.of(
                 MeetingStatusCode.CANCELLED.getCode(),
                 MeetingStatusCode.COMPLETED.getCode());
+    }
+
+    // ── Notification triggers ─────────────────────
+
+    // Confirm → organizer; cancel/postpone/reschedule → attendees.
+    private void notifyOnStatusChange(
+            Meeting meeting, String statusCode) {
+
+        if (MeetingStatusCode.CONFIRMED
+                .getCode().equals(statusCode)) {
+
+            User organizer = meeting.getOrganizer();
+            Integer actorUserId =
+                    securityUtils.getCurrentUserId();
+
+            if (organizer != null
+                    && !organizer.getUserId()
+                            .equals(actorUserId)) {
+                notificationService.createByUserId(
+                        organizer.getUserId(),
+                        "ការប្រជុំត្រូវបានបញ្ជាក់",
+                        "ការប្រជុំ \""
+                                + meeting.getTitle()
+                                + "\" ត្រូវបានបញ្ជាក់",
+                        NotificationType.MEETING,
+                        meeting.getMeetingId());
+            }
+
+        } else if (MeetingStatusCode.CANCELLED
+                        .getCode().equals(statusCode)
+                || MeetingStatusCode.POSTPONED
+                        .getCode().equals(statusCode)
+                || MeetingStatusCode.RESCHEDULED
+                        .getCode().equals(statusCode)) {
+
+            notifyAttendees(meeting,
+                    "ការប្រជុំមានការផ្លាស់ប្ដូរ",
+                    "ការប្រជុំ \""
+                            + meeting.getTitle()
+                            + "\" "
+                            + statusLabelKh(statusCode));
+        }
+    }
+
+    // Notify every attendee except the user performing the action.
+    private void notifyAttendees(
+            Meeting meeting,
+            String title, String message) {
+
+        Officer actor =
+                securityUtils.getCurrentOfficerOrNull();
+        Integer actorOfficerId =
+                actor != null ? actor.getOfficerId() : null;
+
+        attendeeRepo
+                .findByMeeting_MeetingId(
+                        meeting.getMeetingId())
+                .forEach(att -> {
+                    Officer officer = att.getOfficer();
+                    if (officer == null) {
+                        return;
+                    }
+                    if (actorOfficerId != null
+                            && actorOfficerId.equals(
+                                    officer.getOfficerId())) {
+                        return; // skip the actor
+                    }
+                    notificationService.createByOfficerId(
+                            officer.getOfficerId(),
+                            title, message,
+                            NotificationType.MEETING,
+                            meeting.getMeetingId());
+                });
+    }
+
+    private String statusLabelKh(String code) {
+        for (MeetingStatusCode s
+                : MeetingStatusCode.values()) {
+            if (s.getCode().equals(code)) {
+                return s.getLabelKh();
+            }
+        }
+        return code;
     }
 
     // Build response with attendee summary

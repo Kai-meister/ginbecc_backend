@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/inspectorate-management-system.iml" filepath="$PROJECT_DIR$/.idea/inspectorate-management-system.iml" />
+      <module fileurl="file://$PROJECT_DIR$/inspectorate-management-system/inspectorate-management-system.iml" filepath="$PROJECT_DIR$/inspectorate-management-system/inspectorate-management-system.iml" />
     </modules>
   </component>
 </project>
