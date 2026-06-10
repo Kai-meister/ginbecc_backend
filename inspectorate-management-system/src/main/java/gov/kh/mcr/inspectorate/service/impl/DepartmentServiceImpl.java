@@ -83,9 +83,9 @@ public class DepartmentServiceImpl
                 .existsByDepartmentCode(
                         request.getDepartmentCode())) {
             throw new DuplicateResourceException(
-                    "លេខកូដនាយកដ្ឋាន ["
+                    "កូដ ["
                             + request.getDepartmentCode()
-                            + "] មានក្នុងប្រព័ន្ធរួចហើយ");
+                            + "] មានស្ទួន");
         }
 
         Department saved = departmentRepository.save(
@@ -94,7 +94,7 @@ public class DepartmentServiceImpl
         activityLogService.log(
                 "CREATE", "Department",
                 saved.getDepartmentId(),
-                "បង្កើតនាយកដ្ឋានថ្មី "
+                "បង្កើត: "
                         + saved.getDepartmentName());
 
         return departmentMapper.toResponse(saved);
@@ -180,23 +180,7 @@ public class DepartmentServiceImpl
         return departmentRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "មិនមានទិន្នន័យនាយកដ្ឋានដែលមានលេខសម្គាល់ ", id));
-    }
-    private ActivityLogContext buildContext() {
-        HttpServletRequest request =
-                getCurrentRequest();
-        return securityUtils.buildLogContext(request);
-    }
-
-    private HttpServletRequest getCurrentRequest() {
-        try {
-            return ((ServletRequestAttributes)
-                    RequestContextHolder
-                            .currentRequestAttributes())
-                    .getRequest();
-        } catch (Exception e) {
-            return null;
-        }
+                                "នាយកដ្ឋាន", id));
     }
     private ActivityLogContext buildContext() {
         HttpServletRequest request =

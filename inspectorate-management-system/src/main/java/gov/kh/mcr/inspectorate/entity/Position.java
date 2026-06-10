@@ -9,8 +9,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "positions",
         indexes = {
-                @Index(name = "idx_pos_dept",
-                        columnList = "department_id"),
                 @Index(name = "idx_pos_code",
                         columnList = "position_code")
         })
@@ -20,36 +18,20 @@ import java.time.LocalDateTime;
 public class Position {
 
     @Id
-    @GeneratedValue(
-            strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "position_id")
     private Integer positionId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "department_id",
-            nullable = false)
-    private Department department;
-
     @Column(name = "position_code",
-            length = 50,
-            unique = true, nullable = false)
+            length = 20, unique = true, nullable = false)
     private String positionCode;
 
     @Column(name = "position_name",
             length = 255, nullable = false)
     private String positionName;
 
-    @Column(name = "position_name_en",
-            length = 255)
-    private String positionNameEn;
-
-    @Column(name = "description",
-            columnDefinition = "TEXT")
-    private String description;
-
     @CreationTimestamp
-    @Column(name = "created_at",
-            updatable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp

@@ -1,9 +1,9 @@
 package gov.kh.mcr.inspectorate.repository;
 
 import gov.kh.mcr.inspectorate.entity.Position;
-import org.springframework.data.jpa.repository
-        .JpaRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -13,8 +13,5 @@ public interface PositionRepository extends JpaRepository<Position, Integer> {
 
     List<Position> findByPositionNameContainingIgnoreCase(String keyword);
 
-    boolean existsByPositionCode(String code);
-
-    Optional<Position> findByPositionCode(
-            String code);
+    List<Position> findAllByOrderByPositionNameAsc();
 }
