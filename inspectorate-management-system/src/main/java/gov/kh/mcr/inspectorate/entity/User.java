@@ -30,6 +30,14 @@ public class User {
     @Column(name = "user_id")
     private Integer userId;
 
+    // Legacy NOT-NULL column with no DB default; populated in @PrePersist
+    // so every creation path (API, seeding) supplies a value.
+    @Column(name = "uuid",
+            length = 36,
+            nullable = false,
+            updatable = false)
+    private String uuid;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "officer_id",
             unique = true,
@@ -91,4 +99,11 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    private void ensureUuid() {
+        if (uuid == null || uuid.isBlank()) {
+            uuid = UUID.randomUUID().toString();
+        }
+    }
 }
