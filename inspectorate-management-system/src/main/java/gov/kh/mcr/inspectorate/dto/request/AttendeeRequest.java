@@ -13,6 +13,6 @@ public class AttendeeRequest {
     @Positive
     private Integer officerId;
 
-    @NotNull(message = "តួនាទីចាំបាច់")
+    @NotNull(message = "សូមបញ្ជាក់តួនាទីរបស់មន្ត្រីចូលរួម")
     private AttendeeRole role;
 }

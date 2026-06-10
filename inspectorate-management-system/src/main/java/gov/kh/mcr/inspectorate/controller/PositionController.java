@@ -1,16 +1,22 @@
 package gov.kh.mcr.inspectorate.controller;
-import gov.kh.mcr.inspectorate.dto.request.PositionRequest;
-import gov.kh.mcr.inspectorate.dto.response.ApiResponse;
-import gov.kh.mcr.inspectorate.dto.response.PositionResponse;
-import gov.kh.mcr.inspectorate.service.PositionService;
+
+import gov.kh.mcr.inspectorate.dto.request
+        .PositionRequest;
+import gov.kh.mcr.inspectorate.dto.response.*;
+import gov.kh.mcr.inspectorate.service
+        .PositionService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost
+        .PreAuthorize;
+import org.springframework.validation.annotation
+        .Validated;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/api/v1/positions")
 @RequiredArgsConstructor
@@ -22,11 +28,18 @@ public class PositionController {
     @GetMapping
     @PreAuthorize("hasAuthority('POSITION_VIEW')")
     public ResponseEntity<ApiResponse<
-    List<PositionResponse>>> getAll(@RequestParam(required = false) String keyword) {
+    List<PositionResponse>>>
+    getAll(
+            @RequestParam(required = false)
+            Integer departmentId,
+            @RequestParam(required = false)
+            String keyword) {
 
-        return ResponseEntity.ok(ApiResponse.success(
-                        positionService.getAll(keyword),
-                        "ទទួលបន្ជីតំណែង"));
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        positionService.getAll(
+                                departmentId, keyword),
+                        "ទទួលបានបញ្ជីតំណែង"));
     }
     // GET /positions/{id}
     @GetMapping("/{id}")
@@ -40,7 +53,7 @@ public class PositionController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         positionService.getById(id),
-                        "ទទួលបានតំណែង"));
+                        "ទទួលបានព័ត៌មានតំណែង"));
     }
 
     // POST /positions
@@ -51,7 +64,7 @@ public class PositionController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         positionService.create(request),
-                        "បង្កើតជោគជ័យ"));
+                        "បង្កើតតំណែងបានជោគជ័យ"));
     }
 
     // PUT /positions/{id}
@@ -72,6 +85,7 @@ public class PositionController {
             @PathVariable Integer id) {
         positionService.delete(id);
         return ResponseEntity.ok(
-                ApiResponse.success(null, "លុបជោគជ័យ"));
+                ApiResponse.success(
+                        null, "លុបតំណែងបានជោគជ័យ"));
     }
 }

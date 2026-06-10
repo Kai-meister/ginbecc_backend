@@ -7,7 +7,7 @@ import lombok.*;
 @Builder
 public class MeetingMinuteRequest {
 
-    @NotNull(message = "ប្រជុំចាំបាច់")
+    @NotNull(message = "សូមជ្រើសរើសកិច្ចប្រជុំ")
     private Integer meetingId;
 
     @NotBlank(message = "សង្ខេបចាំបាច់")

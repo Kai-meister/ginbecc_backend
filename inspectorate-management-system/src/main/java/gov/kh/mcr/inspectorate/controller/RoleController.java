@@ -23,7 +23,7 @@ public class RoleController {
     @PreAuthorize("hasAuthority('ROLE_VIEW')")
     public ResponseEntity<ApiResponse<List<RoleResponse>>> getAll() {
         return ResponseEntity.ok(ApiResponse.success(
-                roleService.getAll(), "ទទួលបន្ជីតួនាទី"));
+                roleService.getAll(), "ទទួលបានបញ្ជីតួនាទីទាំងអស់"));
     }
     // GET /roles/{id}
     @GetMapping("/{id}")
@@ -31,7 +31,7 @@ public class RoleController {
     public ResponseEntity<ApiResponse<RoleResponse>> getById(
             @PathVariable Integer id) {
         return ResponseEntity.ok(ApiResponse.success(
-                roleService.getById(id), "ទទួលបានតួនាទី"));
+                roleService.getById(id), "ទទួលបានព័ត៌មានតួនាទី"));
     }
 
     // POST /roles
@@ -42,7 +42,7 @@ public class RoleController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         roleService.create(request),
-                        "បង្កើតជោគជ័យ"));
+                        "បង្កើតតួនាទីបានជោគជ័យ"));
     }
 
     // PUT /roles/{id}
@@ -52,6 +52,6 @@ public class RoleController {
             @PathVariable Integer id,
             @Valid @RequestBody RoleRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
-                roleService.update(id, request), "កែប្រែជោគជ័យ"));
+                roleService.update(id, request), "កែប្រែតួនាទីបានជោគជ័យ"));
     }
 }

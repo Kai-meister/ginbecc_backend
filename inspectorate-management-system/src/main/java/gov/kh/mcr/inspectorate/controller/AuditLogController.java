@@ -52,7 +52,7 @@ public class AuditLogController {
                                 userId, action,
                                 entityType, from, to,
                                 page, size),
-                        "ប្រវត្តិសកម្មភាព"));
+                        "បាទទួលបានប្រវត្តិសកម្មភាព"));
     }
 
     // GET /audit-logs/{id}

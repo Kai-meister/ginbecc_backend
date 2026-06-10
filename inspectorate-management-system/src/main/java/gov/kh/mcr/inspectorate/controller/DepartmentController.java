@@ -36,7 +36,7 @@ public class DepartmentController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         departmentService.getAll(status, keyword),
-                        "ទទួលបន្ជីនាយកដ្ឋាន"));
+                        "ទទួលបានបញ្ជីទិន្នន័យនាយកដ្ឋាន"));
     }
     // GET /departments/{id}
     @GetMapping("/{id}")
@@ -50,7 +50,7 @@ public class DepartmentController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         departmentService.getById(id),
-                        "ទទួលបាននាយកដ្ឋាន"));
+                        "ទទួលបានព័ត៌មានលម្អិតនាយកដ្ឋាន"));
     }
 
     // POST /departments
@@ -66,7 +66,7 @@ public class DepartmentController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         departmentService.create(request),
-                        "បង្កើតនាយកដ្ឋានជោគជ័យ"));
+                        "បានបង្កើតនាយកដ្ឋានដោយជោគជ័យ"));
     }
 
     // PUT /departments/{id}
@@ -84,7 +84,7 @@ public class DepartmentController {
                 ApiResponse.success(
                         departmentService.update(
                                 id, request),
-                        "កែប្រែជោគជ័យ"));
+                        "បានកែប្រែនាយកដ្ឋានដោយជោគជ័យ"));
     }
 
     // DELETE /departments/{id}
@@ -98,6 +98,6 @@ public class DepartmentController {
         departmentService.delete(id);
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "លុបជោគជ័យ"));
+                        null, "បានលុបនាយកដ្ឋានដោយជោគជ័យ"));
     }
 }

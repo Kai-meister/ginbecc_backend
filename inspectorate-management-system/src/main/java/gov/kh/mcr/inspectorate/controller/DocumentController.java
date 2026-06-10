@@ -115,7 +115,7 @@ public class DocumentController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         documentService.create(request),
-                        "បង្កើតជោគជ័យ"));
+                        "បានបង្កើតឯកសារដោយជោគជ័យ"));
     }
 
     // PUT /documents/{id}
@@ -126,7 +126,7 @@ public class DocumentController {
             @Valid @RequestBody DocumentRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
                 documentService.update(id, request),
-                "កែប្រែជោគជ័យ"));
+                "បានកែប្រែឯកសារដោយជោគជ័យ"));
     }
 
     // DELETE /documents/{id}

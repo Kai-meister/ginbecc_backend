@@ -31,7 +31,7 @@ public class AuthController {
 
         return ResponseEntity.ok(ApiResponse.success(
                 authService.login(req),
-                "ចូលប្រព័ន្ធជោគជ័យ"));
+                "បានចូលប្រព័ន្ធដោយជោគជ័យ"));
     }
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
@@ -42,7 +42,7 @@ public class AuthController {
                 || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.ok(
                     ApiResponse.success(null,
-                            "ចាកចេញជោគជ័យ"));
+                            "បានចាកចេញពីប្រព័ន្ធដោយជោគជ័យ"));
         }
 
         authService.logout(
@@ -50,7 +50,7 @@ public class AuthController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(null,
-                        "ចាកចេញជោគជ័យ"));
+                        "បានចាកចេញពីប្រព័ន្ធដោយជោគជ័យ"));
     }
 
     @PostMapping("/refresh-token")
@@ -71,12 +71,12 @@ public class AuthController {
 
         if (!StringUtils.hasText(token)) {
             throw new BusinessException(
-                    "Refresh Token ចាំបាច់");
+                    "Refresh Token ត្រូវបានទាមទារ");
         }
 
         return ResponseEntity.ok(ApiResponse.success(
                 authService.refreshToken(token),
-                "Token ថ្មីជោគជ័យ"));
+                "បានបង្កើត Token ថ្មីដោយជោគជ័យ"));
     }
 
     @PostMapping("/change-password")
@@ -92,7 +92,7 @@ public class AuthController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(null,
-                        "ប្ដូរ Password ជោគជ័យ"));
+                        "បានប្ដូរពាក្យសម្ងាត់ដោយជោគជ័យ"));
     }
 
     @PostMapping("/reset-password/{userId}")
@@ -106,6 +106,6 @@ public class AuthController {
 
         return ResponseEntity.ok(ApiResponse.success(
                 authService.resetPassword(userId),
-                "Reset Password ជោគជ័យ"));
+                "បានកំណត់ពាក្យសម្ងាត់ឡើងវិញដោយជោគជ័យ"));
     }
 }

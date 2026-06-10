@@ -74,7 +74,7 @@ public class UserController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         userService.getPermissions(id),
-                        "ទទួលសិទ្ធិ"));
+                        "ទទួលបានសិទ្ធិរបស់អ្នកប្រើប្រាស់"));
     }
 
     // POST /users
@@ -107,7 +107,7 @@ public class UserController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         userService.update(id, request),
-                        "កែប្រែជោគជ័យ"));
+                        "កែប្រែព័ត៌មានអ្នកប្រើប្រាស់បានជោគជ័យ"));
     }
 
     // PATCH /users/{id}/status
@@ -125,7 +125,7 @@ public class UserController {
                 ApiResponse.success(
                         userService.updateStatus(
                                 id, request),
-                        "ផ្លាស់ប្ដូរស្ថានភាព"));
+                        "ផ្លាស់ប្ដូរស្ថានភាពអ្នកប្រើប្រាស់បានជោគជ័យ"));
     }
 
     // DELETE /users/{id}
@@ -139,6 +139,6 @@ public class UserController {
         userService.delete(id);
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "លុបជោគជ័យ"));
+                        null, "លុបអ្នកប្រើប្រាស់បានជោគជ័យ"));
     }
 }

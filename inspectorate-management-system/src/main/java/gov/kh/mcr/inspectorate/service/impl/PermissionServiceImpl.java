@@ -27,7 +27,7 @@ public class PermissionServiceImpl
         return permissionRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "សិទ្ធិ", id));
+                                "មិនមានទិន្នន័យសិទ្ធិដែលមានលេខសម្គាល់ ", id));
     }
 
     @Override

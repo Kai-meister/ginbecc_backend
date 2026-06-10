@@ -8,6 +8,6 @@ import lombok.*;
 @Builder
 public class RefreshTokenRequest {
 
-    @NotBlank(message = "Refresh Token ចាំបាច់")
+    @NotBlank(message = "សូមផ្តល់ជូនថូខិនសារជាថ្មី (Refresh Token)")
     private String refreshToken;
 }

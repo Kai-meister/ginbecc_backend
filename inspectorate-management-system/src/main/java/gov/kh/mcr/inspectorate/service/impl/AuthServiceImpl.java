@@ -60,7 +60,7 @@ public class AuthServiceImpl implements AuthService {
                 .findByEmail(request.getEmail())
                 .orElseThrow(() ->
                         new UnauthorizedException(
-                                "Email ឬ Password មិនត្រឹមត្រូវ"));
+                                "អាសយដ្ឋានអ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវឡើយ"));
 
         validateAccountStatus(user);
         checkAccountLocked(user);
@@ -73,7 +73,7 @@ public class AuthServiceImpl implements AuthService {
         } catch (BadCredentialsException ex) {
             handleFailedLogin(user);
             throw new UnauthorizedException(
-                    "Email ឬ Password មិនត្រឹមត្រូវ");
+                    "អាសយដ្ឋានអ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវឡើយ");
         }
 
         user.setFailedLoginCount(0);
@@ -166,14 +166,13 @@ public class AuthServiceImpl implements AuthService {
 
         if (!jwtProvider.validateToken(refreshToken)) {
             throw new UnauthorizedException(
-                    "Refresh Token មិនត្រឹមត្រូវ"
-                            + " ឬផុតកំណត់");
+                    "ថូខិន (Refresh Token) មិនត្រឹមត្រូវ "
+                            + "ឬអស់សុពលភាពហើយ");
         }
-
 
         if (Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:" + refreshToken))) {
             throw new UnauthorizedException(
-                    "Refresh Token ត្រូវបានលុបចោល");
+                    "ថូខិន (Refresh Token) ត្រូវបានលុបចោលហើយ");
         }
 
         String email =
@@ -183,7 +182,7 @@ public class AuthServiceImpl implements AuthService {
                 .findByEmail(email)
                 .orElseThrow(() ->
                         new UnauthorizedException(
-                                "User រកមិនឃើញ"));
+                                "ថូខិន (Refresh Token) ត្រូវបានលុបចោលហើយ"));
 
         validateAccountStatus(user);
 
@@ -247,7 +246,7 @@ public class AuthServiceImpl implements AuthService {
         activityLogService.log(
                 "CHANGE_PASSWORD", "User",
                 userId,
-                "ផ្លាស់ប្ដូរ Password: "
+                "ផ្លាស់ប្ដូរ ពាក្យសម្ងាត់: "
                         + user.getEmail());
 
         log.info("Password changed: {}",
@@ -274,7 +273,7 @@ public class AuthServiceImpl implements AuthService {
         activityLogService.log(
                 "RESET_PASSWORD", "User",
                 userId,
-                "Admin Reset Password: "
+                "ការកំណត់ពាក្យសម្ងាត់សារជាថ្មីដោយអ្នកគ្រប់គ្រងប្រព័ន្ធ៖"
                         + user.getEmail());
 
         log.info("Password reset by admin: {}",
@@ -294,8 +293,8 @@ public class AuthServiceImpl implements AuthService {
                 .temporaryPassword(plainPassword)
                 .mustChangePassword(true)
                 .message(
-                        "Password នេះប្រើបានតែ 1 ដង"
-                                + " — User ត្រូវប្ដូរភ្លាម")
+                        "ពាក្យសម្ងាត់នេះអាចប្រើប្រាស់បានតែម្តងគត់ (One-time Password) "
+                                + "សូមធ្វើការផ្លាស់ប្តូរពាក្យសម្ងាត់ថ្មីជាបន្ទាន់")
                 .build();
     }
 

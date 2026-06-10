@@ -1,16 +1,19 @@
 package gov.kh.mcr.inspectorate.dto.request;
 
+import gov.kh.mcr.inspectorate.enums.UserType;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
 @Data
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class UserRequest {
 
     // officerId (nullable)
     // null = Admin user (no officer linked)
     private Integer officerId;
+    private Integer contractOfficerId;
 
     @NotNull(message = "Role ចាំបាច់")
     private Integer roleId;
@@ -22,9 +25,9 @@ public class UserRequest {
     @Size(max = 255)
     private String userNameEn;
 
-    @NotBlank(message = "Email ចាំបាច់")
-    @Email(message = "Email មិនត្រឹមត្រូវ")
-    @Size(max = 150)
+    @NotBlank(message = "សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែល")
+    @Email(message = "ទម្រង់អាសយដ្ឋានអ៊ីមែលមិនត្រឹមត្រូវឡើយ")
+    @Size(max = 150, message = "អាសយដ្ឋានអ៊ីមែលមិនអាចលើសពី ១៥០ តួអក្សរឡើយ")
     private String email;
 
     @Size(min = 8, max = 100,

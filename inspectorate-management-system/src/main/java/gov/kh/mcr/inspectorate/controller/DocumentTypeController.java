@@ -25,7 +25,7 @@ public class DocumentTypeController {
     getAll() {
         return ResponseEntity.ok(ApiResponse.success(
                 documentTypeService.getAll(),
-                "ទទួលបន្ជីប្រភេទឯកសារ"));
+                "ទទួលបានព័ត៌មានប្រភេទឯកសារជោគជ័យ"));
     }
 
     // GET /document-types/{id}
@@ -35,7 +35,7 @@ public class DocumentTypeController {
             @PathVariable Integer id) {
         return ResponseEntity.ok(ApiResponse.success(
                 documentTypeService.getById(id),
-                "ទទួលបានប្រភេទឯកសារ"));
+                "ទទួលបានព័ត៌មានប្រភេទឯកសារជោគជ័យ"));
     }
 
     // POST /document-types
@@ -46,7 +46,7 @@ public class DocumentTypeController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         documentTypeService.create(request),
-                        "បង្កើតជោគជ័យ"));
+                        "បង្កើតប្រភេទឯកសារជោគជ័យ"));
     }
 
     // PUT /document-types/{id}
@@ -57,7 +57,7 @@ public class DocumentTypeController {
             @Valid @RequestBody DocumentTypeRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
                 documentTypeService.update(id, request),
-                "កែប្រែជោគជ័យ"));
+                "កែប្រែប្រភេទឯកសារជោគជ័យ"));
     }
 
     // DELETE /document-types/{id}
@@ -67,6 +67,6 @@ public class DocumentTypeController {
             @PathVariable Integer id) {
         documentTypeService.delete(id);
         return ResponseEntity.ok(
-                ApiResponse.success(null, "លុបជោគជ័យ"));
+                ApiResponse.success(null, "លុបប្រភេទឯកសារជោគជ័យ"));
     }
 }

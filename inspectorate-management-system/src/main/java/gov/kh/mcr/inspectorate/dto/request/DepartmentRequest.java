@@ -10,16 +10,16 @@ import lombok.*;
 @Builder
 public class DepartmentRequest {
 
-    @NotBlank(message = "កូដចាំបាច់")
-    @Size(max = 20)
+    @NotBlank(message = "សូមបញ្ចូលលេខកូដនាយកដ្ឋាន")
+    @Size(max = 20, message = "លេខកូដនាយកដ្ឋានមិនអាចលើសពី ២០ តួអក្សរឡើយ")
     private String departmentCode;
 
-    @NotBlank(message = "ឈ្មោះចាំបាច់")
-    @Size(max = 255)
+    @NotBlank(message = "សូមបញ្ចូលឈ្មោះនាយកដ្ឋាន")
+    @Size(max = 255, message = "ឈ្មោះនាយកដ្ឋានមិនអាចលើសពី ២៥៥ តួអក្សរឡើយ")
     private String departmentName;
 
     private String description;
 
-    @NotNull(message = "ស្ថានភាពចាំបាច់")
+    @NotNull(message = "សូមជ្រើសរើសស្ថានភាពសកម្មភាព")
     private ActiveStatus status;
 }

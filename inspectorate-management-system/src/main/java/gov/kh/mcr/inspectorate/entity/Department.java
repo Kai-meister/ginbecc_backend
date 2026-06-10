@@ -12,8 +12,10 @@ import java.time.LocalDateTime;
                 @Index(name = "idx_dept_code",
                         columnList = "department_code")
         })
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Department {
 

@@ -88,7 +88,7 @@ public class MinioServiceImpl implements MinioService {
         } catch (Exception ex) {
             log.error("Presigned URL error", ex);
             throw new BusinessException(
-                    "ទាញ URL Download មានបញ្ហា: "
+                    "ការទាញយកតំណភ្ជាប់សម្រាប់ទាញយកឯកសារមានបញ្ហា "
                             + ex.getMessage());
         }
     }
@@ -106,7 +106,7 @@ public class MinioServiceImpl implements MinioService {
         } catch (Exception ex) {
             log.error("MinIO delete error", ex);
             throw new BusinessException(
-                    "លុប File មានបញ្ហា: "
+                    "ការលុបឯកសារមានបញ្ហា ឬមិនជោគជ័យ "
                             + ex.getMessage());
         }
     }
@@ -126,11 +126,11 @@ public class MinioServiceImpl implements MinioService {
                 return false;
             }
             throw new BusinessException(
-                    "MinIO check error: "
+                    "ការពិនិត្យវត្តមានឯកសារក្នុងប្រព័ន្ធផ្ទុកទិន្នន័យមានបញ្ហា "
                             + ex.getMessage());
         } catch (Exception ex) {
             throw new BusinessException(
-                    "MinIO check error: "
+                    "ការពិនិត្យវត្តមានឯកសារក្នុងប្រព័ន្ធផ្ទុកទិន្នន័យមានបញ្ហា "
                             + ex.getMessage());
         }
     }
@@ -169,7 +169,7 @@ public class MinioServiceImpl implements MinioService {
         } catch (Exception ex) {
             log.error("Bucket create error", ex);
             throw new BusinessException(
-                    "MinIO bucket error: "
+                    "ការពិនិត្យ ឬបង្កើតប្រអប់ផ្ទុកទិន្នន័យមានបញ្ហា "
                             + ex.getMessage());
         }
     }

@@ -22,6 +22,7 @@ import gov.kh.mcr.inspectorate.service.ContractOfficerService;
 import gov.kh.mcr.inspectorate.util.DateUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -46,7 +48,8 @@ public class ContractOfficerServiceImpl
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<ContractOfficerResponse> getAll(
+    public PageResponse<ContractOfficerResponse>
+    getAll(
             int page, int size,
             String status,
             Integer deptId,
@@ -62,15 +65,23 @@ public class ContractOfficerServiceImpl
                             .map(contractOfficerMapper::toResponse)
                             .toList();
 
-            return PageResponse
-                    .<ContractOfficerResponse>builder()
-                    .content(list)
-                    .pageNumber(0)
-                    .pageSize(list.size())
-                    .totalElements(list.size())
-                    .totalPages(list.isEmpty() ? 0 : 1)
-                    .first(true).last(true)
-                    .build();
+        if (expiringWithinDays != null) {
+            LocalDate expiry =
+                    LocalDate.now()
+                            .plusDays(expiringWithinDays);
+
+            List<ContractOfficer> list;
+
+            if (resolvedId != null) {
+                list = contractRepo
+                        .findByContractOfficerIdAndExpiring(
+                                resolvedId, expiry);
+            } else {
+                list = contractRepo
+                        .findExpiring(expiry);
+            }
+
+            return toPage(list);
         }
 
         Pageable pageable = PageRequest.of(
@@ -79,20 +90,33 @@ public class ContractOfficerServiceImpl
 
         Page<ContractOfficer> result;
 
-        if (status != null && deptId != null) {
-            result = contractOfficerRepository
+        if (resolvedId != null) {
+            result = contractRepo
+                    .findById(resolvedId)
+                    .map(c -> {
+                        List<ContractOfficer> l =
+                                List.of(c);
+                        return (Page<ContractOfficer>)
+                                new PageImpl<>(l, pageable,
+                                        l.size());
+                    })
+                    .orElse(Page.empty(pageable));
+
+        } else if (status != null
+                && deptId != null) {
+            result = contractRepo
                     .findByDepartment_DepartmentIdAndStatusCode_StatusCode(
                             deptId, status, pageable);
         } else if (status != null) {
-            result = contractOfficerRepository
+            result = contractRepo
                     .findByStatusCode_StatusCode(
                             status, pageable);
         } else if (deptId != null) {
-            result = contractOfficerRepository
+            result = contractRepo
                     .findByDepartment_DepartmentId(
                             deptId, pageable);
         } else {
-            result = contractOfficerRepository
+            result = contractRepo
                     .findAll(pageable);
         }
 
@@ -102,19 +126,15 @@ public class ContractOfficerServiceImpl
 
     @Override
     @Transactional(readOnly = true)
-    public ContractOfficerResponse getById(Integer id) {
-        return contractOfficerMapper.toResponse(findById(id));
-    }
+    public ContractOfficerResponse getById(
+            Integer id) {
 
-//    @Override
-//    @Transactional(readOnly = true)
-//    public List<ContractOfficerResponse> getExpiring(int withinDays) {
-//        LocalDate expiryDate = LocalDate.now().plusDays(withinDays);
-//        return contractOfficerRepository.findExpiring(expiryDate)
-//                .stream()
-//                .map(contractOfficerMapper::toResponse)
-//                .toList();
-//    }
+        ContractOfficer contract = findById(id);
+
+        validateViewPermission(contract);
+
+        return contractMapper.toResponse(contract);
+    }
 
     @Override
     public ContractOfficerResponse create(
@@ -122,11 +142,21 @@ public class ContractOfficerServiceImpl
 
         if (contractOfficerRepository
                 .existsByContractOfficerCode(
-                        request.getContractOfficerCode())) {
+                        request
+                                .getContractOfficerCode())) {
             throw new DuplicateResourceException(
                     "លេខកូដ ["
                             + request.getContractOfficerCode()
                             + "] មានស្ទួន");
+        }
+        validateDates(request);
+        if (!contract.getDepartment()
+                .getDepartmentId()
+                .equals(request
+                        .getDepartmentId())) {
+            contract.setDepartment(
+                    findActiveDept(
+                            request.getDepartmentId()));
         }
 
         ContractOfficer contract =
@@ -209,21 +239,80 @@ public class ContractOfficerServiceImpl
 
     @Override
     public ContractOfficerResponse updateStatus(
-            Integer id, StatusRequest request) {
-        ContractOfficer entity = findById(id);
-        entity.setStatusCode(findStatus(request.getStatusCode()));
-        activityLogService.log("UPDATE", "ContractOfficer",
-                id, "ស្ថានភាព → " + request.getStatusCode());
-        return contractOfficerMapper.toResponse(
-                contractOfficerRepository.save(entity));
+            Integer id,
+            StatusRequest request) {
+
+        if (securityUtils.isContractOfficer()) {
+            throw new BusinessException(
+                    "មន្ត្រីកិច្ចសន្យា"
+                            + " មិនមានសិទ្ធិក្នុងការផ្លាស់ប្តូរស្ថានភាពឡើយ");
+        }
+
+        ContractOfficer contract = findById(id);
+        contract.setStatusCode(
+                findStatus(request.getStatusCode()));
+
+        activityLogService.log(
+                "UPDATE", "ContractOfficer",
+                id,
+                "ធ្វើបច្ចុប្បន្នភាពស្ថានភាពមន្ត្រីកិច្ចសន្យា ទៅជា "
+                        + request.getStatusCode(),
+                buildContext());
+
+        return contractMapper.toResponse(
+                contractRepo.save(contract));
     }
 
     @Override
     public void delete(Integer id) {
-        findById(id);
-        contractOfficerRepository.deleteById(id);
-        activityLogService.log("DELETE", "ContractOfficer",
-                id, "លុបមន្ត្រីកិច្ចសន្យា");
+
+        // Contract Officer cannot delete
+        if (securityUtils.isContractOfficer()) {
+            throw new BusinessException(
+                    "មន្ត្រីកិច្ចសន្យា"
+                            + " មិនមានសិទ្ធិក្នុងការលុបទិន្នន័យចេញពីប្រព័ន្ធឡើយ");
+        }
+
+        ContractOfficer contract = findById(id);
+        contractRepo.deleteById(id);
+
+        activityLogService.log(
+                "DELETE", "ContractOfficer",
+                id,
+                "លុបទិន្នន័យមន្ត្រីកិច្ចសន្យា "
+                        + contract.getFullNameKh(),
+                buildContext());
+    }
+
+    private Integer resolveContractOfficerId() {
+        ContractOfficer co =
+                securityUtils
+                        .getCurrentContractOfficerOrNull();
+        return co != null
+                ? co.getContractOfficerId() : null;
+    }
+
+    private void validateViewPermission(
+            ContractOfficer contract) {
+
+        ContractOfficer current =
+                securityUtils
+                        .getCurrentContractOfficerOrNull();
+
+        if (current == null
+                || securityUtils.hasPermission(
+                "CONTRACT_OFFICER_VIEW")) {
+            return;
+        }
+
+        if (!contract
+                .getContractOfficerId()
+                .equals(current
+                        .getContractOfficerId())) {
+            throw new ResourceNotFoundException(
+                    "រកមិនឃើញទិន្នន័យមន្ត្រីកិច្ចសន្យាដែលមានលេខសម្គាល់ ",
+                    contract.getContractOfficerId());
+        }
     }
 
     private ActivityLogContext buildContext() {
@@ -241,17 +330,18 @@ public class ContractOfficerServiceImpl
         }
     }
     private ContractOfficer findById(Integer id) {
-        return contractOfficerRepository.findById(id)
+        return contractRepo.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "មន្ត្រីកិច្ចសន្យា", id));
+                                "មិនមានទិន្នន័យមន្ត្រីកិច្ចសន្យាដែលមានលេខសម្គាល់ ", id));
     }
 
-    private Department findDepartment(Integer id) {
-        return departmentRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("នាយកដ្ឋាន", id));
-    }
+    private Department findActiveDept(Integer id) {
+        Department dept =
+                deptRepo.findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "មិនមានទិន្នន័យនាយកដ្ឋានដែលមានលេខសម្គាល់", id));
 
     private LookupOfficerStatus findStatus(String code) {
         return lookupStatusRepository.findById(code)

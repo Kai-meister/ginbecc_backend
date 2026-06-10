@@ -10,17 +10,17 @@ import lombok.*;
 @Builder
 public class MeetingRoomRequest {
 
-    @NotBlank(message = "កូដចាំបាច់")
-    @Size(max = 20)
+    @NotBlank(message = "សូមបញ្ចូលលេខកូដបន្ទប់")
+    @Size(max = 20, message = "លេខកូដបន្ទប់មិនអាចលើសពី ២០ តួអក្សរឡើយ")
     private String roomCode;
 
-    @Size(max = 255)
+    @Size(max = 255, message = "ទីតាំងមិនអាចលើសពី ២៥៥ តួអក្សរឡើយ")
     private String location;
 
-    @Min(value = 1, message = "សមត្ថភាពអប្បបរមា 1")
+    @Min(value = 1, message = "ចំណុះ ឬសមត្ថភាពផ្ទុកអប្បបរមាត្រូវចាប់ពី ១ នាក់ឡើងទៅ")
     private Integer capacity;
 
-    @NotNull(message = "ស្ថានភាពចាំបាច់")
+    @NotNull(message = "សូមជ្រើសរើសស្ថានភាពបន្ទប់")
     private RoomStatus status;
 
     private String  facilities;

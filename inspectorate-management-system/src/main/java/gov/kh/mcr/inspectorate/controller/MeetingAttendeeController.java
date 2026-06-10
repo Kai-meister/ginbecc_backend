@@ -130,6 +130,6 @@ public class MeetingAttendeeController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "លុបជោគជ័យ"));
+                        null, "លុបអ្នកចូលរួមជោគជ័យ"));
     }
 }

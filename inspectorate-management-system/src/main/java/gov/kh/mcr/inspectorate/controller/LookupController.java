@@ -106,6 +106,6 @@ public class LookupController {
                                         lookupService
                                                 .getUserStatuses())
                                 .build(),
-                        "Lookups ទាំងអស់"));
+                        "ទទួលបានទិន្នន័យ Lookup ទាំងអស់ជោគជ័យ"));
     }
 }

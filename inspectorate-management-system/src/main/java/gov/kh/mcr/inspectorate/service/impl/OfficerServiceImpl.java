@@ -257,7 +257,7 @@ public class OfficerServiceImpl implements OfficerService {
         return deptRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "នាយកដ្ឋាន", id));
+                                "មិនមានទិន្នន័យនាយកដ្ឋានដែលមានលេខសម្គាល់ ", id));
     }
 
     private Position findPos(
@@ -274,7 +274,15 @@ public class OfficerServiceImpl implements OfficerService {
         return statusRepository.findById(code)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "ស្ថានភាព", code));
+                                "មិនមានទិន្នន័យតំណែងដែលមានលេខសម្គាល់ ", id));
+    }
+
+    private LookupOfficerStatus findStatus(
+            String code) {
+        return statusRepository.findById(code)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "មិនមានទិន្នន័យស្ថានភាពដែលមានលេខកូដ ", code));
     }
 
     private OfficerResponse toResponseWithAge(

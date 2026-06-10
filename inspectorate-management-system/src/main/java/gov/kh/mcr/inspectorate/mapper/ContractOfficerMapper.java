@@ -8,7 +8,8 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 @Mapper(componentModel = "spring",
-        unmappedTargetPolicy = ReportingPolicy.IGNORE)
+        unmappedTargetPolicy =
+                ReportingPolicy.IGNORE)
 public interface ContractOfficerMapper {
 
     @Mapping(target = "contractOfficerId",

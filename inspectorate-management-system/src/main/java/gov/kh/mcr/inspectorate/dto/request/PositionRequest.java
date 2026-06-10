@@ -4,16 +4,25 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor @AllArgsConstructor
 @Builder
 public class PositionRequest {
 
-    @NotBlank(message = "កូដចាំបាច់")
-    @Size(max = 20)
+    // Department required
+    @NotNull(message = "សូមជ្រើសរើសនាយកដ្ឋាន")
+    @Positive
+    private Integer departmentId;
+
+    @NotBlank(message = "សូមបញ្ចូលលេខកូដមុខតំណែង")
+    @Size(max = 50, message = "លេខកូដមុខតំណែងមិនអាចលើសពី ៥០ តួអក្សរឡើយ")
     private String positionCode;
 
-    @NotBlank(message = "ឈ្មោះចាំបាច់")
-    @Size(max = 255)
+    @NotBlank(message = "សូមបញ្ចូលឈ្មោះមុខតំណែងជាភាសាខ្មែរ")
+    @Size(max = 255, message = "ឈ្មោះមុខតំណែងជាភាសាខ្មែរមិនអាចលើសពី ២៥៥ តួអក្សរឡើយ")
     private String positionName;
+
+    @Size(max = 255, message = "ឈ្មោះមុខតំណែងជាភាសាអង់គ្លេសមិនអាចលើសពី ២៥៥ តួអក្សរឡើយ")
+    private String positionNameEn;
+
+    private String description;
 }

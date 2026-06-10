@@ -36,7 +36,7 @@ public class OfficerController {
             @RequestParam(required = false) String status) {
         return ResponseEntity.ok(ApiResponse.success(
                 officerService.getAll(page, size, dept, status),
-                "ទទួលបន្ជីមន្ត្រី"));
+                "ទទួលបានបញ្ជីមន្ត្រី"));
     }
 
     // GET /officers/{id}
@@ -45,7 +45,7 @@ public class OfficerController {
     public ResponseEntity<ApiResponse<OfficerResponse>> getById(
             @PathVariable Integer id) {
         return ResponseEntity.ok(ApiResponse.success(
-                officerService.getById(id), "ទទួលបានមន្ត្រី"));
+                officerService.getById(id), "ទទួលបានព័ត៌មានមន្ត្រី"));
     }
 
     // POST /officers
@@ -56,7 +56,7 @@ public class OfficerController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         officerService.create(request),
-                        "បង្កើតមន្ត្រីជោគជ័យ"));
+                        "បង្កើតមន្ត្រីបានជោគជ័យ"));
     }
 
     // PUT /officers/{id}
@@ -66,7 +66,7 @@ public class OfficerController {
             @PathVariable Integer id,
             @Valid @RequestBody OfficerRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
-                officerService.update(id, request), "កែប្រែជោគជ័យ"));
+                officerService.update(id, request), "កែប្រែបានជោគជ័យ"));
     }
 
     // PATCH /officers/{id}/status
@@ -77,7 +77,7 @@ public class OfficerController {
             @Valid @RequestBody StatusRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
                 officerService.updateStatus(id, request),
-                "ផ្លាស់ប្ដូរស្ថានភាព"));
+                "ផ្លាស់ប្ដូរស្ថានភាពបានជោគជ័យ"));
     }
 
     // DELETE /officers/{id}
@@ -87,7 +87,7 @@ public class OfficerController {
             @PathVariable Integer id) {
         officerService.delete(id);
         return ResponseEntity.ok(
-                ApiResponse.success(null, "លុបជោគជ័យ"));
+                ApiResponse.success(null, "លុបបានជោគជ័យ"));
     }
 
     // GET /officers/near-retirement
@@ -97,7 +97,7 @@ public class OfficerController {
     getNearRetirement() {
         return ResponseEntity.ok(ApiResponse.success(
                 officerService.getNearRetirement(),
-                "ទទួលបន្ជីជិតនិវត្តន៍"));
+                "ទទួលបានបញ្ជីជិតនិវត្តន៍"));
     }
 
     // POST /officers/{id}/profile-image

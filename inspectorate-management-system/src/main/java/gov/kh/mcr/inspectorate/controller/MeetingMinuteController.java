@@ -32,7 +32,7 @@ public class MeetingMinuteController {
             @RequestParam(required = false) Integer meeting_id) {
         return ResponseEntity.ok(ApiResponse.success(
                 meetingMinuteService.getAll(page, size, meeting_id),
-                "ទទួលបន្ជីកំណត់ហេតុ"));
+                "ទទួលបានបញ្ជីកំណត់ហេតុ"));
     }
 
     // GET /meeting-minutes/{id}
@@ -41,7 +41,7 @@ public class MeetingMinuteController {
     public ResponseEntity<ApiResponse<MeetingMinuteResponse>> getById(
             @PathVariable Integer id) {
         return ResponseEntity.ok(ApiResponse.success(
-                meetingMinuteService.getById(id), "ទទួលបានកំណត់ហេតុ"));
+                meetingMinuteService.getById(id), "ការទទួលបានកំណត់ហេតុបានជោគជ័យ"));
     }
 
     // POST /meeting-minutes
@@ -52,7 +52,7 @@ public class MeetingMinuteController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         meetingMinuteService.create(request),
-                        "បង្កើតជោគជ័យ"));
+                        "ការបង្កើតបានជោគជ័យ"));
     }
 
     // PUT /meeting-minutes/{id}
@@ -63,7 +63,7 @@ public class MeetingMinuteController {
             @Valid @RequestBody MeetingMinuteRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
                 meetingMinuteService.update(id, request),
-                "កែប្រែជោគជ័យ"));
+                "ការកែប្រែបានជោគជ័យ"));
     }
 
     @PostMapping(

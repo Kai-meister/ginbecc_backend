@@ -17,6 +17,7 @@ public class SecurityUtils {
 
     private final UserRepository userRepository;
 
+    // ── Get current User ──────────────────────────
     public Optional<User> getCurrentUser() {
         Authentication auth = getAuth();
         if (!isAuthenticated(auth)) {

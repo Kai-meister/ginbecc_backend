@@ -11,19 +11,19 @@ import java.time.LocalDate;
 @Builder
 public class DocumentRequest {
 
-    @NotNull(message = "មន្ត្រីចាំបាច់")
+    @NotNull(message = "សូមជ្រើសរើសមន្ត្រីទទួលខុសត្រូវ")
     private Integer officerId;
 
-    @NotNull(message = "ប្រភេទឯកសារចាំបាច់")
+    @NotNull(message = "សូមជ្រើសរើសប្រភេទឯកសារ")
     private Integer documentTypeId;
     @NotBlank(message = "ឈ្មោះឯកសារចាំបាច់")
     @Size(max = 255)
     private String documentName;
 
-    @Size(max = 100)
+    @Size(max = 100, message = "លេខឯកសារមិនអាចលើសពី ១០០ តួអក្សរឡើយ")
     private String documentNumber;
 
-    private String    note;
+    private String note;
 
 //    @NotBlank(message = "ស្ថានភាពចាំបាច់")
 //    private String    statusCode;

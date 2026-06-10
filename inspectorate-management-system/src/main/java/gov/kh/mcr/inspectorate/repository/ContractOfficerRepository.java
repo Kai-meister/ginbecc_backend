@@ -24,11 +24,13 @@ public interface ContractOfficerRepository
             Integer deptId, Pageable pageable);
 
 
+
     Page<ContractOfficer>
     findByDepartment_DepartmentIdAndStatusCode_StatusCode(
             Integer deptId,
             String status,
             Pageable pageable);
+
 
     @Query("""
         SELECT c FROM ContractOfficer c

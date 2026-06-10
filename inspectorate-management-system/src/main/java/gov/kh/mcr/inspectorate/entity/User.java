@@ -1,5 +1,6 @@
 package gov.kh.mcr.inspectorate.entity;
 
+import gov.kh.mcr.inspectorate.enums.UserType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -82,7 +83,6 @@ public class User {
 
     @Column(name = "failed_login_count",
             nullable = false)
-    @Builder.Default
     private Integer failedLoginCount = 0;
 
     @Column(name = "locked_until")

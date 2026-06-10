@@ -43,7 +43,7 @@ public class ContractOfficerController {
                                 page, size,
                                 status, dept,
                                 expiring_within),
-                        "ទទួលបន្ជីមន្ត្រីកិច្ចសន្យា"));
+                        "ទទួលបានបញ្ជីមន្ត្រីកិច្ចសន្យា"));
     }
 
     // GET /contract-officers/{id}
@@ -58,7 +58,7 @@ public class ContractOfficerController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         service.getById(id),
-                        "ទទួលបានមន្ត្រីកិច្ចសន្យា"));
+                        "ទទួលបានព័ត៌មានមន្ត្រីកិច្ចសន្យាា"));
     }
 
     // POST /contract-officers
@@ -74,7 +74,7 @@ public class ContractOfficerController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         service.create(req),
-                        "បង្កើតជោគជ័យ"));
+                        "បានបង្កើតមន្ត្រីកិច្ចសន្យាដោយជោគជ័យ"));
     }
     // PUT /contract-officers/{id}
     @PutMapping("/{id}")
@@ -90,7 +90,7 @@ public class ContractOfficerController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         service.update(id, req),
-                        "កែប្រែជោគជ័យ"));
+                        "បានកែប្រែមន្ត្រីកិច្ចសន្យាដោយជោគជ័យ"));
     }
 
     // PATCH /contract-officers/{id}/status
@@ -107,7 +107,7 @@ public class ContractOfficerController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         service.updateStatus(id, req),
-                        "ផ្លាស់ប្ដូរស្ថានភាព"));
+                        "បានផ្លាស់ប្ដូរស្ថានភាពមន្ត្រីកិច្ចសន្យាដោយជោគជ័យ"));
     }
 
     // DELETE /contract-officers/{id}
@@ -121,6 +121,6 @@ public class ContractOfficerController {
         service.delete(id);
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "លុបជោគជ័យ"));
+                        null, "បានលុបមន្ត្រីកិច្ចសន្យាដោយជោគជ័យ"));
     }
 }

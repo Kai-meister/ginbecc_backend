@@ -54,8 +54,9 @@ public class DocumentTypeServiceImpl
         if (documentTypeRepository.existsByDocumentTypeCode(
                 request.getDocumentTypeCode())) {
             throw new DuplicateResourceException(
-                    "កូដ [" + request.getDocumentTypeCode()
-                            + "] មានស្ទួន");
+                    "មិនអាចបង្កើតបានឡើយ ដោយសារកូដប្រភេទឯកសារ «"
+                            + request.getDocumentTypeCode()
+                            + "» នេះមានក្នុងប្រព័ន្ធរួចហើយ។");
         }
 
         DocumentType entity = documentTypeMapper.toEntity(request);
@@ -68,7 +69,7 @@ public class DocumentTypeServiceImpl
 
         activityLogService.log("CREATE", "DocumentType",
                 saved.getDocumentTypeId(),
-                "បង្កើត: " + saved.getDocumentTypeName());
+                "បង្កើតប្រភេទឯកសារថ្មី " + saved.getDocumentTypeName());
 
         return documentTypeMapper.toResponse(saved);
     }
