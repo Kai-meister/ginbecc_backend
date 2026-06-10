@@ -1,8 +1,8 @@
 package gov.kh.mcr.inspectorate.controller;
 
-import gov.kh.mcr.inspectorate.dto.request.AttendeeRequest;
-import gov.kh.mcr.inspectorate.dto.response.ApiResponse;
-import gov.kh.mcr.inspectorate.dto.response.AttendeeResponse;
+import gov.kh.mcr.inspectorate.dto.request.*;
+import gov.kh.mcr.inspectorate.dto.response.*;
+import gov.kh.mcr.inspectorate.exception.ResourceNotFoundException;
 import gov.kh.mcr.inspectorate.service.MeetingAttendeeService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -15,34 +15,31 @@ import java.util.List;
 
 @Validated
 @RestController
-@RequestMapping("/api/v1/meetings/{meetingId}/attendees")
+@RequestMapping(
+        "/api/v1/meetings/{meetingId}/attendees")
 @RequiredArgsConstructor
 public class MeetingAttendeeController {
 
-    private final MeetingAttendeeService
-            meetingAttendeeService;
+    private final MeetingAttendeeService service;
 
-    // ─────────────────────────────────────────────
-    // GET — All attendees of meeting
-    // ─────────────────────────────────────────────
+    // GET /{meetingId}/attendees
     @GetMapping
+    @PreAuthorize("hasAuthority('MEETING_VIEW')")
     public ResponseEntity<ApiResponse<
     List<AttendeeResponse>>>
-    getByMeeting(
+    getAll(
             @PathVariable
             @Positive Integer meetingId) {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        meetingAttendeeService
-                                .getByMeetingId(meetingId),
-                        "ទទួលបន្ជីអ្នកចូលរួម"));
+                        service.getByMeetingId(meetingId),
+                        "ទទួលបានបញ្ជីអ្នកចូលរួមជោគជ័យ"));
     }
 
-    // ─────────────────────────────────────────────
-    // GET /{attendeeId} — Fix ខ្វះ
-    // ─────────────────────────────────────────────
+    // GET /{meetingId}/attendees/{id}
     @GetMapping("/{attendeeId}")
+    @PreAuthorize("hasAuthority('MEETING_VIEW')")
     public ResponseEntity<ApiResponse<
     AttendeeResponse>>
     getById(
@@ -53,15 +50,13 @@ public class MeetingAttendeeController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        meetingAttendeeService
-                                .getById(
-                                        meetingId, attendeeId),
-                        "ទទួលបានអ្នកចូលរួម"));
+                        service.getById(
+                                meetingId, attendeeId),
+                        "ទទួលបានព័ត៌មានអ្នកចូលរួមជោគជ័យ"));
     }
-
+    // POST /{meetingId}/attendees
     @PostMapping
-    @PreAuthorize(
-            "hasAuthority('MEETING_MANAGE')")
+    @PreAuthorize("hasAuthority('MEETING_MANAGE_ATTENDEES')")
     public ResponseEntity<ApiResponse<
     AttendeeResponse>>
     add(
@@ -73,14 +68,57 @@ public class MeetingAttendeeController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
-                        meetingAttendeeService
-                                .addAttendee(
-                                        meetingId, request),
+                        service.addAttendee(
+                                meetingId, request),
                         "បន្ថែមអ្នកចូលរួមជោគជ័យ"));
+
     }
-    @DeleteMapping("/{attendeeId}")
+
+    // POST /{meetingId}/attendees/bulk
+    @PostMapping("/bulk")
     @PreAuthorize(
-            "hasAuthority('MEETING_MANAGE')")
+            "hasAuthority('MEETING_MANAGE_ATTENDEES')")
+    public ResponseEntity<ApiResponse<
+    List<AttendeeResponse>>>
+    addBulk(
+            @PathVariable
+            @Positive Integer meetingId,
+            @Valid @RequestBody
+            BulkAttendeeRequest request) {
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        service.addBulk(
+                                meetingId, request),
+                        "បន្ថែមអ្នកចូលរួមជាច្រើនជោគជ័យ"));
+    }
+
+    // PATCH /{meetingId}/attendees/{id}/attendance
+    @PatchMapping("/{attendeeId}/attendance")
+    @PreAuthorize(
+            "hasAuthority('MEETING_MARK_ATTENDANCE')")
+    public ResponseEntity<ApiResponse<
+    AttendeeResponse>>
+    updateAttendance(
+            @PathVariable
+            @Positive Integer meetingId,
+            @PathVariable
+            @Positive Integer attendeeId,
+            @Valid @RequestBody
+            AttendanceUpdateRequest request) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        service.updateAttendance(
+                                meetingId, attendeeId,
+                                request),
+                        "ធ្វើបច្ចុប្បន្នភាពស្ថានភាពការចូលរួមជោគជ័យ"));
+    }
+
+    // DELETE /{meetingId}/attendees/{id}
+    @DeleteMapping("/{attendeeId}")
+    @PreAuthorize("hasAuthority('MEETING_MANAGE_ATTENDEES')")
     public ResponseEntity<ApiResponse<Void>>
     remove(
             @PathVariable
@@ -88,12 +126,11 @@ public class MeetingAttendeeController {
             @PathVariable
             @Positive Integer attendeeId) {
 
-        meetingAttendeeService
-                .removeAttendee(
-                        meetingId, attendeeId);
+        service.removeAttendee(
+                meetingId, attendeeId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "លុបជោគជ័យ"));
+                        null, "លុបអ្នកចូលរួមជោគជ័យ"));
     }
 }

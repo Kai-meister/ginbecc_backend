@@ -1,7 +1,7 @@
 package gov.kh.mcr.inspectorate.controller;
+import gov.kh.mcr.inspectorate.dto.response.ActivityLogResponse;
 import gov.kh.mcr.inspectorate.dto.response.ApiResponse;
 import gov.kh.mcr.inspectorate.dto.response.PageResponse;
-import gov.kh.mcr.inspectorate.entity.ActivityLog;
 import gov.kh.mcr.inspectorate.service.ActivityLogService;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +19,12 @@ import java.time.LocalDateTime;
 public class AuditLogController {
 
     private final ActivityLogService activityLogService;
+
+    // GET /audit-logs
     @GetMapping
-    @PreAuthorize("hasAuthority('AUDIT_VIEW')")
-    public ResponseEntity<ApiResponse<PageResponse<ActivityLog>>>
+    @PreAuthorize("hasAuthority('LOG_VIEW')")
+    public ResponseEntity<ApiResponse<
+            PageResponse<ActivityLogResponse>>>
     getLogs(
             @RequestParam(required = false)
             Integer userId,
@@ -31,28 +34,32 @@ public class AuditLogController {
             String entityType,
             @RequestParam(required = false)
             @DateTimeFormat(
-                    iso = DateTimeFormat.ISO.DATE_TIME)
+                    iso = DateTimeFormat
+                            .ISO.DATE_TIME)
             LocalDateTime from,
             @RequestParam(required = false)
             @DateTimeFormat(
-                    iso = DateTimeFormat.ISO.DATE_TIME)
+                    iso = DateTimeFormat
+                            .ISO.DATE_TIME)
             LocalDateTime to,
             @RequestParam(defaultValue = "0")
             int page,
             @RequestParam(defaultValue = "20")
             int size) {
 
-        return ResponseEntity.ok(ApiResponse.success(activityLogService
-                        .getLogs(
+        return ResponseEntity.ok(ApiResponse.success(
+                        activityLogService.getLogs(
                                 userId, action,
                                 entityType, from, to,
                                 page, size),
-                        "ប្រវត្តិសកម្មភាព"));
+                        "បាទទួលបានប្រវត្តិសកម្មភាព"));
     }
 
+    // GET /audit-logs/{id}
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('AUDIT_VIEW')")
-    public ResponseEntity<ApiResponse<ActivityLog>>
+    @PreAuthorize("hasAuthority('LOG_VIEW')")
+    public ResponseEntity<ApiResponse<
+    ActivityLogResponse>>
     getById(
             @PathVariable
             @Positive Integer id) {
@@ -60,6 +67,6 @@ public class AuditLogController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         activityLogService.getById(id),
-                        "ទទួលបានLog"));
+                        "ទទួលបានព័ត៌មានប្រវត្តិសកម្មភាព"));
     }
 }

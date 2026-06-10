@@ -1,7 +1,6 @@
 package gov.kh.mcr.inspectorate.service;
 
 import gov.kh.mcr.inspectorate.dto.request.MeetingRoomRequest;
-import gov.kh.mcr.inspectorate.dto.response.AttachmentResponse;
 import gov.kh.mcr.inspectorate.dto.response.MeetingRoomResponse;
 import gov.kh.mcr.inspectorate.enums.RoomStatus;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +21,11 @@ public interface MeetingRoomService {
 
     void delete(Integer id);
 
-    AttachmentResponse uploadImage(
+    MeetingRoomResponse uploadImage(
             Integer roomId, MultipartFile file);
+
+    MeetingRoomResponse removeImage(
+            Integer roomId);
+
+    String getImageUrl(Integer roomId);
 }

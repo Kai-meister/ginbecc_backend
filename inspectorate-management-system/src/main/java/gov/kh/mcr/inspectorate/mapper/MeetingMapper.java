@@ -13,6 +13,7 @@ public interface MeetingMapper {
     @Mapping(target = "room",       ignore = true)
     @Mapping(target = "organizer",  ignore = true)
     @Mapping(target = "statusCode", ignore = true)
+    @Mapping(target = "attendees",  ignore = true)
     @Mapping(target = "createdAt",  ignore = true)
     @Mapping(target = "updatedAt",  ignore = true)
     Meeting toEntity(MeetingRequest request);
@@ -31,16 +32,30 @@ public interface MeetingMapper {
             source = "statusCode.statusCode")
     @Mapping(target = "statusLabel",
             source = "statusCode.labelKh")
+    @Mapping(target = "totalAttendees",
+            ignore = true)
+    @Mapping(target = "attendedCount",
+            ignore = true)
+    @Mapping(target = "absentCount",
+            ignore = true)
+    @Mapping(target = "invitedCount",
+            ignore = true)
+    @Mapping(target = "attendees",
+            ignore = true)
+
     MeetingResponse toResponse(Meeting entity);
 
-    @BeanMapping(nullValuePropertyMappingStrategy =
-            NullValuePropertyMappingStrategy.IGNORE)
+    @BeanMapping(
+            nullValuePropertyMappingStrategy =
+                    NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "meetingId",  ignore = true)
     @Mapping(target = "room",       ignore = true)
     @Mapping(target = "organizer",  ignore = true)
     @Mapping(target = "statusCode", ignore = true)
+    @Mapping(target = "attendees",  ignore = true)
     @Mapping(target = "createdAt",  ignore = true)
     @Mapping(target = "updatedAt",  ignore = true)
-    void updateEntity(MeetingRequest request,
-                      @MappingTarget Meeting entity);
+    void updateEntity(
+            MeetingRequest request,
+            @MappingTarget Meeting entity);
 }

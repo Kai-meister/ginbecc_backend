@@ -10,35 +10,30 @@ import java.time.LocalTime;
 @NoArgsConstructor @AllArgsConstructor
 @Builder
 public class MeetingRequest {
-
-    private Integer roomId;
-
-    @NotBlank(message = "ចំណងជើងចាំបាច់")
-    @Size(max = 255,
-            message = "ចំណងជើងអតិបរមា 255 តួ")
+    @NotBlank(message = "សូមបញ្ចូលកម្មវត្ថុ ឬចំណងជើងនៃកិច្ចប្រជុំ")
+    @Size(max = 255, message = "ចំណងជើងនៃកិច្ចប្រជុំមិនអាចលើសពី ២៥៥ តួអក្សរឡើយ")
     private String title;
 
-    @NotNull(message = "ថ្ងៃប្រជុំចាំបាច់")
-    @FutureOrPresent(
-            message = "ថ្ងៃប្រជុំមិនអាចជាអតីតកាល")
-    private LocalDate meetingDate;
+    private String description;
 
-    @NotNull(message = "ម៉ោងចាប់ផ្តើមចាំបាច់")
-    private LocalTime startTime;
-
-    @NotNull(message = "ម៉ោងបញ្ចប់ចាំបាច់")
-    private LocalTime endTime;
-
-    @NotNull(message = "ប្រភេទចាំបាច់")
+    @NotNull(message = "សូមជ្រើសរើសប្រភេទកិច្ចប្រជុំ")
     private MeetingType meetingType;
 
-    @Size(max = 500,
-            message = "Link អតិបរមា 500 តួ")
+    @NotNull(message = "សូមជ្រើសរើសកាលបរិច្ឆេទប្រជុំ")
+    @FutureOrPresent(message = "កាលបរិច្ឆេទប្រជុំត្រូវតែជាថ្ងៃនេះ ឬថ្ងៃក្នុងពេលអនាគត")
+    private LocalDate meetingDate;
+
+    @NotNull(message = "សូមជ្រើសរើសម៉ោងចាប់ផ្តើម")
+    private LocalTime startTime;
+
+    @NotNull(message = "សូមជ្រើសរើសម៉ោងបញ្ចប់")
+    private LocalTime endTime;
+
+    // nullable — online meeting
+    private Integer roomId;
+    // nullable — physical meeting
     private String meetingLink;
 
-    @NotBlank(message = "ស្ថានភាពចាំបាច់")
+    @NotBlank(message = "សូមជ្រើសរើសស្ថានភាព")
     private String statusCode;
-
-    private String agenda;
-    private String note;
 }

@@ -1,21 +1,16 @@
 package gov.kh.mcr.inspectorate.dto.request;
-
-
 import jakarta.validation.constraints.*;
 import lombok.*;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor @AllArgsConstructor
 @Builder
 public class MeetingMinuteRequest {
 
-    @NotNull(message = "ប្រជុំចាំបាច់")
+    @NotNull(message = "សូមជ្រើសរើសកិច្ចប្រជុំ")
     private Integer meetingId;
 
-    private Integer attachmentPathId;
-
-    @NotBlank(message = "សង្ខេបចាំបាច់")
+    @NotBlank(message = "សូមបញ្ចូលសេចក្តីសង្ខេបនៃកិច្ចប្រជុំ")
     private String summary;
 
     private String decisions;

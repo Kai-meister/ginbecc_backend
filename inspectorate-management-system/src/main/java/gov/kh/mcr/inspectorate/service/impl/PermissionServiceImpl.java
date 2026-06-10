@@ -15,13 +15,11 @@ import java.util.List;
 public class PermissionServiceImpl
         implements PermissionService {
 
-    private final PermissionRepository
-            permissionRepository;
+    private final PermissionRepository permissionRepository;
 
     @Override
     public List<Permission> getAll() {
-        return permissionRepository
-                .findAllByOrderByModuleAscPermissionNameAsc();
+        return permissionRepository.findAllByOrderByModuleAscPermissionNameAsc();
     }
 
     @Override
@@ -29,7 +27,7 @@ public class PermissionServiceImpl
         return permissionRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "សិទ្ធិ", id));
+                                "មិនមានទិន្នន័យសិទ្ធិដែលមានលេខសម្គាល់ ", id));
     }
 
     @Override

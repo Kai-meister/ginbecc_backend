@@ -1,13 +1,21 @@
 package gov.kh.mcr.inspectorate.controller;
-import gov.kh.mcr.inspectorate.dto.response.ApiResponse;
-import gov.kh.mcr.inspectorate.dto.response.NotificationResponse;
-import gov.kh.mcr.inspectorate.dto.response.PageResponse;
-import gov.kh.mcr.inspectorate.service.NotificationService;
+
+import gov.kh.mcr.inspectorate.dto.request
+        .NotificationCreateRequest;
+import gov.kh.mcr.inspectorate.dto.response.*;
+import gov.kh.mcr.inspectorate.security.SecurityUtils;
+import gov.kh.mcr.inspectorate.service
+        .NotificationService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.http.*;
+import org.springframework.security.access.prepost
+        .PreAuthorize;
+import org.springframework.validation.annotation
+        .Validated;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @Validated
 @RestController
@@ -15,36 +23,65 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class NotificationController {
 
-    private final NotificationService
-            notificationService;
+    private final NotificationService service;
+    private final SecurityUtils       securityUtils;
 
-    // ─────────────────────────────────────────────
-    // GET /notifications/my — ទាំងអស់ of User
-    // ─────────────────────────────────────────────
+    // POST /notifications
+    @PostMapping
+    @PreAuthorize(
+            "hasAuthority('NOTIFICATION_SEND')")
+    public ResponseEntity<ApiResponse<NotificationResponse>>
+    create(
+            @Valid @RequestBody
+            NotificationCreateRequest req) {
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        service.create(req),
+                        "ការបង្កើតសារជូនដំណឹងបានជោគជ័យ"));
+    }
+
+    // POST /notifications/bulk
+    @PostMapping("/bulk")
+    @PreAuthorize(
+            "hasAuthority('NOTIFICATION_SEND')")
+    public ResponseEntity<ApiResponse<
+    List<NotificationResponse>>>
+    createBulk(
+            @Valid @RequestBody
+            NotificationCreateRequest req) {
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        service.createBulk(req),
+                        "ការបង្កើតសារជូនដំណឹងជាច្រើនបានជោគជ័យ"));
+    }
+
+    // GET /notifications/my
     @GetMapping("/my")
     public ResponseEntity<ApiResponse<
-            PageResponse<NotificationResponse>>>
+    PageResponse<NotificationResponse>>>
     getMyNotifications(
-            @RequestParam Integer userId,
+            @RequestParam(required = false)
+            Boolean isRead,
             @RequestParam(defaultValue = "0")
             int page,
             @RequestParam(defaultValue = "20")
-            int size,
-            @RequestParam(required = false)
-            Boolean isRead) {
+            int size) {
+        Integer currentUserId =
+                securityUtils.getCurrentUserId();
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        notificationService
-                                .getMyNotifications(
-                                        userId, isRead,
-                                        page, size),
-                        "ទទួលការជូនដំណឹង"));
+                        service.getMyNotifications(
+                                currentUserId,
+                                isRead, page, size),
+                        "ទទួលបានសារជូនដំណឹង"));
     }
 
-    // ─────────────────────────────────────────────
-    // GET /notifications/{id} — Fix ខ្វះ
-    // ─────────────────────────────────────────────
+    // GET /notifications/{id}
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<
     NotificationResponse>>
@@ -52,44 +89,59 @@ public class NotificationController {
             @PathVariable
             @Positive Integer id) {
 
+        Integer currentUserId =
+                securityUtils.getCurrentUserId();
+
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        notificationService.getById(id),
-                        "ទទួលបានការជូនដំណឹង"));
+                        service.getById(
+                                id, currentUserId),
+                        "ទទួលបានសារជូនដំណឹង"));
     }
+
+    // GET /notifications/unread-count
     @GetMapping("/unread-count")
     public ResponseEntity<ApiResponse<Long>>
-    getUnreadCount(
-            @RequestParam Integer userId) {
+    getUnreadCount() {
+
+        Integer currentUserId =
+                securityUtils.getCurrentUserId();
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        notificationService
-                                .getUnreadCount(userId),
-                        "ចំនួនមិនទាន់អាន"));
+                        service.getUnreadCount(
+                                currentUserId),
+                        "ចំនួនសារជូនដំណឹងមិនទាន់អាន"));
     }
 
+    // PUT /notifications/{id}/read
     @PutMapping("/{id}/read")
     public ResponseEntity<ApiResponse<Void>>
     markAsRead(
             @PathVariable
             @Positive Integer id) {
 
-        notificationService.markAsRead(id);
+        Integer currentUserId =
+                securityUtils.getCurrentUserId();
+
+        service.markAsRead(id, currentUserId);
+
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "អានហើយ"));
+                        null, "បានអានសារជូនដំណឹង"));
     }
 
+    // PUT /notifications/read-all
     @PutMapping("/read-all")
     public ResponseEntity<ApiResponse<Integer>>
-    markAllAsRead(
-            @RequestParam Integer userId) {
+    markAllAsRead() {
+
+        Integer currentUserId = securityUtils.getCurrentUserId();
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        notificationService
-                                .markAllAsRead(userId),
-                        "អានទាំងអស់ជោគជ័យ"));
+                        service.markAllAsRead(
+                                currentUserId),
+                        "បានអានសារជូនដំណឹងទាំងអស់"));
     }
 }

@@ -1,5 +1,4 @@
 package gov.kh.mcr.inspectorate.entity;
-
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -23,13 +22,13 @@ public class MeetingMinute {
     private Integer minuteId;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "meeting_id",
-            unique = true, nullable = false)
+    @JoinColumn(name = "meeting_id", unique = true, nullable = false)
     private Meeting meeting;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "attachment_path_id")
-    private Attachment attachmentPath;
+    @JoinColumn(name = "attachment_id",
+            nullable = true)
+    private Attachment attachment;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recorded_by")
@@ -48,7 +47,8 @@ public class MeetingMinute {
     private String actionItems;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at",
+            updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp

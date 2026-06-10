@@ -1,6 +1,7 @@
 package gov.kh.mcr.inspectorate.repository;
 
 import gov.kh.mcr.inspectorate.entity.Attachment;
+import gov.kh.mcr.inspectorate.enums.AttachmentRefType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
@@ -15,45 +16,38 @@ public interface AttachmentRepository
 
     Optional<Attachment>
     findByReferenceIdAndReferenceTypeAndIsActiveTrue(
-            Integer refId, String refType);
-
-
-    List<Attachment> findByReferenceIdAndReferenceType(
-            Integer refId, String refType);
+            Integer refId,
+            AttachmentRefType refType);
 
     List<Attachment>
-    findByReferenceIdAndReferenceTypeAndIsActive(
-            Integer refId, String refType,
+    findByReferenceIdAndReferenceType(
+            Integer refId,
+            AttachmentRefType refType);
+    List<Attachment> findByReferenceIdAndReferenceTypeAndIsActive(
+            Integer refId,
+            AttachmentRefType refType,
             Boolean isActive);
 
-    Page<Attachment> findByUploadedBy_UserId(
-            Integer userId, Pageable pageable);
+//    Page<Attachment> findByUploadedBy_UserId(
+//            Integer userId, Pageable pageable);
 
-    List<Attachment> findByFileType(String fileType);
+//    List<Attachment> findByFileType(
+//            String fileType);
 
-    long countByReferenceIdAndReferenceTypeAndIsActiveTrue(
-            Integer refId, String refType);
-
-    @Query("""
-        SELECT a FROM Attachment a
-        WHERE a.fileSize > :minSize
-        AND   a.isActive = true
-        ORDER BY a.fileSize DESC
-        """)
-    List<Attachment> findLargeFiles(
-            @Param("minSize") Long minSize);
-
-    @Modifying
-    @Query("""
-        UPDATE Attachment a
-        SET    a.isActive = false
-        WHERE  a.referenceId   = :refId
-        AND    a.referenceType = :refType
-        AND    a.isActive      = true
-        """)
-    int archiveByReference(
-            @Param("refId")   Integer refId,
-            @Param("refType") String  refType);
+//    long countByReferenceIdAndReferenceTypeAndIsActiveTrue(
+//            Integer refId,
+//            AttachmentRefType refType);
+//    @Modifying
+//    @Query("""
+//        UPDATE Attachment a
+//        SET    a.isActive = false
+//        WHERE  a.referenceId   = :refId
+//        AND    a.referenceType = :refType
+//        AND    a.isActive      = true
+//        """)
+//    int archiveByReference(
+//            @Param("refId")   Integer refId,
+//            @Param("refType") AttachmentRefType refType);
 
     @Modifying
     @Query("""
@@ -64,8 +58,16 @@ public interface AttachmentRepository
         """)
     int deleteArchivedByReference(
             @Param("refId")   Integer refId,
-            @Param("refType") String  refType);
+            @Param("refType") AttachmentRefType refType);
 
+//    boolean existsByFilePath(String filePath);
 
-    boolean existsByFilePath(String filePath);
+//    @Query("""
+//        SELECT a FROM Attachment a
+//        WHERE  a.fileSize > :minSize
+//        AND    a.isActive = true
+//        ORDER BY a.fileSize DESC
+//        """)
+//    List<Attachment> findLargeFiles(
+//            @Param("minSize") Long minSize);
 }

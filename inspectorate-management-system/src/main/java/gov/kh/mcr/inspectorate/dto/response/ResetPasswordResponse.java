@@ -10,10 +10,7 @@ public class ResetPasswordResponse {
     private Integer userId;
     private String  email;
     private String  userNameKh;
-
     private String  temporaryPassword;
-
     private Boolean mustChangePassword;
-
     private String  message;
 }

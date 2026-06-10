@@ -7,21 +7,20 @@ import lombok.*;
 @NoArgsConstructor @AllArgsConstructor
 @Builder
 public class ChangePasswordRequest {
-
-    @NotBlank(message = "ពាក្យសម្ងាត់ចាស់ចាំបាច់")
+    @NotBlank(message = "សូមបញ្ចូលពាក្យសម្ងាត់ចាស់")
     private String oldPassword;
 
-    @NotBlank(message = "ពាក្យសម្ងាត់ថ្មីចាំបាច់")
+    @NotBlank(message = "សូមបញ្ចូលពាក្យសម្ងាត់ថ្មី")
     @Size(min = 8, max = 100,
-            message = "ពាក្យសម្ងាត់ 8-100 តួ")
+            message = "ពាក្យសម្ងាត់ថ្មីត្រូវមានប្រវែងពី ៨ ដល់ ១០០ តួអក្សរ")
     @Pattern(
             regexp = "^(?=.*[A-Z])(?=.*[a-z])"
                     + "(?=.*\\d)"
                     + "(?=.*[@#$%!&*()_+\\-=])"
                     + ".{8,}$",
-            message = "ត្រូវមានអក្សរធំ/តូច/ខ្ទង/និមិត្តសញ្ញា")
+            message = "ពាក្យសម្ងាត់ត្រូវមានលាយអក្សរធំ អក្សរតូច លេខ និងនិមិត្តសញ្ញាពិសេស")
     private String newPassword;
 
-    @NotBlank(message = "បញ្ជាក់ Password ចាំបាច់")
+    @NotBlank(message = "សូមបញ្ចូលពាក្យសម្ងាត់ម្តងទៀតដើម្បីផ្ទៀងផ្ទាត់")
     private String confirmPassword;
 }

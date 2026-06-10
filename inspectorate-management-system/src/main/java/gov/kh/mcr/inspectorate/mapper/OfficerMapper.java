@@ -17,8 +17,13 @@ public interface OfficerMapper {
     @Mapping(target = "updatedAt",         ignore = true)
     Officer toEntity(OfficerRequest request);
 
+
+    @Mapping(target = "positionId",
+            source = "position.positionId")
     @Mapping(target = "positionName",
             source = "position.positionName")
+    @Mapping(target = "departmentId",
+            source = "department.departmentId")
     @Mapping(target = "departmentName",
             source = "department.departmentName")
     @Mapping(target = "statusCode",
@@ -38,6 +43,5 @@ public interface OfficerMapper {
     @Mapping(target = "statusCode",        ignore = true)
     @Mapping(target = "createdAt",         ignore = true)
     @Mapping(target = "updatedAt",         ignore = true)
-    void updateEntity(OfficerRequest request,
-                      @MappingTarget Officer entity);
+    void updateEntity(OfficerRequest request, @MappingTarget Officer entity);
 }

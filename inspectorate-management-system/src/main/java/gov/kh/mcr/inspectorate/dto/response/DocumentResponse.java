@@ -13,7 +13,9 @@ import java.time.LocalDateTime;
 public class DocumentResponse {
 
     private Integer documentId;
+    private String officerId;
     private String officerName;
+    private Integer documentTypeId;
     private String documentTypeName;
     private String  documentName;
     private String documentNumber;

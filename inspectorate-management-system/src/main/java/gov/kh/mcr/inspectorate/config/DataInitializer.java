@@ -274,35 +274,79 @@ public class DataInitializer
         log.info("Roles (5)");
     }
 
-    private void initPermissions() {
-        if (permissionRepository.count() > 0) return;
 
+    private void initPermissions() {
+        if (permissionRepository.count() > 0)
+            return;
         String[][] perms = {
-                {"USER_CREATE","USER"},
-                {"USER_UPDATE","USER"},
-                {"USER_DELETE","USER"},
-                {"USER_SUSPEND","USER"},
-                {"ROLE_ASSIGN","USER"},
-                {"OFFICER_MANAGE", "OFFICER"},
-                {"SELF_PROFILE_VIEW","OFFICER"},
-                {"SELF_PROFILE_EDIT", "OFFICER"},
-                {"DOC_APPROVE","DOCUMENT"},
-                {"DOC_VIEW_OWN","DOCUMENT"},
-                {"MEETING_MANAGE","MEETING"},
-                {"MEETING_VIEW","MEETING"},
-                {"MEETING_ATTEND","MEETING"},
-                {"ANNOUNCEMENT_VIEW","ANNOUNCEMENT"},
-                {"ANNOUNCEMENT_CREATE","ANNOUNCEMENT"},
-                {"ANNOUNCEMENT_UPDATE","ANNOUNCEMENT"},
-                {"ANNOUNCEMENT_DELETE", "ANNOUNCEMENT"},
-                {"ANNOUNCEMENT_PUBLISH","ANNOUNCEMENT"},
-                {"ATTACHMENT_UPLOAD","ATTACHMENT"},
-                {"ATTACHMENT_MANAGE","ATTACHMENT"},
-                {"AUDIT_VIEW", "AUDIT"},
-                {"REPORT_EXPORT", "REPORT"},
-                {"DAILY_REPORT","REPORT"},
-                {"DASHBOARD_OWN","DASHBOARD"},
-                {"NOTIFICATION","NOTIFICATION"},
+
+                // User Management
+                {"USER_VIEW",           "USER"},
+                {"USER_CREATE",         "USER"},
+                {"USER_UPDATE",         "USER"},
+                {"USER_DELETE",         "USER"},
+                {"USER_RESET_PASSWORD", "USER"},
+                {"ROLE_VIEW",           "USER"},
+                {"ROLE_ASSIGN",         "USER"},
+                {"PERMISSION_VIEW",     "USER"},
+                {"PERMISSION_MANAGE",   "USER"},
+
+                // Officer Management
+                {"OFFICER_VIEW",             "OFFICER"},
+                {"OFFICER_CREATE",           "OFFICER"},
+                {"OFFICER_UPDATE",           "OFFICER"},
+                {"OFFICER_DELETE",           "OFFICER"},
+                {"OFFICER_VIEW_SENSITIVE",   "OFFICER"},
+                {"CONTRACT_OFFICER_VIEW",    "OFFICER"},
+                {"CONTRACT_OFFICER_CREATE",  "OFFICER"},
+                {"CONTRACT_OFFICER_UPDATE",  "OFFICER"},
+                {"CONTRACT_OFFICER_DELETE",  "OFFICER"},
+                {"DEPARTMENT_VIEW",          "OFFICER"},
+                {"DEPARTMENT_MANAGE",        "OFFICER"},
+                {"POSITION_VIEW",            "OFFICER"},
+                {"POSITION_MANAGE",          "OFFICER"},
+
+                // Document Management
+                {"DOCUMENT_VIEW",         "DOCUMENT"},
+                {"DOCUMENT_VIEW_ALL",     "DOCUMENT"},
+                {"DOCUMENT_CREATE",       "DOCUMENT"},
+                {"DOCUMENT_UPDATE",       "DOCUMENT"},
+                {"DOCUMENT_DELETE",       "DOCUMENT"},
+                {"DOCUMENT_TYPE_MANAGE",  "DOCUMENT"},
+                {"APPROVAL_REQUEST",      "DOCUMENT"},
+                {"APPROVAL_REVIEW",       "DOCUMENT"},
+                {"APPROVAL_VIEW",         "DOCUMENT"},
+
+                // Meeting Management
+                {"MEETING_VIEW",             "MEETING"},
+                {"MEETING_CREATE",           "MEETING"},
+                {"MEETING_UPDATE",           "MEETING"},
+                {"MEETING_DELETE",           "MEETING"},
+                {"MEETING_MANAGE_ATTENDEES", "MEETING"},
+                {"MEETING_MARK_ATTENDANCE",  "MEETING"},
+                {"MEETING_MINUTE_CREATE",    "MEETING"},
+                {"MEETING_MINUTE_VIEW",      "MEETING"},
+                {"ROOM_VIEW",                "MEETING"},
+                {"ROOM_MANAGE",              "MEETING"},
+
+                // Announcement
+                {"ANNOUNCEMENT_VIEW",    "ANNOUNCEMENT"},
+                {"ANNOUNCEMENT_CREATE",  "ANNOUNCEMENT"},
+                {"ANNOUNCEMENT_UPDATE",  "ANNOUNCEMENT"},
+                {"ANNOUNCEMENT_DELETE",  "ANNOUNCEMENT"},
+                {"ANNOUNCEMENT_PUBLISH", "ANNOUNCEMENT"},
+
+                // Report
+                {"REPORT_VIEW",     "REPORT"},
+                {"REPORT_EXPORT",   "REPORT"},
+                {"REPORT_ADVANCED", "REPORT"},
+
+                // System
+                {"ATTACHMENT_UPLOAD",   "SYSTEM"},
+                {"ATTACHMENT_DELETE",   "SYSTEM"},
+                {"LOG_VIEW",            "SYSTEM"},
+                {"LOOKUP_MANAGE",       "SYSTEM"},
+                {"NOTIFICATION_SEND",   "SYSTEM"},
         };
 
         for (String[] p : perms) {
@@ -313,6 +357,8 @@ public class DataInitializer
                             .build());
         }
 
+        //ROLE ASSIGNMENTS
+        // SUPER_ADMIN Full control
         roleRepository
                 .findByRoleName("SUPER_ADMIN")
                 .ifPresent(role ->
@@ -325,38 +371,124 @@ public class DataInitializer
                                                                 .permission(perm)
                                                                 .build())));
 
+        // ADMIN
         assignPermsToRole("ADMIN", new String[]{
-                "OFFICER_MANAGE","ATTACHMENT_UPLOAD",
-                "ATTACHMENT_MANAGE","DOC_APPROVE",
-                "MEETING_MANAGE","MEETING_VIEW",
-                "ANNOUNCEMENT_VIEW","ANNOUNCEMENT_CREATE",
+                // User
+                "USER_VIEW", "USER_CREATE",
+                "USER_UPDATE", "USER_SUSPEND",
+                "USER_RESET_PASSWORD",
+                "ROLE_VIEW", "ROLE_ASSIGN",
+                "PERMISSION_VIEW",
+                // Officer
+                "OFFICER_VIEW", "OFFICER_CREATE",
+                "OFFICER_UPDATE", "OFFICER_DELETE",
+                "OFFICER_VIEW_SENSITIVE",
+                "CONTRACT_OFFICER_VIEW",
+                "CONTRACT_OFFICER_CREATE",
+                "CONTRACT_OFFICER_UPDATE",
+                "CONTRACT_OFFICER_DELETE",
+                "DEPARTMENT_VIEW", "DEPARTMENT_MANAGE",
+                "POSITION_VIEW", "POSITION_MANAGE",
+                // Document
+                "DOCUMENT_VIEW", "DOCUMENT_VIEW_ALL",
+                "DOCUMENT_CREATE", "DOCUMENT_UPDATE",
+                "DOCUMENT_DELETE",
+                "DOCUMENT_TYPE_MANAGE",
+                "APPROVAL_REVIEW", "APPROVAL_VIEW",
+                // Meeting
+                "MEETING_VIEW", "MEETING_CREATE",
+                "MEETING_UPDATE", "MEETING_DELETE",
+                "MEETING_MANAGE_ATTENDEES",
+                "MEETING_MARK_ATTENDANCE",
+                "MEETING_MINUTE_CREATE",
+                "MEETING_MINUTE_VIEW",
+                "ROOM_VIEW", "ROOM_MANAGE",
+                // Announcement
+                "ANNOUNCEMENT_VIEW",
+                "ANNOUNCEMENT_CREATE",
                 "ANNOUNCEMENT_UPDATE",
+                "ANNOUNCEMENT_DELETE",
                 "ANNOUNCEMENT_PUBLISH",
-                "DAILY_REPORT","DASHBOARD_OWN",
-                "NOTIFICATION","USER_CREATE",
-                "USER_UPDATE","USER_SUSPEND"});
+                // Report
+                "REPORT_VIEW", "REPORT_EXPORT",
+                // System
+                "ATTACHMENT_UPLOAD", "ATTACHMENT_DELETE",
+                "LOG_VIEW", "NOTIFICATION_SEND",
+        });
 
+        // MANAGER
         assignPermsToRole("MANAGER", new String[]{
-                "OFFICER_MANAGE","DOC_APPROVE",
-                "MEETING_MANAGE","MEETING_VIEW",
-                "ANNOUNCEMENT_VIEW","ANNOUNCEMENT_CREATE",
+                // Officer
+                "OFFICER_VIEW", "OFFICER_CREATE",
+                "OFFICER_UPDATE",
+                "OFFICER_VIEW_SENSITIVE",
+                "CONTRACT_OFFICER_VIEW",
+                "CONTRACT_OFFICER_CREATE",
+                "CONTRACT_OFFICER_UPDATE",
+                "DEPARTMENT_VIEW",
+                "POSITION_VIEW",
+                // Document
+                "DOCUMENT_VIEW", "DOCUMENT_VIEW_ALL",
+                "DOCUMENT_CREATE", "DOCUMENT_UPDATE",
+                "APPROVAL_REVIEW", "APPROVAL_VIEW",
+                // Meeting
+                "MEETING_VIEW", "MEETING_CREATE",
+                "MEETING_UPDATE",
+                "MEETING_MANAGE_ATTENDEES",
+                "MEETING_MARK_ATTENDANCE",
+                "MEETING_MINUTE_CREATE",
+                "MEETING_MINUTE_VIEW",
+                "ROOM_VIEW",
+                // Announcement
+                "ANNOUNCEMENT_VIEW",
+                "ANNOUNCEMENT_CREATE",
                 "ANNOUNCEMENT_UPDATE",
                 "ANNOUNCEMENT_PUBLISH",
-                "DAILY_REPORT","DASHBOARD_OWN",
-                "NOTIFICATION","ATTACHMENT_UPLOAD",
-                "ATTACHMENT_MANAGE"});
+                // Report
+                "REPORT_VIEW", "REPORT_EXPORT",
+                // System
+                "ATTACHMENT_UPLOAD",
+                "NOTIFICATION_SEND",
+        });
 
+        // OFFICER
         assignPermsToRole("OFFICER", new String[]{
-                "SELF_PROFILE_VIEW","SELF_PROFILE_EDIT",
-                "MEETING_VIEW","MEETING_ATTEND",
-                "DOC_VIEW_OWN","DASHBOARD_OWN",
-                "NOTIFICATION","ANNOUNCEMENT_VIEW"});
+                // Officer (self)
+                "OFFICER_VIEW",
+                // Document (own)
+                "DOCUMENT_VIEW",
+                "DOCUMENT_CREATE",
+                "DOCUMENT_UPDATE",
+                "DOCUMENT_DELETE",
+                "APPROVAL_REQUEST",  // submit approval
+                "APPROVAL_VIEW",
+                // Meeting
+                "MEETING_VIEW",
+                "MEETING_MARK_ATTENDANCE",
+                "MEETING_MINUTE_VIEW",
+                "ROOM_VIEW",
+                // Announcement
+                "ANNOUNCEMENT_VIEW",
+                // System
+                "ATTACHMENT_UPLOAD",
+        });
 
+        // AUDITOR
         assignPermsToRole("AUDITOR", new String[]{
-                "AUDIT_VIEW","REPORT_EXPORT",
-                "DASHBOARD_OWN","NOTIFICATION"});
+                "OFFICER_VIEW",
+                "DOCUMENT_VIEW_ALL",
+                "APPROVAL_VIEW",
+                "MEETING_VIEW",
+                "MEETING_MINUTE_VIEW",
+                "ANNOUNCEMENT_VIEW",
+                "REPORT_VIEW",
+                "REPORT_EXPORT",
+                "REPORT_ADVANCED",
+                "LOG_VIEW",
+        });
 
-        log.info("Permissions (25) + Assignments");
+        log.info("✅ Permissions ({}) + Assignments",
+                perms.length);
     }
 
     private void assignPermsToRole(
@@ -393,8 +525,8 @@ public class DataInitializer
 
                     userRepository.save(
                             User.builder()
-                                    .uuid(UUID.randomUUID()
-                                            .toString())
+//                                    .uuid(UUID.randomUUID()
+//                                            .toString())
                                     .userNameKh(
                                             "អ្នកគ្រប់គ្រងប្រព័ន្ធ")
                                     .userNameEn(

@@ -1,17 +1,29 @@
 package gov.kh.mcr.inspectorate.service;
-
+import gov.kh.mcr.inspectorate.dto.request.ActivityLogContext;
+import gov.kh.mcr.inspectorate.dto.response.ActivityLogResponse;
 import gov.kh.mcr.inspectorate.dto.response.PageResponse;
-import gov.kh.mcr.inspectorate.entity.ActivityLog;
 
 import java.time.LocalDateTime;
 
 public interface ActivityLogService {
 
-    void log(String action, String entityType,
-             Integer entityId, String details);
+
+    // ប្រើពី Service (Controller inject context)
+    void log(String action,
+             String entityType,
+             Integer entityId,
+             String details,
+             ActivityLogContext context);
 
 
-    PageResponse<ActivityLog> getLogs(
+    // ប្រើពី Service ដែល SecurityContext OK
+    void log(String action,
+             String entityType,
+             Integer entityId,
+             String details);
+
+
+    PageResponse<ActivityLogResponse> getLogs(
             Integer userId,
             String action,
             String entityType,
@@ -19,6 +31,5 @@ public interface ActivityLogService {
             LocalDateTime to,
             int page, int size);
 
-
-    ActivityLog getById(Integer id);
+    ActivityLogResponse getById(Integer id);
 }
