@@ -276,8 +276,10 @@ public class DataInitializer
 
 
     private void initPermissions() {
-        if (permissionRepository.count() > 0)
-            return;
+        // Idempotent: runs every startup. Missing permissions are inserted
+        // and role grants are reconciled, so adding/renaming permissions in
+        // code no longer requires a clean DB. (Old behaviour early-returned
+        // when any permission existed, causing permanent seed drift.)
         String[][] perms = {
 
                 // User Management
@@ -349,27 +351,40 @@ public class DataInitializer
                 {"NOTIFICATION_SEND",   "SYSTEM"},
         };
 
+        // Upsert: only insert permissions that don't already exist.
         for (String[] p : perms) {
-            permissionRepository.save(
-                    Permission.builder()
-                            .permissionName(p[0])
-                            .module(p[1])
-                            .build());
+            if (permissionRepository
+                    .findByPermissionName(p[0])
+                    .isEmpty()) {
+                permissionRepository.save(
+                        Permission.builder()
+                                .permissionName(p[0])
+                                .module(p[1])
+                                .build());
+            }
         }
 
         //ROLE ASSIGNMENTS
-        // SUPER_ADMIN Full control
+        // SUPER_ADMIN Full control: reconcile to ALL permissions every startup.
         roleRepository
                 .findByRoleName("SUPER_ADMIN")
-                .ifPresent(role ->
-                        permissionRepository.findAll()
-                                .forEach(perm ->
-                                        rolePermissionRepository
-                                                .save(
-                                                        RolePermission.builder()
-                                                                .role(role)
-                                                                .permission(perm)
-                                                                .build())));
+                .ifPresent(role -> {
+                    var existing = new java.util.HashSet<>(
+                            rolePermissionRepository
+                                    .findPermissionNamesByRoleId(
+                                            role.getRoleId()));
+                    permissionRepository.findAll()
+                            .forEach(perm -> {
+                                if (!existing.contains(
+                                        perm.getPermissionName())) {
+                                    rolePermissionRepository.save(
+                                            RolePermission.builder()
+                                                    .role(role)
+                                                    .permission(perm)
+                                                    .build());
+                                }
+                            });
+                });
 
         // ADMIN
         assignPermsToRole("ADMIN", new String[]{
@@ -495,7 +510,12 @@ public class DataInitializer
             String roleName, String[] permNames) {
         roleRepository.findByRoleName(roleName)
                 .ifPresent(role -> {
+                    var existing = new java.util.HashSet<>(
+                            rolePermissionRepository
+                                    .findPermissionNamesByRoleId(
+                                            role.getRoleId()));
                     for (String permName : permNames) {
+                        if (existing.contains(permName)) continue;
                         permissionRepository
                                 .findByPermissionName(permName)
                                 .ifPresent(perm ->
