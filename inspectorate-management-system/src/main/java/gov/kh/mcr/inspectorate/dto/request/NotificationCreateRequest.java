@@ -11,19 +11,18 @@ import java.util.List;
 @Builder
 public class NotificationCreateRequest {
 
-    // Target 1
     private Integer       officerId;
     private Integer       userId;
     private List<Integer> officerIds;
 
-    @NotBlank(message = "ចំណងជើងចាំបាច់")
-    @Size(max = 255)
+    @NotBlank(message = "សូមបញ្ចូលកម្មវត្ថុ ឬចំណងជើងនៃសារដំណឹង")
+    @Size(max = 255, message = "ចំណងជើងនៃសារដំណឹងមិនអាចលើសពី ២៥៥ តួអក្សរឡើយ")
     private String title;
 
-    @NotBlank(message = "ខ្លឹមសារចាំបាច់")
+    @NotBlank(message = "សូមបញ្ចូលខ្លឹមសារ ឬអត្ថបទនៃសារដំណឹង")
     private String message;
 
-    @NotNull(message = "ប្រភេទចាំបាច់")
+    @NotNull(message = "សូមជ្រើសរើសប្រភេទសារដំណឹង")
     private NotificationType type;
 
     private Integer referenceId;

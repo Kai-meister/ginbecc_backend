@@ -16,8 +16,9 @@ public class DocumentRequest {
 
     @NotNull(message = "សូមជ្រើសរើសប្រភេទឯកសារ")
     private Integer documentTypeId;
-    @NotBlank(message = "ឈ្មោះឯកសារចាំបាច់")
-    @Size(max = 255)
+
+    @NotBlank(message = "សូមបញ្ចូលឈ្មោះឯកសារ")
+    @Size(max = 255, message = "ឈ្មោះឯកសារមិនអាចលើសពី ២៥៥ តួអក្សរឡើយ")
     private String documentName;
 
     @Size(max = 100, message = "លេខឯកសារមិនអាចលើសពី ១០០ តួអក្សរឡើយ")
@@ -25,8 +26,8 @@ public class DocumentRequest {
 
     private String note;
 
-//    @NotBlank(message = "ស្ថានភាពចាំបាច់")
-//    private String    statusCode;
+//    @NotBlank(message = "សូមជ្រើសរើសស្ថានភាព")
+//    private String statusCode;
 
     private LocalDate expiryDate;
 }

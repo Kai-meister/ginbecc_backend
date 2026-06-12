@@ -24,7 +24,6 @@ public interface OfficerRepository extends JpaRepository<Officer, Integer>,
     Page<Officer> findByStatusCode_StatusCode(
             String status, Pageable pageable);
 
-    // OfficerRepository — Count by dept
     long countByDepartment_DepartmentId(
             Integer departmentId);
 
@@ -56,24 +55,23 @@ public interface OfficerRepository extends JpaRepository<Officer, Integer>,
         ORDER BY COUNT(o) DESC
         """)
     List<Object[]> countByDepartment();
-    // បន្ថែម ក្នុង OfficerRepository
 
     @Query("""
-    SELECT o FROM Officer o
-    LEFT JOIN FETCH o.department d
-    LEFT JOIN FETCH o.position  p
-    LEFT JOIN FETCH o.statusCode s
-    WHERE (:deptId IS NULL
-           OR d.departmentId = :deptId)
-    AND   (:status IS NULL
-           OR s.statusCode = :status)
-    AND   (:from IS NULL
-           OR o.joinDate >= :from)
-    AND   (:to IS NULL
-           OR o.joinDate <= :to)
-    ORDER BY d.departmentName ASC,
-             o.fullNameKh     ASC
-    """)
+SELECT o FROM Officer o
+LEFT JOIN FETCH o.department d
+LEFT JOIN FETCH o.position p
+LEFT JOIN FETCH o.statusCode s
+WHERE (:deptId IS NULL
+       OR d.departmentId = :deptId)
+AND (:status IS NULL
+       OR s.statusCode = :status)
+AND (CAST(:from AS date) IS NULL
+       OR o.joinDate >= :from)
+AND (CAST(:to AS date) IS NULL
+       OR o.joinDate <= :to)
+ORDER BY d.departmentName,
+         o.fullNameKh
+""")
     List<Officer> findForReport(
             @Param("deptId") Integer deptId,
             @Param("status") String status,

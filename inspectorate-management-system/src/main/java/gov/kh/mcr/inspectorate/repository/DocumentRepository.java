@@ -16,12 +16,10 @@ public interface DocumentRepository
     Page<Document> findByOfficer_OfficerId(
             Integer officerId, Pageable pageable);
 
-    // Filter by status
     Page<Document>
     findByStatusCode_StatusCode(
             String statusCode, Pageable pageable);
 
-    // Filter by type
     Page<Document>
     findByDocumentType_DocumentTypeId(
             Integer typeId, Pageable pageable);
@@ -45,11 +43,9 @@ public interface DocumentRepository
             @Param("expiryDate")
             LocalDate expiryDate);
 
-    // Count by document type
     long countByDocumentType_DocumentTypeId(
             Integer documentTypeId);
 
-    // Expiring by officer
     @Query("""
     SELECT d FROM Document d
     WHERE d.expiryDate <= :expiryDate
@@ -62,7 +58,6 @@ public interface DocumentRepository
             @Param("expiryDate") LocalDate expiryDate,
             @Param("officerId")  Integer officerId);
 
-    //  Filter by status + type
     Page<Document>
     findByStatusCode_StatusCodeAndDocumentType_DocumentTypeId(
             String statusCode,

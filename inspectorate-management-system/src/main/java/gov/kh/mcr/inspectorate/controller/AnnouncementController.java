@@ -48,7 +48,7 @@ public class AnnouncementController {
                         service.getAll(
                                 page, size,
                                 status, priority),
-                        "ទទួលបន្ជីប្រកាស"));
+                        "ទទួលបានបញ្ជីប្រកាសដោយជោគជ័យ"));
     }
 
     // GET /announcements/{id}
@@ -64,7 +64,7 @@ public class AnnouncementController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         service.getById(id),
-                        "ទទួលបានប្រកាស"));
+                        "ទទួលបានព័ត៌មានប្រកាសដោយជោគជ័យ"));
     }
 
     // GET /announcements/{id}/read-status
@@ -81,7 +81,7 @@ public class AnnouncementController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         service.getReadStatus(id),
-                        "ស្ថានភាពការអាន"));
+                        "ទទួលបានស្ថានភាពការអានដោយជោគជ័យ"));
     }
 
     // POST /announcements
@@ -98,7 +98,7 @@ public class AnnouncementController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         service.create(request),
-                        "បង្កើតជោគជ័យ"));
+                        "បានបង្កើតការប្រកាសដោយជោគជ័យ"));
     }
 
     // POST /announcements/{id}/attachment
@@ -120,7 +120,7 @@ public class AnnouncementController {
                 .body(ApiResponse.success(
                         service.uploadAttachment(
                                 id, file),
-                        "Upload ជោគជ័យ"));
+                        "បានផ្ទុកឯកសារភ្ជាប់ដោយជោគជ័យ"));
     }
 
     // PUT /announcements/{id}
@@ -138,7 +138,7 @@ public class AnnouncementController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         service.update(id, request),
-                        "កែប្រែជោគជ័យ"));
+                        "បានកែប្រែព័ត៌មានប្រកាសដោយជោគជ័យ"));
     }
 
     // POST /announcements/{id}/mark-read
@@ -150,8 +150,6 @@ public class AnnouncementController {
             @PathVariable
             @Positive Integer id) {
 
-        // Fix — Get currentOfficerId
-        // from SecurityContext
         Integer officerId =
                 resolveCurrentOfficerId();
 
@@ -159,7 +157,7 @@ public class AnnouncementController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "Mark Read ជោគជ័យ"));
+                        null, "បានកំណត់ថាបានអានដោយជោគជ័យ"));
     }
 
     // DELETE /announcements/{id}
@@ -174,11 +172,9 @@ public class AnnouncementController {
         service.delete(id);
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "លុបជោគជ័យ"));
+                        null, "បានលុបដោយជោគជ័យ"));
     }
 
-    // ── Fix: Get current Officer ID ───────────────
-    // Block Admin/SuperAdmin (no officer)
     private Integer resolveCurrentOfficerId() {
         return securityUtils.getCurrentUser()
                 .map(user -> {
@@ -188,10 +184,7 @@ public class AnnouncementController {
                                 gov.kh.mcr.inspectorate
                                         .exception
                                         .BusinessException(
-                                "Admin មិនអាច"
-                                        + " mark read"
-                                        + " — Officer Account"
-                                        + " ប៉ុណ្ណោះ");
+                                "សកម្មភាពនេះអនុញ្ញាតសម្រាប់តែគណនីមន្ត្រីប៉ុណ្ណោះ");
                     }
                     return user.getOfficer()
                             .getOfficerId();
@@ -199,6 +192,6 @@ public class AnnouncementController {
                 .orElseThrow(() ->
                         new gov.kh.mcr.inspectorate
                                 .exception.UnauthorizedException(
-                                "ត្រូវ Login"));
+                                "ត្រូសូមចូលប្រព័ន្ធជាមុនសិន"));
     }
 }

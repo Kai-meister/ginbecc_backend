@@ -54,17 +54,13 @@ public class ActivityLogServiceImpl
                             .entityType(entityType)
                             .entityId(entityId)
                             .details(details);
-
-            // ប្រើ context (not SecurityContext)
             if (context != null) {
 
-                // Set IP + UserAgent
                 builder
                         .ipAddress(context.getIpAddress())
                         .userAgent(context.getUserAgent())
                         .userEmail(context.getUserEmail());
 
-                // Set User FK
                 if (context.getUserId() != null) {
                     userRepo.findById(
                                     context.getUserId())
@@ -76,7 +72,7 @@ public class ActivityLogServiceImpl
 
         } catch (Exception ex) {
             log.error(
-                    "ActivityLog save failed: {}",
+                    "ការរក្សាទុកប្រវត្តិនៃសកម្មភាព បានបរាជ័យ៖ {}",
                     ex.getMessage());
         }
     }
@@ -107,7 +103,6 @@ public class ActivityLogServiceImpl
                     || "anonymousUser".equals(
                     auth.getPrincipal())) {
 
-                // System log — no user
                 logRepo.save(
                         ActivityLog.builder()
                                 .action(action)
@@ -138,7 +133,7 @@ public class ActivityLogServiceImpl
 
         } catch (Exception ex) {
             log.error(
-                    "ActivityLog save failed: {}",
+                    "ការរក្សាទុកប្រវត្តិនៃសកម្មភាព បានបរាជ័យ៖ {}",
                     ex.getMessage());
         }
     }
@@ -167,8 +162,6 @@ public class ActivityLogServiceImpl
                         .map(logMapper::toResponse));
     }
 
-
-    // GET BY ID
     @Override
     @Transactional(readOnly = true)
     public ActivityLogResponse getById(Integer id) {

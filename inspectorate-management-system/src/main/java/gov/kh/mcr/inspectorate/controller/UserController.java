@@ -44,7 +44,7 @@ public class UserController {
                         userService.getAll(
                                 page, size,
                                 roleId, status, keyword),
-                        "ទទួលបន្ជី User"));
+                        "ទទួលបានបញ្ជីអ្នកប្រើប្រាស់"));
     }
 
     // GET /users/{id}
@@ -59,7 +59,7 @@ public class UserController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         userService.getById(id),
-                        "ទទួលបាន User"));
+                        "ទទួលបានព័ត៌មានអ្នកប្រើប្រាស់"));
     }
 
     // GET /users/{id}/permissions
@@ -90,7 +90,7 @@ public class UserController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         userService.create(request),
-                        "បង្កើត User ជោគជ័យ"));
+                        "បង្កើតអ្នកប្រើប្រាស់បានជោគជ័យ"));
     }
 
     // PUT /users/{id}

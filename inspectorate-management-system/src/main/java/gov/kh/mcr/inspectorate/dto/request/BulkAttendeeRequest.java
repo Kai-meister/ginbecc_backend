@@ -10,10 +10,10 @@ import java.util.List;
 @Builder
 public class BulkAttendeeRequest {
 
-    @NotEmpty(message = "Officer list ចាំបាច់")
+    @NotEmpty(message = "សូមជ្រើសរើសបញ្ជីឈ្មោះមន្ត្រីយ៉ាងហោចណាស់ម្នាក់")
     private List<Integer> officerIds;
 
-    @NotNull(message = "តួនាទីចាំបាច់")
+    @NotNull(message = "សូមបញ្ជាក់តួនាទីរបស់មន្ត្រីចូលរួម")
     @Builder.Default
     private AttendeeRole role =
             AttendeeRole.ATTENDEE;

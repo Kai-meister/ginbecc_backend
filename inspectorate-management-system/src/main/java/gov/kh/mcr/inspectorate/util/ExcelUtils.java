@@ -1,6 +1,6 @@
 package gov.kh.mcr.inspectorate.util;
 
-import gov.kh.mcr.inspectorate.entity.*;
+import gov.kh.mcr.inspectorate.dto.response.report.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -8,7 +8,6 @@ import org.apache.poi.xssf.usermodel.*;
 import java.io.ByteArrayOutputStream;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Slf4j
@@ -19,70 +18,86 @@ public final class ExcelUtils {
     private static final DateTimeFormatter D =
             DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter DT =
-            DateTimeFormatter
-                    .ofPattern("dd/MM/yyyy HH:mm");
+            DateTimeFormatter.ofPattern(
+                    "dd/MM/yyyy HH:mm");
 
+    private static final String ORG_NAME =
+            "អគ្គាធិការដ្ឋានពុទ្ធិកសិក្សាជាតិ";
+    private static final String ORG_NAME_EN =
+            "National Inspectorate of Buddhist Education";
+
+
+    private static final byte[] HDR_BG =
+            hex("#401E12");
+    private static final byte[] SUB_BG =
+            hex("#895129");
+    private static final byte[] ALT_BG =
+            hex("#E7C6A2");
+    private static final byte[] WARN_BG =
+            hex("#FCE4D6");
+    private static final byte[] SUM_BG =
+            hex("#E2EFDA");
+    private static final byte[] WHITE =
+            hex("#FFFFFF");
 
     public static byte[] officers(
-            List<Officer> list) {
+            List<OfficerReportResponse> list,
+            Integer deptId,
+            String status,
+            LocalDate from,
+            LocalDate to) {
 
-        try (XSSFWorkbook wb =
-                     new XSSFWorkbook()) {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
 
             XSSFSheet sh =
                     wb.createSheet("មន្ត្រីរាជការ");
             Styles s = new Styles(wb);
+            int cols = 10;
+            int r = 0;
 
-            title(sh, wb,
-                    "របាយការណ៍មន្ត្រីរាជការ", 9);
-            headers(sh, s.hdr, new String[]{
-                    "ល.រ", "លេខសម្គាល់",
+            r = orgHeader(sh, wb, r, cols);
+
+            r = reportTitle(sh, wb, r, cols,
+                    "របាយការណ៍មន្ត្រីរាជការ");
+
+            r = filterBar(sh, wb, r, cols,
+                    null, status, from, to);
+
+            r = colHeaders(sh, s, r, new String[]{
+                    "ល.រ",
+                    "លេខសម្គាល់",
                     "គោត្តនាម ឈ្មោះ",
                     "ភេទ",
                     "ថ្ងៃខែឆ្នាំកំណើត",
-                    "នាយកដ្ឋាន", "តំណែង",
-                    "ថ្ងៃចូលបម្រើ", "ស្ថានភាព"
+                    "អាយុ",
+                    "នាយកដ្ឋាន",
+                    "តំណែង",
+                    "ថ្ងៃចូលបម្រើ",
+                    "ស្ថានភាព"
             });
 
-            int r = 3;
-            for (int i = 0;
-                 i < list.size(); i++) {
-                Officer o = list.get(i);
+            for (var o : list) {
                 Row row = sh.createRow(r++);
-                row.setHeightInPoints(20);
-                CellStyle cs = alt(s, i);
-
-                c(row, 0, (i+1)+"", cs);
-                c(row, 1,
-                        o.getOfficerCode(), cs);
-                c(row, 2,
-                        o.getFullNameKh(), cs);
-                c(row, 3,
-                        o.getGender() != null
-                                ? o.getGender().name()
-                                : "", cs);
-                c(row, 4,
-                        d(o.getDob()), cs);
-                c(row, 5,
-                        o.getDepartment() != null
-                                ? o.getDepartment()
-                                  .getDepartmentName()
-                                : "", cs);
-                c(row, 6,
-                        o.getPosition() != null
-                                ? o.getPosition()
-                                  .getPositionName()
-                                : "", cs);
-                c(row, 7,
-                        d(o.getJoinDate()), cs);
-                c(row, 8,
-                        lbl(o.getStatusCode()), cs);
+                row.setHeightInPoints(22);
+                CellStyle cs = alt(s, o.getNo());
+                c(row, 0,  o.getNo()+"",          cs);
+                c(row, 1,  nv(o.getOfficerCode()), cs);
+                c(row, 2,  nv(o.getFullNameKh()),  cs);
+                c(row, 3,  nv(o.getGenderLabel()), cs);
+                c(row, 4,  d(o.getDob()),           cs);
+                c(row, 5,  o.getAge() != null
+                        ? o.getAge()+" ឆ្នាំ" : "",  cs);
+                c(row, 6,  nv(o.getDepartmentName()),cs);
+                c(row, 7,  nv(o.getPositionName()), cs);
+                c(row, 8,  d(o.getJoinDate()),      cs);
+                c(row, 9,  nv(o.getStatusLabel()),  cs);
             }
 
-            summary(sh, wb, r,
-                    "សរុប: " + list.size()
-                            + " នាក់", 9);
-            auto(sh, 9);
+            summaryBar(sh, wb, r, cols,
+                    "សរុប: " + list.size() + " នាក់");
+
+            autoWidth(sh, cols);
+            freezeHeader(sh, 4); // freeze row 1-4
             return bytes(wb);
 
         } catch (Exception e) {
@@ -92,70 +107,65 @@ public final class ExcelUtils {
         }
     }
 
-
     public static byte[] contractOfficers(
-            List<ContractOfficer> list,
-            int withinDays) {
+            List<ContractOfficerReportResponse> list,
+            Integer days) {
 
-        try (XSSFWorkbook wb =
-                     new XSSFWorkbook()) {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
 
             XSSFSheet sh =
                     wb.createSheet("Contract Officers");
             Styles s = new Styles(wb);
+            int cols = 11;
+            int r = 0;
 
-            title(sh, wb,
-                    "មន្ត្រីកិច្ចសន្យា ផុតក្នុង "
-                            + withinDays + " ថ្ងៃ", 8);
+            r = orgHeader(sh, wb, r, cols);
+            r = reportTitle(sh, wb, r, cols,
+                    "របាយការណ៍មន្ត្រីជាប់កិច្ចសន្យា");
+            r = filterBar(sh, wb, r, cols,
+                    "ជិតផុតក្នុង: "
+                            + (days != null ? days : 30)
+                            + " ថ្ងៃ",
+                    null, null, null);
 
-            headers(sh, s.hdr, new String[]{
+            r = colHeaders(sh, s, r, new String[]{
                     "ល.រ", "លេខសម្គាល់",
                     "គោត្តនាម ឈ្មោះ",
-                    "នាយកដ្ឋាន",
+                    "ភេទ", "ថ្ងៃខែឆ្នាំ",
+                    "អាយុ", "នាយកដ្ឋាន",
                     "ចាប់ផ្ដើម", "ផុតកំណត់",
-                    "ថ្ងៃនៅសល់", "ស្ថានភាព"
+                    "ថ្ងៃនៅសល់",
+                    "លេខកូដគណនេយ្យ"
             });
 
-            int r = 3;
-            for (int i = 0;
-                 i < list.size(); i++) {
-                ContractOfficer o = list.get(i);
-                long days =
-                        o.getEndDate() != null
-                                ? ChronoUnit.DAYS.between(
-                                LocalDate.now(),
-                                o.getEndDate())
-                                : 0;
-
+            for (var c2 : list) {
                 Row row = sh.createRow(r++);
-                row.setHeightInPoints(20);
-                CellStyle cs = days <= 7
-                        ? s.warn : alt(s, i);
+                row.setHeightInPoints(22);
+                long daysLeft =
+                        c2.getDaysUntilExpiry() != null
+                                ? c2.getDaysUntilExpiry()
+                                : 0;
+                CellStyle cs = daysLeft <= 7
+                        ? s.warn : alt(s, c2.getNo());
 
-                c(row, 0, (i+1)+"", cs);
-                c(row, 1,
-                        o.getContractOfficerCode(),
-                        cs);
-                c(row, 2,
-                        o.getFullNameKh(), cs);
-                c(row, 3,
-                        o.getDepartment() != null
-                                ? o.getDepartment()
-                                  .getDepartmentName()
-                                : "", cs);
-                c(row, 4,
-                        d(o.getStartDate()), cs);
-                c(row, 5,
-                        d(o.getEndDate()), cs);
-                c(row, 6, days+"ថ្ងៃ", cs);
-                c(row, 7,
-                        lbl(o.getStatusCode()), cs);
+                c(row, 0,  c2.getNo()+"",                cs);
+                c(row, 1,  nv(c2.getContractOfficerCode()),cs);
+                c(row, 2,  nv(c2.getFullNameKh()),        cs);
+                c(row, 3,  nv(c2.getGenderLabel()),       cs);
+                c(row, 4,  d(c2.getDob()),                cs);
+                c(row, 5,  c2.getAge() != null
+                        ? c2.getAge()+" ឆ្នាំ" : "",      cs);
+                c(row, 6,  nv(c2.getDepartmentName()),    cs);
+                c(row, 7,  d(c2.getStartDate()),          cs);
+                c(row, 8,  d(c2.getEndDate()),            cs);
+                c(row, 9,  nv(c2.getExpiryLabel()),       cs);
+                c(row, 10, nv(c2.getAccountingCode()),    cs);
             }
 
-            summary(sh, wb, r,
-                    "សរុប: " + list.size()
-                            + " នាក់", 8);
-            auto(sh, 8);
+            summaryBar(sh, wb, r, cols,
+                    "សរុប: " + list.size() + " នាក់");
+            autoWidth(sh, cols);
+            freezeHeader(sh, 4);
             return bytes(wb);
 
         } catch (Exception e) {
@@ -166,64 +176,60 @@ public final class ExcelUtils {
     }
 
     public static byte[] documents(
-            List<Document> list) {
+            List<DocumentReportResponse> list,
+            Integer officerId,
+            String status,
+            LocalDate from,
+            LocalDate to) {
 
-        try (XSSFWorkbook wb =
-                     new XSSFWorkbook()) {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
 
             XSSFSheet sh = wb.createSheet("ឯកសារ");
             Styles s = new Styles(wb);
+            int cols = 9;
+            int r = 0;
 
-            title(sh, wb,
-                    "របាយការណ៍ឯកសារ", 8);
-            headers(sh, s.hdr, new String[]{
+            r = orgHeader(sh, wb, r, cols);
+            r = reportTitle(sh, wb, r, cols,
+                    "របាយការណ៍ឯកសារ");
+            r = filterBar(sh, wb, r, cols,
+                    null, status, from, to);
+
+            r = colHeaders(sh, s, r, new String[]{
                     "ល.រ", "លេខឯកសារ",
                     "ឈ្មោះឯកសារ", "ប្រភេទ",
-                    "មន្ត្រី", "ផុតកំណត់",
-                    "ស្ថានភាព", "ថ្ងៃបង្កើត"
+                    "មន្ត្រី", "នាយកដ្ឋាន",
+                    "ផុតកំណត់", "ស្ថានភាព",
+                    "ថ្ងៃបង្កើត"
             });
 
-            int r = 3;
-            for (int i = 0;
-                 i < list.size(); i++) {
-                Document doc = list.get(i);
-                boolean exp =
-                        doc.getExpiryDate() != null
-                                && doc.getExpiryDate()
-                                .isBefore(LocalDate.now());
-
+            long expired = 0;
+            for (var d2 : list) {
+                boolean exp = Boolean.TRUE.equals(
+                        d2.getIsExpired());
+                if (exp) expired++;
                 Row row = sh.createRow(r++);
-                row.setHeightInPoints(20);
+                row.setHeightInPoints(22);
                 CellStyle cs = exp
-                        ? s.warn : alt(s, i);
+                        ? s.warn : alt(s, d2.getNo());
 
-                c(row, 0, (i+1)+"", cs);
-                c(row, 1,
-                        doc.getDocumentNumber(), cs);
-                c(row, 2,
-                        doc.getDocumentName(), cs);
-                c(row, 3,
-                        doc.getDocumentType() != null
-                                ? doc.getDocumentType()
-                                  .getDocumentTypeName()
-                                : "", cs);
-                c(row, 4,
-                        doc.getOfficer() != null
-                                ? doc.getOfficer()
-                                  .getFullNameKh()
-                                : "", cs);
-                c(row, 5,
-                        d(doc.getExpiryDate()), cs);
-                c(row, 6,
-                        lbl(doc.getStatusCode()), cs);
-                c(row, 7,
-                        dt(doc.getCreatedAt()), cs);
+                c(row, 0, d2.getNo()+"",              cs);
+                c(row, 1, nv(d2.getDocumentNumber()), cs);
+                c(row, 2, nv(d2.getDocumentName()),   cs);
+                c(row, 3, nv(d2.getDocumentTypeName()),cs);
+                c(row, 4, nv(d2.getOfficerName()),    cs);
+                c(row, 5, nv(d2.getDepartmentName()), cs);
+                c(row, 6, d(d2.getExpiryDate()),      cs);
+                c(row, 7, nv(d2.getStatusLabel()),    cs);
+                c(row, 8, dt(d2.getCreatedAt()),      cs);
             }
 
-            summary(sh, wb, r,
+            summaryBar(sh, wb, r, cols,
                     "សរុប: " + list.size()
-                            + " ឯកសារ", 8);
-            auto(sh, 8);
+                            + "  |  ផុតកំណត់: "
+                            + expired);
+            autoWidth(sh, cols);
+            freezeHeader(sh, 4);
             return bytes(wb);
 
         } catch (Exception e) {
@@ -234,76 +240,62 @@ public final class ExcelUtils {
     }
 
     public static byte[] approvals(
-            List<Approval> list) {
+            List<ApprovalReportResponse> list,
+            String status,
+            LocalDate from,
+            LocalDate to) {
 
-        try (XSSFWorkbook wb =
-                     new XSSFWorkbook()) {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
 
             XSSFSheet sh =
                     wb.createSheet("Approvals");
             Styles s = new Styles(wb);
+            int cols = 8;
+            int r = 0;
 
-            title(sh, wb,
-                    "របាយការណ៍ការអនុម័ត", 7);
-            headers(sh, s.hdr, new String[]{
+            r = orgHeader(sh, wb, r, cols);
+            r = reportTitle(sh, wb, r, cols,
+                    "របាយការណ៍ការអនុម័ត");
+            r = filterBar(sh, wb, r, cols,
+                    null, status, from, to);
+
+            r = colHeaders(sh, s, r, new String[]{
                     "ល.រ", "ឈ្មោះឯកសារ",
-                    "ស្នើដោយ", "អនុម័តដោយ",
-                    "ស្ថានភាព", "ហេតុផល",
-                    "ថ្ងៃស្នើ"
+                    "ស្នើដោយ", "នាយកដ្ឋាន",
+                    "អនុម័តដោយ", "ស្ថានភាព",
+                    "ហេតុផល", "ថ្ងៃស្នើ"
             });
 
-            int r = 3;
             long approved = 0, rejected = 0;
-
-            for (int i = 0;
-                 i < list.size(); i++) {
-                Approval a = list.get(i);
-                String code =
-                        a.getStatusCode() != null
-                                ? a.getStatusCode()
-                                  .getStatusCode() : "";
-
-                if ("APPROVED".equals(code))
-                    approved++;
-                else if ("REJECTED".equals(code))
-                    rejected++;
+            for (var a : list) {
+                if ("APPROVED".equals(
+                        a.getStatusCode())) approved++;
+                else if ("REJECTED".equals(
+                        a.getStatusCode())) rejected++;
 
                 Row row = sh.createRow(r++);
-                row.setHeightInPoints(20);
+                row.setHeightInPoints(22);
                 CellStyle cs =
-                        "REJECTED".equals(code)
-                                ? s.warn : alt(s, i);
+                        "REJECTED".equals(
+                                a.getStatusCode())
+                                ? s.warn : alt(s, a.getNo());
 
-                c(row, 0, (i+1)+"", cs);
-                c(row, 1,
-                        a.getDocument() != null
-                                ? a.getDocument()
-                                  .getDocumentName()
-                                : "", cs);
-                c(row, 2,
-                        a.getRequestedBy() != null
-                                ? a.getRequestedBy()
-                                  .getFullNameKh()
-                                : "", cs);
-                c(row, 3,
-                        a.getApprovedBy() != null
-                                ? a.getApprovedBy()
-                                  .getUserNameKh()
-                                : "", cs);
-                c(row, 4, lbl(a.getStatusCode()),
-                        cs);
-                c(row, 5,
-                        a.getComment() != null
-                                ? a.getComment() : "", cs);
-                c(row, 6,
-                        dt(a.getRequestedAt()), cs);
+                c(row, 0, a.getNo()+"",             cs);
+                c(row, 1, nv(a.getDocumentName()),  cs);
+                c(row, 2, nv(a.getRequestedBy()),   cs);
+                c(row, 3, nv(a.getRequestedByDept()),cs);
+                c(row, 4, nv(a.getApprovedBy()),    cs);
+                c(row, 5, nv(a.getStatusLabel()),   cs);
+                c(row, 6, nv(a.getComment()),       cs);
+                c(row, 7, dt(a.getRequestedAt()),   cs);
             }
 
-            summary(sh, wb, r,
+            summaryBar(sh, wb, r, cols,
                     "សរុប: " + list.size()
-                            + " | អនុម័ត: " + approved
-                            + " | បដិសេធ: " + rejected, 7);
-            auto(sh, 7);
+                            + "  |  អនុម័ត: " + approved
+                            + "  |  បដិសេធ: " + rejected);
+            autoWidth(sh, cols);
+            freezeHeader(sh, 4);
             return bytes(wb);
 
         } catch (Exception e) {
@@ -314,66 +306,61 @@ public final class ExcelUtils {
     }
 
     public static byte[] meetings(
-            List<Meeting> list,
-            int month, int year) {
+            List<MeetingReportResponse> list,
+            int month, int year,
+            String status) {
 
-        try (XSSFWorkbook wb =
-                     new XSSFWorkbook()) {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
 
             XSSFSheet sh =
                     wb.createSheet("ការប្រជុំ");
             Styles s = new Styles(wb);
+            int cols = 9;
+            int r = 0;
 
-            title(sh, wb,
+            r = orgHeader(sh, wb, r, cols);
+            r = reportTitle(sh, wb, r, cols,
                     "របាយការណ៍ប្រជុំ — "
                             + String.format("%02d", month)
-                            + "/" + year, 7);
+                            + "/" + year);
+            r = filterBar(sh, wb, r, cols,
+                    null, status, null, null);
 
-            headers(sh, s.hdr, new String[]{
+            r = colHeaders(sh, s, r, new String[]{
                     "ល.រ", "ចំណងជើង",
-                    "ថ្ងៃប្រជុំ", "ម៉ោង",
-                    "បន្ទប់", "ប្រភេទ",
+                    "ប្រភេទ", "ថ្ងៃប្រជុំ",
+                    "ម៉ោង", "បន្ទប់",
+                    "អ្នករៀបចំ",
+                    "វត្តមាន/សរុប",
                     "ស្ថានភាព"
             });
 
-            int r = 3;
-            for (int i = 0;
-                 i < list.size(); i++) {
-                Meeting m = list.get(i);
+            for (var m : list) {
                 Row row = sh.createRow(r++);
-                row.setHeightInPoints(20);
-                CellStyle cs = alt(s, i);
+                row.setHeightInPoints(22);
+                CellStyle cs = alt(s, m.getNo());
 
-                c(row, 0, (i+1)+"", cs);
-                c(row, 1, m.getTitle(), cs);
-                c(row, 2,
-                        d(m.getMeetingDate()), cs);
-                c(row, 3,
-                        (m.getStartTime() != null
-                                ? m.getStartTime()
-                                  .toString() : "")
-                                + " - "
-                                + (m.getEndTime() != null
-                                ? m.getEndTime()
-                                  .toString() : ""),
-                        cs);
-                c(row, 4,
-                        m.getRoom() != null
-                                ? m.getRoom()
-                                  .getRoomCode()
-                                : "Online", cs);
-                c(row, 5,
-                        m.getMeetingType() != null
-                                ? m.getMeetingType()
-                                  .name() : "", cs);
-                c(row, 6,
-                        lbl(m.getStatusCode()), cs);
+                c(row, 0, m.getNo()+"",             cs);
+                c(row, 1, nv(m.getTitle()),          cs);
+                c(row, 2, nv(m.getMeetingType()),    cs);
+                c(row, 3, d(m.getMeetingDate()),     cs);
+                c(row, 4, (m.getStartTime() != null
+                        ? m.getStartTime().toString()
+                        : "") + " - "
+                        + (m.getEndTime() != null
+                        ? m.getEndTime().toString()
+                        : ""),                        cs);
+                c(row, 5, nv(m.getRoomCode()),       cs);
+                c(row, 6, nv(m.getOrganizerName()),  cs);
+                c(row, 7, m.getAttendedCount()
+                        + "/" + m.getTotalAttendees(), cs);
+                c(row, 8, nv(m.getStatusLabel()),    cs);
             }
 
-            summary(sh, wb, r,
-                    "សរុប: " + list.size()
-                            + " ប្រជុំ", 7);
-            auto(sh, 7);
+            summaryBar(sh, wb, r, cols,
+                    "សរុប: " + list.size() + " ប្រជុំ");
+            autoWidth(sh, cols);
+            freezeHeader(sh, 4);
             return bytes(wb);
 
         } catch (Exception e) {
@@ -384,59 +371,50 @@ public final class ExcelUtils {
     }
 
     public static byte[] meetingMinutes(
-            List<MeetingMinute> list) {
+            List<MeetingMinuteReportResponse> list) {
 
-        try (XSSFWorkbook wb =
-                     new XSSFWorkbook()) {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
 
             XSSFSheet sh =
-                    wb.createSheet("Meeting Minutes");
+                    wb.createSheet("Minutes");
             Styles s = new Styles(wb);
+            int cols = 7;
+            int r = 0;
 
-            title(sh, wb,
-                    "របាយការណ៍កំណត់ហេតុប្រជុំ",
-                    6);
-            headers(sh, s.hdr, new String[]{
+            r = orgHeader(sh, wb, r, cols);
+            r = reportTitle(sh, wb, r, cols,
+                    "របាយការណ៍កំណត់ហេតុប្រជុំ");
+            r = filterBar(sh, wb, r, cols,
+                    null, null, null, null);
+
+            r = colHeaders(sh, s, r, new String[]{
                     "ល.រ", "ការប្រជុំ",
                     "ថ្ងៃប្រជុំ", "សង្ខេប",
-                    "ការសម្រេច", "កត់ហេតុដោយ"
+                    "ការសម្រេច",
+                    "កត់ហេតុដោយ", "File"
             });
 
-            int r = 3;
-            for (int i = 0;
-                 i < list.size(); i++) {
-                MeetingMinute m = list.get(i);
+            for (var m : list) {
                 Row row = sh.createRow(r++);
                 row.setHeightInPoints(30);
-                CellStyle cs = alt(s, i);
+                CellStyle cs = alt(s, m.getNo());
 
-                c(row, 0, (i+1)+"", cs);
-                c(row, 1,
-                        m.getMeeting() != null
-                                ? m.getMeeting()
-                                  .getTitle() : "", cs);
-                c(row, 2,
-                        m.getMeeting() != null
-                                ? d(m.getMeeting()
-                                    .getMeetingDate())
-                                : "", cs);
-                c(row, 3,
-                        trunc(m.getSummary(), 100),
-                        cs);
-                c(row, 4,
-                        trunc(m.getDecisions(), 100),
-                        cs);
-                c(row, 5,
-                        m.getRecordedBy() != null
-                                ? m.getRecordedBy()
-                                  .getUserNameKh()
-                                : "", cs);
+                c(row, 0, m.getNo()+"",              cs);
+                c(row, 1, nv(m.getMeetingTitle()),   cs);
+                c(row, 2, d(m.getMeetingDate()),     cs);
+                c(row, 3, trunc(m.getSummary(), 80), cs);
+                c(row, 4, trunc(m.getDecisions(), 80),cs);
+                c(row, 5, nv(m.getRecordedBy()),     cs);
+                c(row, 6, Boolean.TRUE.equals(
+                        m.getHasAttachment())
+                        ? "✓" : "",                  cs);
             }
 
-            summary(sh, wb, r,
+            summaryBar(sh, wb, r, cols,
                     "សរុប: " + list.size()
-                            + " កំណត់ហេតុ", 6);
-            auto(sh, 6);
+                            + " កំណត់ហេតុ");
+            autoWidth(sh, cols);
+            freezeHeader(sh, 4);
             return bytes(wb);
 
         } catch (Exception e) {
@@ -447,53 +425,55 @@ public final class ExcelUtils {
     }
 
     public static byte[] announcements(
-            List<Announcement> list) {
+            List<AnnouncementReportResponse> list,
+            String status,
+            String priority,
+            LocalDate from,
+            LocalDate to) {
 
-        try (XSSFWorkbook wb =
-                     new XSSFWorkbook()) {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
 
             XSSFSheet sh =
                     wb.createSheet("Announcements");
             Styles s = new Styles(wb);
+            int cols = 8;
+            int r = 0;
 
-            title(sh, wb,
-                    "របាយការណ៍សេចក្ដីប្រកាស", 6);
-            headers(sh, s.hdr, new String[]{
+            r = orgHeader(sh, wb, r, cols);
+            r = reportTitle(sh, wb, r, cols,
+                    "របាយការណ៍សេចក្ដីប្រកាស");
+            r = filterBar(sh, wb, r, cols,
+                    priority != null
+                            ? "អាទិភាព: " + priority
+                            : null,
+                    status, from, to);
+
+            r = colHeaders(sh, s, r, new String[]{
                     "ល.រ", "ចំណងជើង",
-                    "អ្នកបង្កើត",
-                    "អាទិភាព", "ស្ថានភាព",
-                    "ថ្ងៃបង្កើត"
+                    "អ្នកបង្កើត", "អាទិភាព",
+                    "ស្ថានភាព", "អ្នកទទួល",
+                    "អាន", "មិនទាន់អាន"
             });
 
-            int r = 3;
-            for (int i = 0;
-                 i < list.size(); i++) {
-                Announcement a = list.get(i);
+            for (var a : list) {
                 Row row = sh.createRow(r++);
-                row.setHeightInPoints(20);
-                CellStyle cs = alt(s, i);
+                row.setHeightInPoints(22);
+                CellStyle cs = alt(s, a.getNo());
 
-                c(row, 0, (i+1)+"", cs);
-                c(row, 1, a.getTitle(), cs);
-                c(row, 2,
-                        a.getCreatedBy() != null
-                                ? a.getCreatedBy()
-                                  .getUserNameKh()
-                                : "", cs);
-                c(row, 3,
-                        a.getPriority() != null
-                                ? a.getPriority().name()
-                                : "", cs);
-                c(row, 4,
-                        lbl(a.getStatusCode()), cs);
-                c(row, 5,
-                        dt(a.getCreatedAt()), cs);
+                c(row, 0, a.getNo()+"",                cs);
+                c(row, 1, nv(a.getTitle()),             cs);
+                c(row, 2, nv(a.getCreatedBy()),         cs);
+                c(row, 3, nv(a.getPriorityLabel()),     cs);
+                c(row, 4, nv(a.getStatusLabel()),       cs);
+                c(row, 5, a.getTotalRecipients()+"",    cs);
+                c(row, 6, a.getReadCount()+"",          cs);
+                c(row, 7, a.getUnreadCount()+"",        cs);
             }
 
-            summary(sh, wb, r,
-                    "សរុប: " + list.size()
-                            + " ប្រកាស", 6);
-            auto(sh, 6);
+            summaryBar(sh, wb, r, cols,
+                    "សរុប: " + list.size() + " ប្រកាស");
+            autoWidth(sh, cols);
+            freezeHeader(sh, 4);
             return bytes(wb);
 
         } catch (Exception e) {
@@ -503,64 +483,58 @@ public final class ExcelUtils {
         }
     }
 
-    // ─────────────────────────────────────────────
-    // 8. AUDIT LOGS
-    // ─────────────────────────────────────────────
     public static byte[] auditLogs(
-            List<ActivityLog> list) {
+            List<AuditLogReportResponse> list,
+            String action,
+            String entityType,
+            LocalDate from,
+            LocalDate to) {
 
-        try (XSSFWorkbook wb =
-                     new XSSFWorkbook()) {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
 
             XSSFSheet sh =
                     wb.createSheet("Audit Logs");
             Styles s = new Styles(wb);
+            int cols = 7;
+            int r = 0;
 
-            title(sh, wb,
-                    "របាយការណ៍សកម្មភាព", 7);
-            headers(sh, s.hdr, new String[]{
-                    "ល.រ", "អ្នកប្រើ", "Email",
-                    "សកម្មភាព", "Entity",
-                    "IP Address", "ពេលវេលា"
+            r = orgHeader(sh, wb, r, cols);
+            r = reportTitle(sh, wb, r, cols,
+                    "របាយការណ៍ប្រវត្តិសកម្មភាព");
+            r = filterBar(sh, wb, r, cols,
+                    (action != null
+                            ? "សកម្មភាព: " + action
+                            : null),
+                    entityType, from, to);
+
+            r = colHeaders(sh, s, r, new String[]{
+                    "ល.រ", "អ្នកប្រើ",
+                    "Email", "សកម្មភាព",
+                    "Entity", "IP",
+                    "ពេលវេលា"
             });
 
-            int r = 3;
-            for (int i = 0;
-                 i < list.size(); i++) {
-                ActivityLog l = list.get(i);
+            for (var l : list) {
                 Row row = sh.createRow(r++);
-                row.setHeightInPoints(20);
-                CellStyle cs = alt(s, i);
+                row.setHeightInPoints(22);
+                CellStyle cs = alt(s, l.getNo());
 
-                c(row, 0, (i+1)+"", cs);
-                c(row, 1,
-                        l.getUser() != null
-                                ? l.getUser()
-                                  .getUserNameKh()
-                                : "SYSTEM", cs);
-                c(row, 2,
-                        l.getUserEmail() != null
-                                ? l.getUserEmail()
-                                : "", cs);
-                c(row, 3,
-                        actionKh(l.getAction()),
-                        cs);
-                c(row, 4,
-                        nvl(l.getEntityType(), "")
-                                + (l.getEntityId() != null
-                                ? " #"+l.getEntityId()
-                                : ""), cs);
-                c(row, 5,
-                        nvl(l.getIpAddress(), ""),
-                        cs);
-                c(row, 6,
-                        dt(l.getCreatedAt()), cs);
+                c(row, 0, l.getNo()+"",          cs);
+                c(row, 1, nv(l.getUserNameKh()), cs);
+                c(row, 2, nv(l.getUserEmail()),  cs);
+                c(row, 3, nv(l.getActionLabel()),cs);
+                c(row, 4, (nv(l.getEntityType()))
+                        + (l.getEntityId() != null
+                        ? " #"+l.getEntityId()
+                        : ""),                   cs);
+                c(row, 5, nv(l.getIpAddress()), cs);
+                c(row, 6, dt(l.getCreatedAt()), cs);
             }
 
-            summary(sh, wb, r,
-                    "សរុប: " + list.size()
-                            + " Log", 7);
-            auto(sh, 7);
+            summaryBar(sh, wb, r, cols,
+                    "សរុប: " + list.size() + " Log");
+            autoWidth(sh, cols);
+            freezeHeader(sh, 4);
             return bytes(wb);
 
         } catch (Exception e) {
@@ -570,67 +544,62 @@ public final class ExcelUtils {
         }
     }
 
-    // ─────────────────────────────────────────────
-    // 9. NOTIFICATIONS
-    // ─────────────────────────────────────────────
     public static byte[] notifications(
-            List<Notification> list) {
+            List<NotificationReportResponse> list,
+            String type,
+            LocalDate from,
+            LocalDate to) {
 
-        try (XSSFWorkbook wb =
-                     new XSSFWorkbook()) {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
 
             XSSFSheet sh =
                     wb.createSheet("Notifications");
             Styles s = new Styles(wb);
+            int cols = 7;
+            int r = 0;
 
-            title(sh, wb,
-                    "របាយការណ៍ការជូនដំណឹង", 6);
-            headers(sh, s.hdr, new String[]{
+            r = orgHeader(sh, wb, r, cols);
+            r = reportTitle(sh, wb, r, cols,
+                    "របាយការណ៍ការជូនដំណឹង");
+            r = filterBar(sh, wb, r, cols,
+                    type != null
+                            ? "ប្រភេទ: " + type
+                            : null,
+                    null, from, to);
+
+            r = colHeaders(sh, s, r, new String[]{
                     "ល.រ", "ទទួលដោយ",
                     "ចំណងជើង", "ប្រភេទ",
-                    "អានហើយ?", "ពេលបង្កើត"
+                    "ស្ថានភាព", "ពេលបង្កើត",
+                    "ពេលអាន"
             });
 
-            int r = 3;
-            long read = 0;
+            long read = list.stream()
+                    .filter(n -> Boolean.TRUE.equals(
+                            n.getIsRead()))
+                    .count();
 
-            for (int i = 0;
-                 i < list.size(); i++) {
-                Notification n = list.get(i);
-                if (Boolean.TRUE.equals(
-                        n.getIsRead())) read++;
-
+            for (var n : list) {
                 Row row = sh.createRow(r++);
-                row.setHeightInPoints(20);
-                CellStyle cs = alt(s, i);
+                row.setHeightInPoints(22);
+                CellStyle cs = alt(s, n.getNo());
 
-                c(row, 0, (i+1)+"", cs);
-                c(row, 1,
-                        n.getUser() != null
-                                ? n.getUser()
-                                  .getUserNameKh()
-                                : "", cs);
-                c(row, 2, n.getTitle(), cs);
-                c(row, 3,
-                        n.getType() != null
-                                ? n.getType()
-                                  .getLabelKh()
-                                : "", cs);
-                c(row, 4,
-                        Boolean.TRUE.equals(
-                                n.getIsRead())
-                                ? "អាន" : "មិនទាន់",
-                        cs);
-                c(row, 5,
-                        dt(n.getCreatedAt()), cs);
+                c(row, 0, n.getNo()+"",          cs);
+                c(row, 1, nv(n.getReceiverName()),cs);
+                c(row, 2, nv(n.getTitle()),      cs);
+                c(row, 3, nv(n.getTypeLabel()),  cs);
+                c(row, 4, nv(n.getReadStatus()), cs);
+                c(row, 5, dt(n.getCreatedAt()),  cs);
+                c(row, 6, dt(n.getReadAt()),     cs);
             }
 
-            summary(sh, wb, r,
+            summaryBar(sh, wb, r, cols,
                     "សរុប: " + list.size()
-                            + " | អាន: " + read
-                            + " | មិនទាន់: "
-                            + (list.size() - read), 6);
-            auto(sh, 6);
+                            + "  |  អាន: " + read
+                            + "  |  មិនទាន់: "
+                            + (list.size() - read));
+            autoWidth(sh, cols);
+            freezeHeader(sh, 4);
             return bytes(wb);
 
         } catch (Exception e) {
@@ -640,60 +609,54 @@ public final class ExcelUtils {
         }
     }
 
-    // ─────────────────────────────────────────────
-    // 10. USERS
-    // ─────────────────────────────────────────────
     public static byte[] users(
-            List<User> list) {
+            List<UserReportResponse> list,
+            String status) {
 
-        try (XSSFWorkbook wb =
-                     new XSSFWorkbook()) {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
 
             XSSFSheet sh = wb.createSheet("Users");
             Styles s = new Styles(wb);
+            int cols = 8;
+            int r = 0;
 
-            title(sh, wb,
-                    "របាយការណ៍អ្នកប្រើប្រាស់", 6);
-            headers(sh, s.hdr, new String[]{
+            r = orgHeader(sh, wb, r, cols);
+            r = reportTitle(sh, wb, r, cols,
+                    "របាយការណ៍អ្នកប្រើប្រាស់");
+            r = filterBar(sh, wb, r, cols,
+                    null, status, null, null);
+
+            r = colHeaders(sh, s, r, new String[]{
                     "ល.រ", "ឈ្មោះ KH",
-                    "ឈ្មោះ EN", "Email",
-                    "Role", "ស្ថានភាព"
+                    "Email", "Phone",
+                    "Role", "មន្ត្រី",
+                    "នាយកដ្ឋាន", "ស្ថានភាព"
             });
 
-            int r = 3;
-            for (int i = 0;
-                 i < list.size(); i++) {
-                User u = list.get(i);
+            for (var u : list) {
                 boolean blocked =
-                        u.getStatusCode() != null
-                                && !"ACTIVE".equals(
-                                u.getStatusCode()
-                                        .getStatusCode());
-
+                        !"ACTIVE".equals(
+                                u.getStatusCode());
                 Row row = sh.createRow(r++);
-                row.setHeightInPoints(20);
+                row.setHeightInPoints(22);
                 CellStyle cs = blocked
-                        ? s.warn : alt(s, i);
+                        ? s.warn : alt(s, u.getNo());
 
-                c(row, 0, (i+1)+"", cs);
-                c(row, 1, u.getUserNameKh(), cs);
-                c(row, 2,
-                        nvl(u.getUserNameEn(), ""),
-                        cs);
-                c(row, 3, u.getEmail(), cs);
-                c(row, 4,
-                        u.getRole() != null
-                                ? u.getRole()
-                                  .getDisplayName()
-                                : "", cs);
-                c(row, 5,
-                        lbl(u.getStatusCode()), cs);
+                c(row, 0, u.getNo()+"",              cs);
+                c(row, 1, nv(u.getUserNameKh()),     cs);
+                c(row, 2, nv(u.getEmail()),          cs);
+                c(row, 3, nv(u.getPhone()),          cs);
+                c(row, 4, nv(u.getRoleDisplay()),    cs);
+                c(row, 5, nv(u.getOfficerName()),    cs);
+                c(row, 6, nv(u.getDepartmentName()), cs);
+                c(row, 7, nv(u.getStatusLabel()),    cs);
             }
 
-            summary(sh, wb, r,
+            summaryBar(sh, wb, r, cols,
                     "សរុប: " + list.size()
-                            + " អ្នកប្រើ", 6);
-            auto(sh, 6);
+                            + " អ្នកប្រើ");
+            autoWidth(sh, cols);
+            freezeHeader(sh, 4);
             return bytes(wb);
 
         } catch (Exception e) {
@@ -703,9 +666,198 @@ public final class ExcelUtils {
         }
     }
 
-    // ══ SHARED HELPERS ════════════════════════════
+    private static int orgHeader(
+            XSSFSheet sh, XSSFWorkbook wb,
+            int r, int cols) {
 
-    // ── Styles ────────────────────────────────────
+        Row r0 = sh.createRow(r++);
+        r0.setHeightInPoints(28);
+        Cell c0 = r0.createCell(0);
+        c0.setCellValue(ORG_NAME);
+        CellStyle cs0 = wb.createCellStyle();
+        XSSFFont f0 = (XSSFFont) wb.createFont();
+        f0.setBold(true);
+        f0.setFontHeightInPoints((short) 12);
+        f0.setColor(new XSSFColor(HDR_BG, null));
+        cs0.setFont(f0);
+        cs0.setAlignment(HorizontalAlignment.CENTER);
+        cs0.setVerticalAlignment(
+                VerticalAlignment.CENTER);
+        c0.setCellStyle(cs0);
+        sh.addMergedRegion(
+                new CellRangeAddress(
+                        r-1, r-1, 0, cols-1));
+
+        Row r1 = sh.createRow(r++);
+        r1.setHeightInPoints(18);
+        Cell c1 = r1.createCell(0);
+        c1.setCellValue(ORG_NAME_EN);
+        CellStyle cs1 = wb.createCellStyle();
+        XSSFFont f1 = (XSSFFont) wb.createFont();
+        f1.setFontHeightInPoints((short) 9);
+        f1.setItalic(true);
+        f1.setColor(new XSSFColor(
+                hex("#555555"), null));
+        cs1.setFont(f1);
+        cs1.setAlignment(HorizontalAlignment.CENTER);
+        c1.setCellStyle(cs1);
+        sh.addMergedRegion(
+                new CellRangeAddress(
+                        r-1, r-1, 0, cols-1));
+
+        return r;
+    }
+
+    private static int reportTitle(
+            XSSFSheet sh, XSSFWorkbook wb,
+            int r, int cols, String title) {
+
+        Row row = sh.createRow(r++);
+        row.setHeightInPoints(36);
+        Cell cell = row.createCell(0);
+        cell.setCellValue(title);
+
+        CellStyle cs = wb.createCellStyle();
+        cs.setFillForegroundColor(
+                new XSSFColor(HDR_BG, null));
+        cs.setFillPattern(
+                FillPatternType.SOLID_FOREGROUND);
+        cs.setAlignment(HorizontalAlignment.CENTER);
+        cs.setVerticalAlignment(
+                VerticalAlignment.CENTER);
+
+        XSSFFont f = (XSSFFont) wb.createFont();
+        f.setBold(true);
+        f.setFontHeightInPoints((short) 14);
+        f.setColor(new XSSFColor(WHITE, null));
+        cs.setFont(f);
+        cell.setCellStyle(cs);
+
+        sh.addMergedRegion(
+                new CellRangeAddress(
+                        r-1, r-1, 0, cols-1));
+        return r;
+    }
+
+    private static int filterBar(
+            XSSFSheet sh, XSSFWorkbook wb,
+            int r, int cols,
+            String extra,
+            String status,
+            LocalDate from,
+            LocalDate to) {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("ទិន្នន័យ: ");
+
+        if (from != null && to != null) {
+            sb.append(from.format(D))
+                    .append(" → ")
+                    .append(to.format(D))
+                    .append("   ");
+        } else if (from != null) {
+            sb.append("ចាប់ពី ")
+                    .append(from.format(D))
+                    .append("   ");
+        } else if (to != null) {
+            sb.append("ដល់ ")
+                    .append(to.format(D))
+                    .append("   ");
+        } else {
+            sb.append("ទាំងអស់   ");
+        }
+
+        if (status != null && !status.isBlank()) {
+            sb.append("ស្ថានភាព: ")
+                    .append(status)
+                    .append("   ");
+        }
+        if (extra != null && !extra.isBlank()) {
+            sb.append(extra).append("   ");
+        }
+
+        sb.append("បោះពុម្ពថ្ងៃ: ")
+                .append(LocalDate.now().format(D));
+
+        Row row = sh.createRow(r++);
+        row.setHeightInPoints(20);
+        Cell cell = row.createCell(0);
+        cell.setCellValue(sb.toString());
+
+        CellStyle cs = wb.createCellStyle();
+        cs.setFillForegroundColor(
+                new XSSFColor(SUB_BG, null));
+        cs.setFillPattern(
+                FillPatternType.SOLID_FOREGROUND);
+        cs.setAlignment(HorizontalAlignment.CENTER);
+        cs.setVerticalAlignment(
+                VerticalAlignment.CENTER);
+
+        XSSFFont f = (XSSFFont) wb.createFont();
+        f.setFontHeightInPoints((short) 9);
+        f.setColor(new XSSFColor(WHITE, null));
+        cs.setFont(f);
+        cell.setCellStyle(cs);
+
+        sh.addMergedRegion(
+                new CellRangeAddress(
+                        r-1, r-1, 0, cols-1));
+        return r;
+    }
+
+    private static int colHeaders(
+            XSSFSheet sh, Styles s,
+            int r, String[] cols) {
+
+        Row row = sh.createRow(r++);
+        row.setHeightInPoints(28);
+        for (int i = 0; i < cols.length; i++) {
+            Cell cell = row.createCell(i);
+            cell.setCellValue(cols[i]);
+            cell.setCellStyle(s.hdr);
+        }
+        return r;
+    }
+
+    private static void summaryBar(
+            XSSFSheet sh, XSSFWorkbook wb,
+            int r, int cols, String text) {
+
+        // blank separator
+        sh.createRow(r++);
+
+        Row row = sh.createRow(r);
+        row.setHeightInPoints(22);
+        Cell cell = row.createCell(0);
+        cell.setCellValue(text);
+
+        CellStyle cs = wb.createCellStyle();
+        cs.setFillForegroundColor(
+                new XSSFColor(SUM_BG, null));
+        cs.setFillPattern(
+                FillPatternType.SOLID_FOREGROUND);
+        cs.setAlignment(HorizontalAlignment.RIGHT);
+        cs.setVerticalAlignment(
+                VerticalAlignment.CENTER);
+
+        XSSFFont f = (XSSFFont) wb.createFont();
+        f.setBold(true);
+        f.setFontHeightInPoints((short) 10);
+        f.setColor(new XSSFColor(
+                hex("#1F3864"), null));
+        cs.setFont(f);
+        cell.setCellStyle(cs);
+
+        sh.addMergedRegion(
+                new CellRangeAddress(
+                        r, r, 0, cols-1));
+    }
+
+    private static void freezeHeader(
+            XSSFSheet sh, int rows) {
+        sh.createFreezePane(0, rows);
+    }
+
     private static class Styles {
         final CellStyle hdr, data, alt, warn;
 
@@ -718,15 +870,13 @@ public final class ExcelUtils {
 
         private CellStyle mkHdr(XSSFWorkbook wb) {
             CellStyle cs = wb.createCellStyle();
-            XSSFFont f = wb.createFont();
+            XSSFFont f = (XSSFFont) wb.createFont();
             f.setBold(true);
-            f.setColor(IndexedColors.WHITE
-                    .getIndex());
-            f.setFontHeightInPoints((short)11);
+            f.setColor(new XSSFColor(WHITE, null));
+            f.setFontHeightInPoints((short) 10);
             cs.setFont(f);
             cs.setFillForegroundColor(
-                    IndexedColors.DARK_BLUE
-                            .getIndex());
+                    new XSSFColor(HDR_BG, null));
             cs.setFillPattern(
                     FillPatternType.SOLID_FOREGROUND);
             border(cs);
@@ -738,45 +888,55 @@ public final class ExcelUtils {
             return cs;
         }
 
-        private CellStyle mkData(
-                XSSFWorkbook wb) {
+        private CellStyle mkData(XSSFWorkbook wb) {
             CellStyle cs = wb.createCellStyle();
-            border(cs);
-            cs.setVerticalAlignment(
-                    VerticalAlignment.CENTER);
-            return cs;
-        }
-
-        private CellStyle mkAlt(
-                XSSFWorkbook wb) {
-            CellStyle cs = wb.createCellStyle();
-            border(cs);
-            cs.setVerticalAlignment(
-                    VerticalAlignment.CENTER);
-            cs.setFillForegroundColor(
-                    IndexedColors
-                            .LIGHT_CORNFLOWER_BLUE
-                            .getIndex());
-            cs.setFillPattern(
-                    FillPatternType.SOLID_FOREGROUND);
-            return cs;
-        }
-
-        private CellStyle mkWarn(
-                XSSFWorkbook wb) {
-            CellStyle cs = wb.createCellStyle();
-            XSSFFont f = wb.createFont();
-            f.setBold(true);
-            f.setColor(
-                    IndexedColors.RED.getIndex());
+            XSSFFont f = (XSSFFont) wb.createFont();
+            f.setFontHeightInPoints((short) 10);
+            f.setColor(new XSSFColor(
+                    hex("#000000"), null));
             cs.setFont(f);
+            cs.setFillForegroundColor(
+                    new XSSFColor(WHITE, null));
+            cs.setFillPattern(
+                    FillPatternType.SOLID_FOREGROUND);
             border(cs);
             cs.setVerticalAlignment(
                     VerticalAlignment.CENTER);
+            return cs;
+        }
+
+        private CellStyle mkAlt(XSSFWorkbook wb) {
+            CellStyle cs = wb.createCellStyle();
+            XSSFFont f = (XSSFFont) wb.createFont();
+            f.setFontHeightInPoints((short) 10);
+            f.setColor(new XSSFColor(
+                    hex("#000000"), null));
+            cs.setFont(f);
             cs.setFillForegroundColor(
-                    IndexedColors.ROSE.getIndex());
+                    new XSSFColor(ALT_BG, null));
             cs.setFillPattern(
                     FillPatternType.SOLID_FOREGROUND);
+            border(cs);
+            cs.setVerticalAlignment(
+                    VerticalAlignment.CENTER);
+            return cs;
+        }
+
+        private CellStyle mkWarn(XSSFWorkbook wb) {
+            CellStyle cs = wb.createCellStyle();
+            XSSFFont f = (XSSFFont) wb.createFont();
+            f.setBold(true);
+            f.setFontHeightInPoints((short) 10);
+            f.setColor(new XSSFColor(
+                    hex("#000000"), null));
+            cs.setFont(f);
+            cs.setFillForegroundColor(
+                    new XSSFColor(WARN_BG, null));
+            cs.setFillPattern(
+                    FillPatternType.SOLID_FOREGROUND);
+            border(cs);
+            cs.setVerticalAlignment(
+                    VerticalAlignment.CENTER);
             return cs;
         }
 
@@ -785,77 +945,24 @@ public final class ExcelUtils {
             cs.setBorderTop(BorderStyle.THIN);
             cs.setBorderLeft(BorderStyle.THIN);
             cs.setBorderRight(BorderStyle.THIN);
+            cs.setBottomBorderColor(
+                    IndexedColors.GREY_50_PERCENT
+                            .getIndex());
+            cs.setTopBorderColor(
+                    IndexedColors.GREY_50_PERCENT
+                            .getIndex());
+            cs.setLeftBorderColor(
+                    IndexedColors.GREY_50_PERCENT
+                            .getIndex());
+            cs.setRightBorderColor(
+                    IndexedColors.GREY_50_PERCENT
+                            .getIndex());
         }
     }
 
     private static CellStyle alt(
-            Styles s, int i) {
-        return i % 2 == 0 ? s.data : s.alt;
-    }
-
-    private static void title(
-            XSSFSheet sh, XSSFWorkbook wb,
-            String text, int cols) {
-
-        Row r = sh.createRow(0);
-        r.setHeightInPoints(36);
-        Cell cell = r.createCell(0);
-        cell.setCellValue(text);
-
-        CellStyle cs = wb.createCellStyle();
-        XSSFFont f = wb.createFont();
-        f.setBold(true);
-        f.setFontHeightInPoints((short)14);
-        cs.setFont(f);
-        cs.setAlignment(
-                HorizontalAlignment.CENTER);
-        cs.setVerticalAlignment(
-                VerticalAlignment.CENTER);
-        cell.setCellStyle(cs);
-
-        sh.addMergedRegion(
-                new CellRangeAddress(
-                        0, 0, 0, cols-1));
-    }
-
-    private static void headers(
-            XSSFSheet sh,
-            CellStyle style,
-            String[] cols) {
-
-        Row r = sh.createRow(2);
-        r.setHeightInPoints(28);
-        for (int i = 0; i < cols.length; i++) {
-            Cell cell = r.createCell(i);
-            cell.setCellValue(cols[i]);
-            cell.setCellStyle(style);
-        }
-    }
-
-    private static void summary(
-            XSSFSheet sh, XSSFWorkbook wb,
-            int rowIdx, String text, int cols) {
-
-        Row r = sh.createRow(rowIdx + 1);
-        r.setHeightInPoints(22);
-        Cell cell = r.createCell(0);
-        cell.setCellValue(text);
-
-        CellStyle cs = wb.createCellStyle();
-        XSSFFont f = wb.createFont();
-        f.setBold(true);
-        cs.setFont(f);
-        cs.setFillForegroundColor(
-                IndexedColors.LIGHT_YELLOW
-                        .getIndex());
-        cs.setFillPattern(
-                FillPatternType.SOLID_FOREGROUND);
-        cell.setCellStyle(cs);
-
-        sh.addMergedRegion(
-                new CellRangeAddress(
-                        rowIdx+1, rowIdx+1,
-                        0, cols-1));
+            Styles s, int no) {
+        return no % 2 == 0 ? s.alt : s.data;
     }
 
     private static void c(
@@ -867,13 +974,15 @@ public final class ExcelUtils {
         cell.setCellStyle(cs);
     }
 
-    private static void auto(
+    private static void autoWidth(
             XSSFSheet sh, int cols) {
         for (int i = 0; i < cols; i++) {
             sh.autoSizeColumn(i);
             int w = sh.getColumnWidth(i);
-            if (w < 3000) sh.setColumnWidth(i, 3000);
-            if (w > 15000) sh.setColumnWidth(i, 15000);
+            if (w < 3500)
+                sh.setColumnWidth(i, 3500);
+            if (w > 18000)
+                sh.setColumnWidth(i, 18000);
         }
     }
 
@@ -885,23 +994,24 @@ public final class ExcelUtils {
         return out.toByteArray();
     }
 
+    private static final DateTimeFormatter Date =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter Date_Time =
+            DateTimeFormatter.ofPattern(
+                    "dd/MM/yyyy HH:mm");
+
     private static String d(LocalDate date) {
         return date != null
-                ? date.format(D) : "";
+                ? date.format(Date) : "";
     }
 
     private static String dt(LocalDateTime dt) {
         return dt != null
-                ? dt.format(DT) : "";
+                ? dt.format(Date_Time) : "";
     }
 
-    private static String lbl(Object status) {
-        if (status == null) return "";
-        try {
-            return (String) status.getClass()
-                    .getMethod("getLabelKh")
-                    .invoke(status);
-        } catch (Exception e) { return ""; }
+    private static String nv(String s) {
+        return s != null ? s : "";
     }
 
     private static String trunc(
@@ -912,23 +1022,15 @@ public final class ExcelUtils {
                 : text;
     }
 
-    private static String nvl(
-            String val, String def) {
-        return val != null ? val : def;
-    }
-
-    private static String actionKh(
-            String action) {
-        if (action == null) return "";
-        return switch (action) {
-            case "CREATE" -> "បង្កើត";
-            case "UPDATE" -> "កែប្រែ";
-            case "DELETE" -> "លុប";
-            case "LOGIN"  -> "ចូលប្រព័ន្ធ";
-            case "LOGOUT" -> "ចេញ";
-            case "RESET_PASSWORD"  -> "Reset PW";
-            case "CHANGE_PASSWORD" -> "ប្ដូរ PW";
-            default -> action;
+    private static byte[] hex(String hex) {
+        hex = hex.replace("#", "");
+        return new byte[]{
+                (byte) Integer.parseInt(
+                        hex.substring(0, 2), 16),
+                (byte) Integer.parseInt(
+                        hex.substring(2, 4), 16),
+                (byte) Integer.parseInt(
+                        hex.substring(4, 6), 16)
         };
     }
 }

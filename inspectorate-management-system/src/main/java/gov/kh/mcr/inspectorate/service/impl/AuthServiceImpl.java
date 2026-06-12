@@ -95,7 +95,6 @@ public class AuthServiceImpl implements AuthService {
                 jwtProvider.generateRefreshToken(
                         user.getEmail());
 
-        //  Build context with IP
         ActivityLogContext context =
                 ActivityLogContext.builder()
                         .userId(user.getUserId())
@@ -124,7 +123,6 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
-    // Extract IP in AuthService
     private String extractIpFromRequest() {
         try {
             HttpServletRequest req =

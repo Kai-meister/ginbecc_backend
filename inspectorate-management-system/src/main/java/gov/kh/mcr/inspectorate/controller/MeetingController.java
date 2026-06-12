@@ -42,7 +42,7 @@ public class MeetingController {
                         meetingService.getAll(
                                 page, size,
                                 status, roomId),
-                        "ទទួលបន្ជីប្រជុំ"));
+                        "ទទួលបានបញ្ជីកិច្ចប្រជុំជោគជ័យ"));
     }
 
     // GET /meetings/{id}
@@ -57,7 +57,7 @@ public class MeetingController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         meetingService.getById(id),
-                        "ទទួលបានប្រជុំ"));
+                        "ទទួលបានព័ត៌មានកិច្ចប្រជុំជោគជ័យ"));
     }
 
     // GET /meetings/calendar
@@ -76,7 +76,7 @@ public class MeetingController {
                 ApiResponse.success(
                         meetingService.getCalendar(
                                 month, year),
-                        "ប្រតិទិន"));
+                        "ទទួលបានប្រតិទិនកិច្ចប្រជុំជោគជ័យ"));
     }
 
     // GET /meetings/rooms/{id}/schedule
@@ -97,7 +97,7 @@ public class MeetingController {
                 ApiResponse.success(
                         meetingService.getRoomSchedule(
                                 roomId, date),
-                        "កាលវិភាគបន្ទប់"));
+                        "ទទួលបានកាលវិភាគបន្ទប់ជោគជ័យ"));
     }
 
     // POST /meetings
@@ -113,7 +113,7 @@ public class MeetingController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         meetingService.create(request),
-                        "បង្កើតជោគជ័យ"));
+                        "ការបង្កើតបានជោគជ័យ"));
     }
 
     // PUT /meetings/{id}
@@ -131,7 +131,7 @@ public class MeetingController {
                 ApiResponse.success(
                         meetingService.update(
                                 id, request),
-                        "កែប្រែជោគជ័យ"));
+                        "ការកែប្រែបានជោគជ័យ"));
     }
 
     // PATCH /meetings/{id}/status
@@ -150,7 +150,7 @@ public class MeetingController {
                 ApiResponse.success(
                         meetingService.updateStatus(
                                 id, statusCode),
-                        "ផ្លាស់ប្ដូរស្ថានភាព"));
+                        "ការផ្លាស់ប្ដូរស្ថានភាពបានជោគជ័យ"));
     }
 
     // DELETE /meetings/{id}
@@ -164,6 +164,6 @@ public class MeetingController {
         meetingService.delete(id);
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "លុបជោគជ័យ"));
+                        null, "ការលុបបានជោគជ័យ"));
     }
 }

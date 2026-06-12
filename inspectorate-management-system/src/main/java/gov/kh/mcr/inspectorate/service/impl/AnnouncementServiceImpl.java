@@ -217,15 +217,12 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             Integer announcementId,
             Integer currentOfficerId) {
 
-        // ១. Validate announcement exists
-        Announcement announcement =
-                findById(announcementId);
+        Announcement announcement = findById(announcementId);
 
-        // ២. Fix — Check currentOfficerId valid
         if (currentOfficerId == null) {
             throw new BusinessException(
-                    "Admin មិនអាច mark read"
-                            + " — ត្រូវជា Officer");
+                    "មុខងារនេះអនុញ្ញាតឱ្យប្រើប្រាស់តែមន្ត្រីពាក់ព័ន្ធប៉ុណ្ណោះ "
+                            + "អ្នកគ្រប់គ្រងប្រព័ន្ធ (Admin) មិនអាចកត់សម្គាល់ថាអានរួចបានឡើយ");
         }
         AnnouncementRecipient recipient =
                 recipientRepository
@@ -234,9 +231,8 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                                 currentOfficerId)
                         .orElseThrow(() ->
                                 new BusinessException(
-                                        "Officer នេះ"
-                                                + " មិនមែន Recipient"
-                                                + " នៃ Announcement នេះ"));
+                                        "មន្ត្រីរូបនេះមិនមែនជាអ្នកទទួល "
+                                                + "សេចក្តីជូនដំណឹងនេះឡើយ"));
 
         // ៤. Already read — skip
         if (Boolean.TRUE.equals(
@@ -332,7 +328,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
         if (announcement.getAttachment() == null) {
             throw new ResourceNotFoundException(
-                    "សេចក្តីប្រកាស មិនមាន File",
+                    "សេចក្តីជូនដំណឹងនេះមិនមានឯកសារភ្ជាប់ឡើយ",
                     announcementId);
         }
 

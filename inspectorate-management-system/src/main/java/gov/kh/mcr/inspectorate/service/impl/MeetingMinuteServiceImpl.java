@@ -92,14 +92,14 @@ public class MeetingMinuteServiceImpl
         if (minuteRepo.existsByMeeting_MeetingId(
                 request.getMeetingId())) {
             throw new DuplicateResourceException(
-                    "ប្រជុំនេះ មានកំណត់ហេតុរួចហើយ");
+                    "កិច្ចប្រជុំនេះមានកំណត់ហេតុរួចរាល់ហើយ មិនអាចបង្កើតស្ទួនបានឡើយ។");
         }
 
         Meeting meeting = meetingRepo
                 .findById(request.getMeetingId())
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "ការប្រជុំ",
+                                "មិនមានទិន្នន័យកិច្ចប្រជុំដែលមានលេខសម្គាល់ ",
                                 request.getMeetingId()));
 
         MeetingMinute minute =
@@ -116,7 +116,7 @@ public class MeetingMinuteServiceImpl
         activityLogService.log(
                 "CREATE", "MeetingMinute",
                 saved.getMinuteId(),
-                "បង្កើត: " + meeting.getTitle(),
+                "បង្កើតកំណត់ហេតុនៃកិច្ចប្រជុំ " + meeting.getTitle(),
                 buildContext());
 
         return minuteMapper.toResponse(saved);
@@ -130,12 +130,9 @@ public class MeetingMinuteServiceImpl
         MeetingMinute minute = findById(id);
         minuteMapper.updateEntity(request, minute);
 
-        // Fix — attachment unchanged on update
-        // Upload ដោយ POST /{id}/attachment ដាច់ដោយឡែក
-
         activityLogService.log(
                 "UPDATE", "MeetingMinute",
-                id, "កែប្រែ",
+                id, "កែប្រែព័ត៌មានកំណត់ហេតុកិច្ចប្រជុំ "+ minute.getMeeting().getTitle(),
                 buildContext());
 
         return minuteMapper.toResponse(
@@ -149,7 +146,6 @@ public class MeetingMinuteServiceImpl
 
         MeetingMinute minute = findById(minuteId);
 
-        // Upload to MinIO
         AttachmentResponse resp =
                 attachmentService.upload(
                         file,
@@ -165,7 +161,7 @@ public class MeetingMinuteServiceImpl
         activityLogService.log(
                 "UPDATE", "MeetingMinute",
                 minuteId,
-                "Upload PDF: "
+                "ផ្ទុកឡើងឯកសារភ្ជាប់ PDF: "
                         + resp.getOriginalName(),
                 buildContext());
 
@@ -173,9 +169,6 @@ public class MeetingMinuteServiceImpl
                 minuteRepo.save(minute));
     }
 
-    // ─────────────────────────────────────────────
-    // Fix — Get download URL
-    // ─────────────────────────────────────────────
     @Override
     @Transactional(readOnly = true)
     public String getDownloadUrl(Integer minuteId) {
@@ -183,15 +176,13 @@ public class MeetingMinuteServiceImpl
 
         if (minute.getAttachment() == null) {
             throw new ResourceNotFoundException(
-                    "កំណត់ហេតុ មិនមាន File",
+                    "មិនមានឯកសារភ្ជាប់ (File) នៅក្នុងកំណត់ហេតុកិច្ចប្រជុំនេះឡើយ សម្រាប់លេខសម្គាល់",
                     minuteId);
         }
 
         return minioService.getPresignedUrl(
                 minute.getAttachment().getFilePath());
     }
-
-    // ── Private helpers ───────────────────────────
     private MeetingMinute findById(Integer id) {
         return minuteRepo.findById(id)
                 .orElseThrow(() ->

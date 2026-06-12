@@ -21,12 +21,8 @@ public interface UserRepository
     Optional<User> findByOfficer_OfficerId(
             Integer officerId);
 
-    //  check officer already linked
     boolean existsByOfficer_OfficerId(
             Integer officerId);
-
-    // check officer already linked
-    // exclude current user (for update)
     boolean
     existsByOfficer_OfficerIdAndUserIdNot(
             Integer officerId, Integer userId);
@@ -50,6 +46,18 @@ public interface UserRepository
             String email,
             Pageable pageable);
 
+    Optional<User>
+    findByContractOfficer_ContractOfficerId(
+            Integer contractOfficerId);
+
+    boolean
+    existsByContractOfficer_ContractOfficerId(
+            Integer contractOfficerId);
+
+    boolean
+    existsByContractOfficer_ContractOfficerIdAndUserIdNot(
+            Integer contractOfficerId,
+            Integer userId);
     // Report
     @Query("""
         SELECT u FROM User u

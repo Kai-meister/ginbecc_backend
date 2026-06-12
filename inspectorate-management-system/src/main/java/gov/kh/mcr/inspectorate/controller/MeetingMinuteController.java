@@ -81,7 +81,7 @@ public class MeetingMinuteController {
                 .body(ApiResponse.success(
                         meetingMinuteService
                                 .uploadAttachment(id, file),
-                        "Upload PDF ជោគជ័យ"));
+                        "ការផ្ទុកឯកសារ PDF បានជោគជ័យ"));
     }
 
     // GET /meeting-minutes/{id}/download
@@ -95,6 +95,6 @@ public class MeetingMinuteController {
                 ApiResponse.success(
                         meetingMinuteService
                                 .getDownloadUrl(id),
-                        "URL Download PDF"));
+                        "ទទួលបានតំណទាញយកឯកសារ PDF"));
     }
 }

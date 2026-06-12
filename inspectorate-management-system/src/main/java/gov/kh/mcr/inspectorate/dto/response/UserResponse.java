@@ -9,27 +9,21 @@ import java.time.LocalDateTime;
 @Builder
 public class UserResponse {
 
-    private Integer       userId;
+    private Integer userId;
+    private OfficerInfo officerInfo;
 
-    // Officer info
-    private Integer       officerId;
-    private String        officerName;
-    private String        departmentName;
+    private Integer roleId;
+    private String  roleName;
+    private String  roleDisplay;
 
-    // Role
-    private Integer       roleId;
-    private String        roleName;
-    private String        roleDisplay;
+    private UserType userType;
+    private String   userNameKh;
+    private String   userNameEn;
+    private String   email;
+    private String   phone;
 
-    // Info
-    private String        userNameKh;
-    private String        userNameEn;
-    private String        email;
-    private String        phone;
-
-    // Status
-    private String        statusCode;
-    private String        statusLabel;
+    private String  statusCode;
+    private String  statusLabel;
 
     private Boolean       mustChangePassword;
     private LocalDateTime lastLoginAt;

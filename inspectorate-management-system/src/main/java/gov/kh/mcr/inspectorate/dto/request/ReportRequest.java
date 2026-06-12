@@ -1,4 +1,5 @@
 package gov.kh.mcr.inspectorate.dto.request;
+import jakarta.validation.constraints.AssertTrue;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
@@ -23,11 +24,11 @@ public class ReportRequest {
     private String  entityType;
 
     // Shared Date Range
-    @DateTimeFormat(
-            iso = DateTimeFormat.ISO.DATE)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate from;
 
-    @DateTimeFormat(
-            iso = DateTimeFormat.ISO.DATE)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate to;
+
+
 }

@@ -117,7 +117,7 @@ public class OfficerController {
                 .body(ApiResponse.success(
                         officerService
                                 .uploadProfileImage(id, file),
-                        "Upload រូបភាព Profile ជោគជ័យ"));
+                        "ផ្ទុករូបភាពប្រវត្តិរូបបានជោគជ័យ"));
     }
 
     @GetMapping("/{id}/profile-image")
@@ -129,7 +129,7 @@ public class OfficerController {
                 ApiResponse.success(
                         officerService
                                 .getProfileImageUrl(id),
-                        "URL រូបភាព Profile"));
+                        "ទទួលបានតំណរូបភាពប្រវត្តិរូប"));
     }
 
 

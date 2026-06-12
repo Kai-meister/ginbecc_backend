@@ -25,12 +25,10 @@ public interface NotificationRepository
             Boolean isRead,
             Pageable pageable);
 
-    // find with owner check
     Optional<Notification> findByNotificationIdAndUser_UserId(
             Integer notificationId,
             Integer userId);
 
-    // Count
     long countByUser_UserIdAndIsRead(
             Integer userId, Boolean isRead);
 

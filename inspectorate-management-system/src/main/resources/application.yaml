@@ -110,7 +110,10 @@ cache:
       redis:
         time-to-live: 3600000   # 1 hour (ms)
         cache-null-values: false
-
+pdf:
+  font:
+    khmer: classpath:fonts/KhmerOS.ttf
+    khmer-bold: classpath:fonts/KhmerOSsiemreap.ttf
       # Cache names
       # lookups — LookupService
       # permissions — RolePermissions

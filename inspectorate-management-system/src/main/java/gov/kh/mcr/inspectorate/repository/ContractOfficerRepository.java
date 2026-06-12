@@ -14,9 +14,17 @@ public interface ContractOfficerRepository
 
     boolean existsByContractOfficerCode(String code);
 
-    Page<ContractOfficer>
-    findByStatusCode_StatusCode(
-            String status, Pageable pageable);
+    @Query("""
+    SELECT c FROM ContractOfficer c
+    WHERE c.contractOfficerId = :id
+    AND   c.endDate <= :expiryDate
+    AND   c.statusCode.statusCode = 'ACTIVE'
+    ORDER BY c.endDate ASC
+    """)
+    List<ContractOfficer>
+    findByContractOfficerIdAndExpiring(@Param("id") Integer id, @Param("expiryDate") LocalDate expiryDate);
+
+    Page<ContractOfficer> findByStatusCode_StatusCode(String status, Pageable pageable);
     long countByDepartment_DepartmentId(Integer departmentId);
 
     Page<ContractOfficer>

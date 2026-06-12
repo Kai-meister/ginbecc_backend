@@ -83,9 +83,9 @@ public class DepartmentServiceImpl
                 .existsByDepartmentCode(
                         request.getDepartmentCode())) {
             throw new DuplicateResourceException(
-                    "កូដ ["
+                    "លេខកូដនាយកដ្ឋាន ["
                             + request.getDepartmentCode()
-                            + "] មានស្ទួន");
+                            + "] មានក្នុងប្រព័ន្ធរួចហើយ");
         }
 
         Department saved = departmentRepository.save(
@@ -94,7 +94,7 @@ public class DepartmentServiceImpl
         activityLogService.log(
                 "CREATE", "Department",
                 saved.getDepartmentId(),
-                "បង្កើត: "
+                "បង្កើតនាយកដ្ឋានថ្មី "
                         + saved.getDepartmentName());
 
         return departmentMapper.toResponse(saved);
@@ -105,17 +105,16 @@ public class DepartmentServiceImpl
 
         Department dept = findById(id);
 
-        // Check has Officers
         long officerCount =
                 officerRepository
                         .countByDepartment_DepartmentId(id);
 
         if (officerCount > 0) {
             throw new BusinessException(
-                    "មិនអាចលុបបាន — នាយកដ្ឋាននេះ"
+                    "មិនអាចលុបទិន្នន័យនាយកដ្ឋាននេះបានឡើយ ដោយសារមានមន្ត្រីកំពុងបំពេញការងារចំនួន"
                             + " មានមន្ត្រី "
                             + officerCount + " នាក់"
-                            + " — សូម Deactivate ជំនួស");
+                            + "។ សូមធ្វើការផ្លាស់ប្តូរស្ថានភាពទៅជា «មិនមានសកម្មភាព» ជំនួសវិញ។");
         }
 
         // Check has ContractOfficers
@@ -125,17 +124,15 @@ public class DepartmentServiceImpl
 
         if (contractCount > 0) {
             throw new BusinessException(
-                    "មិនអាចលុបបាន — នាយកដ្ឋាននេះ"
-                            + " មានមន្ត្រីកិច្ចសន្យា "
+                    "មិនអាចលុបទិន្នន័យនាយកដ្ឋាននេះបានឡើយ ដោយសារមានមន្ត្រីកិច្ចសន្យាកំពុងបំពេញការងារចំនួន"
                             + contractCount + " នាក់"
-                            + " — សូម Deactivate ជំនួស");
+                            + "។ សូមធ្វើការផ្លាស់ប្តូរស្ថានភាពទៅជា «មិនមានសកម្មភាព» ជំនួសវិញ។");
         }
-
         departmentRepository.deleteById(id);
 
         activityLogService.log(
                 "DELETE", "Department",
-                id, "លុបនាយកដ្ឋាន",
+                id, "លុបទិន្នន័យនាយកដ្ឋាន",
                 buildContext());
     }
 
@@ -156,9 +153,9 @@ public class DepartmentServiceImpl
 
             if (count > 0) {
                 throw new BusinessException(
-                        "នាយកដ្ឋាននេះ មានមន្ត្រីសកម្ម "
-                                + count + " នាក់"
-                                + " — មិនអាច Deactivate");
+                        "មិនអាចផ្លាស់ប្តូរស្ថានភាពនាយកដ្ឋាននេះទៅជា «មិនមានសកម្មភាព» បានឡើយ "
+                                + "ដោយសារមានមន្ត្រីកំពុងស្ថិតក្នុងស្ថានភាពសកម្មចំនួន "
+                                + count + " នាក់។");
             }
         }
 
@@ -166,7 +163,7 @@ public class DepartmentServiceImpl
 
         activityLogService.log(
                 "UPDATE", "Department",
-                id, "កែប្រែ: "
+                id, "កែប្រែព័ត៌មាននាយកដ្ឋាន "
                         + dept.getDepartmentName(),
                 buildContext());
 
@@ -180,7 +177,7 @@ public class DepartmentServiceImpl
         return departmentRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "នាយកដ្ឋាន", id));
+                                "មិនមានទិន្នន័យនាយកដ្ឋានដែលមានលេខសម្គាល់ ", id));
     }
     private ActivityLogContext buildContext() {
         HttpServletRequest request =

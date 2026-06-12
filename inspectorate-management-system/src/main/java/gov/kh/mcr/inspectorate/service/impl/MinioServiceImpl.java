@@ -30,7 +30,7 @@ public class MinioServiceImpl implements MinioService {
     @Override
     public String uploadFile(
             MultipartFile file,
-            String refTypePrefix, // "officer" / "meeting-room"
+            String refTypePrefix,
             Integer refId) {
         try {
             createBucketIfNotExists();
@@ -43,7 +43,7 @@ public class MinioServiceImpl implements MinioService {
             // meeting-room/2/{UUID}.jpg
             // meeting-minute/7/{UUID}.pdf
             String objectName =
-                    refTypePrefix          // ← toPathPrefix()
+                    refTypePrefix
                             + "/" + refId
                             + "/" + UUID.randomUUID()
                             + "." + ext;
@@ -64,7 +64,7 @@ public class MinioServiceImpl implements MinioService {
 
         } catch (Exception ex) {
             throw new BusinessException(
-                    "Upload មានបញ្ហា: " + ex.getMessage());
+                    "ការផ្ទុកឡើងឯកសារមានបញ្ហា ឬមិនជោគជ័យ " + ex.getMessage());
         }
     }
 

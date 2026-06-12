@@ -85,10 +85,6 @@ public class MeetingServiceImpl
         return toResponseWithSummary(
                 findById(id));
     }
-
-    // ─────────────────────────────────────────────
-    // GET CALENDAR
-    // ─────────────────────────────────────────────
     @Override
     @Transactional(readOnly = true)
     public List<MeetingResponse> getCalendar(
@@ -101,9 +97,6 @@ public class MeetingServiceImpl
                 .toList();
     }
 
-    // ─────────────────────────────────────────────
-    // GET ROOM SCHEDULE
-    // ─────────────────────────────────────────────
     @Override
     @Transactional(readOnly = true)
     public List<MeetingResponse> getRoomSchedule(
@@ -126,7 +119,6 @@ public class MeetingServiceImpl
     public MeetingResponse create(
             MeetingRequest request) {
 
-        // ១. Validate time
         validateTime(request);
 
         // ២. Conflict check (room only)
@@ -140,17 +132,14 @@ public class MeetingServiceImpl
         Meeting meeting =
                 meetingMapper.toEntity(request);
 
-        // ៣. Set room (optional)
         if (request.getRoomId() != null) {
             meeting.setRoom(
                     findRoom(request.getRoomId()));
         }
 
-        // ៤. Set status
         meeting.setStatusCode(
                 findStatus(request.getStatusCode()));
 
-        // ៥. Set organizer
         securityUtils.getCurrentUser()
                 .ifPresent(meeting::setOrganizer);
 
@@ -159,7 +148,7 @@ public class MeetingServiceImpl
         activityLogService.log(
                 "CREATE", "Meeting",
                 saved.getMeetingId(),
-                "បង្កើត: " + saved.getTitle(),
+                "បង្កើតកិច្ចប្រជុំថ្មី " + saved.getTitle(),
                 buildContext());
 
         return toResponseWithSummary(saved);
@@ -174,14 +163,9 @@ public class MeetingServiceImpl
             MeetingRequest request) {
 
         Meeting meeting = findById(id);
-
-        // Fix — Block update if final status
         validateCanUpdate(meeting);
 
-        // Validate time
         validateTime(request);
-
-        // Conflict check (exclude self)
         if (request.getRoomId() != null) {
             checkConflict(
                     request.getRoomId(),
@@ -263,8 +247,6 @@ public class MeetingServiceImpl
     public void delete(Integer id) {
 
         Meeting meeting = findById(id);
-
-        // Fix — Only DRAFT can be deleted
         String code =
                 meeting.getStatusCode() != null
                         ? meeting.getStatusCode()
@@ -274,22 +256,19 @@ public class MeetingServiceImpl
         if (!MeetingStatusCode.DRAFT
                 .getCode().equals(code)) {
             throw new BusinessException(
-                    "មិនអាចលុបការប្រជុំ"
-                            + " ស្ថានភាព: " + code
-                            + " — DRAFT ប៉ុណ្ណោះ");
+                    "មិនអាចលុបកិច្ចប្រជុំបានឡើយ ដោយសារកិច្ចប្រជុំនេះស្ថិតក្នុងស្ថានភាព «"
+                            + code
+                            + "» (ប្រព័ន្ធអនុញ្ញាតឱ្យលុបតែគម្រោងព្រាង ប៉ុណ្ណោះ)។");
         }
 
         meetingRepo.deleteById(id);
 
         activityLogService.log(
                 "DELETE", "Meeting",
-                id, "លុប: " + meeting.getTitle(),
+                id, "លុបទិន្នន័យកិច្ចប្រជុំ " + meeting.getTitle(),
                 buildContext());
     }
 
-    // ── Private Validations ───────────────────────
-
-    // Fix — Time validation
     private void validateTime(
             MeetingRequest request) {
 
@@ -298,12 +277,10 @@ public class MeetingServiceImpl
                 || request.getEndTime()
                 .equals(request.getStartTime())) {
             throw new BusinessException(
-                    "ម៉ោងបញ្ចប់"
-                            + " ត្រូវធំជាង ម៉ោងចាប់ផ្ដើម");
+                    "មកាលបរិច្ឆេទ ឬម៉ោងបញ្ចប់ត្រូវតែនៅក្រោយកាលបរិច្ឆេទ ឬម៉ោងចាប់ផ្ដើម។");
         }
     }
 
-    // Fix — Conflict check
     private void checkConflict(
             Integer roomId,
             MeetingRequest request,
@@ -329,17 +306,17 @@ public class MeetingServiceImpl
         if (!conflicts.isEmpty()) {
             Meeting c = conflicts.get(0);
             throw new BusinessException(
-                    "បន្ទប់ \""
+                    "មិនអាចកក់បានឡើយ ដោយសារបន្ទប់ប្រជុំ «"
                             + c.getRoom().getRoomCode()
-                            + "\" ត្រូវបានកក់"
-                            + " ពេល: "
+                            + "» ត្រូវបានកក់រួចហើយ ចាប់ពីម៉ោង "
                             + c.getStartTime()
-                            + " - " + c.getEndTime()
-                            + " ដោយ: " + c.getTitle());
+                            + " ដល់ "
+                            + c.getEndTime()
+                            + " សម្រាប់កិច្ចប្រជុំ៖ «"
+                            + c.getTitle() + "»។");
         }
     }
 
-    // Fix — Block update if COMPLETED/CANCELLED
     private void validateCanUpdate(
             Meeting meeting) {
 
@@ -351,23 +328,22 @@ public class MeetingServiceImpl
 
         if (!MeetingStatusCode.canUpdate(code)) {
             throw new BusinessException(
-                    "មិនអាចកែប្រែ"
-                            + " ស្ថានភាព: " + code);
+                    "មិនអាចកែប្រែព័ត៌មានបានឡើយ ដោយសារកិច្ចប្រជុំនេះស្ថិតក្នុងស្ថានភាព «"
+                            + code
+                            + "» ដែលត្រូវបានចាក់សោរួចហើយ។");
         }
     }
 
-    // Fix — Status transition rules
     private void validateStatusTransition(
             String current, String next) {
 
-        // Cannot change from final state
         if (MeetingStatusCode.isFinal(current)) {
             throw new BusinessException(
-                    "ស្ថានភាព " + current
-                            + " មិនអាចផ្លាស់ប្ដូរ");
+                    "មិនអាចផ្លាស់ប្តូរបានឡើយ ដោយសារកិច្ចប្រជុំនេះស្ថិតក្នុងស្ថានភាពចុងក្រោយ «"
+                            + current
+                            + "» រួចរាល់ហើយ។");
         }
 
-        // Cannot cancel if IN_PROGRESS
         if (MeetingStatusCode.IN_PROGRESS
                 .getCode().equals(current)
                 && MeetingStatusCode.CANCELLED

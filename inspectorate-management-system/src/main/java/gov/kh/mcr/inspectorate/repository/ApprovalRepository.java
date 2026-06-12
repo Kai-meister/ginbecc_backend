@@ -13,35 +13,30 @@ import java.util.Optional;
 public interface ApprovalRepository
         extends JpaRepository<Approval, Integer> {
 
-    // Filter by status
     Page<Approval>
     findByStatusCode_StatusCode(
             String statusCode, Pageable pageable);
 
-    // Filter by officer
     Page<Approval>
     findByRequestedBy_OfficerId(
             Integer officerId, Pageable pageable);
 
-    // Filter by document
     Page<Approval>
     findByDocument_DocumentId(
             Integer documentId, Pageable pageable);
 
-    // Filter by status + officer
     Page<Approval>
     findByStatusCode_StatusCodeAndRequestedBy_OfficerId(
             String statusCode,
             Integer officerId,
             Pageable pageable);
 
-    // ── Check duplicate pending ───────────────────
     boolean
     existsByDocument_DocumentIdAndStatusCode_StatusCode(
             Integer documentId,
             String statusCode);
 
-    // ── Latest approval for document ──────────────
+
     Optional<Approval>
     findFirstByDocument_DocumentIdOrderByCreatedAtDesc(
             Integer documentId);

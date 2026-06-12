@@ -23,7 +23,6 @@ public interface DocumentTypeRepository extends JpaRepository<DocumentType, Inte
     Optional<DocumentType>
     findByDocumentTypeCode(String code);
 
-    // Fix — count documents using this type
     long countByDocumentTypeId(
             Integer documentTypeId);
 }

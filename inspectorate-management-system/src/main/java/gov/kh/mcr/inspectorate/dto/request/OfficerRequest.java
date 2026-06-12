@@ -16,8 +16,8 @@ public class OfficerRequest {
     @NotNull(message = "សូមជ្រើសរើសនាយកដ្ឋាន")
     private Integer departmentId;
 
-    @NotBlank(message = "លេខកូដចាំបាច់")
-    @Size(max = 50, message = "លេខកូដអតិបរមា 50 តួ")
+    @NotBlank(message = "សូមបញ្ចូលលេខកូដសម្គាល់មន្ត្រី")
+    @Size(max = 50, message = "លេខកូដសម្គាល់មន្ត្រីមិនអាចលើសពី ៥០ តួអក្សរឡើយ")
     @Pattern(regexp = "^[A-Za-z0-9\\-_]+$",
             message = "លេខកូដសម្គាល់មន្ត្រីត្រូវប្រើប្រាស់តែអក្សរឡាតាំង លេខ សញ្ញាដក(-) ឬសញ្ញាកាត់(_)")
     private String officerCode;

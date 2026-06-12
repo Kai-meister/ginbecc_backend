@@ -1,10 +1,14 @@
 package gov.kh.mcr.inspectorate.mapper;
 
-import gov.kh.mcr.inspectorate.dto.request.ContractOfficerRequest;
-import gov.kh.mcr.inspectorate.dto.response.ContractOfficerResponse;
-import gov.kh.mcr.inspectorate.entity.ContractOfficer;
+import gov.kh.mcr.inspectorate.dto.request
+        .ContractOfficerRequest;
+import gov.kh.mcr.inspectorate.dto.response
+        .ContractOfficerResponse;
+import gov.kh.mcr.inspectorate.entity
+        .ContractOfficer;
 import org.mapstruct.*;
 import java.time.LocalDate;
+import java.time.Period;
 import java.time.temporal.ChronoUnit;
 
 @Mapper(componentModel = "spring",
@@ -33,12 +37,14 @@ public interface ContractOfficerMapper {
             source = "statusCode.statusCode")
     @Mapping(target = "statusLabel",
             source = "statusCode.labelKh")
-    // compute daysUntilExpiry
+    @Mapping(target = "age",
+            expression =
+                    "java(calcAge("
+                            + "entity.getDob()))")
     @Mapping(target = "daysUntilExpiry",
             expression =
                     "java(calcDays("
                             + "entity.getEndDate()))")
-    // compute label
     @Mapping(target = "expiryLabel",
             expression =
                     "java(calcLabel("
@@ -48,7 +54,8 @@ public interface ContractOfficerMapper {
 
     @BeanMapping(
             nullValuePropertyMappingStrategy =
-                    NullValuePropertyMappingStrategy.IGNORE)
+                    NullValuePropertyMappingStrategy
+                            .IGNORE)
     @Mapping(target = "contractOfficerId",
             ignore = true)
     @Mapping(target = "department",
@@ -63,37 +70,41 @@ public interface ContractOfficerMapper {
             ContractOfficerRequest request,
             @MappingTarget ContractOfficer entity);
 
-    // Compute days
+    // ── Age from dob ──────────────────────────────
+    default Integer calcAge(LocalDate dob) {
+        if (dob == null) return null;
+        return Period.between(
+                dob, LocalDate.now()).getYears();
+    }
+
+    // ── Days until expiry ─────────────────────────
     default Long calcDays(LocalDate endDate) {
         if (endDate == null) return null;
         long days = ChronoUnit.DAYS.between(
                 LocalDate.now(), endDate);
-        // Expired to 0
         return days < 0 ? 0L : days;
     }
 
-    // ── Compute label ─────────────────────────────
+    // ── Expiry label ──────────────────────────────
     default String calcLabel(LocalDate endDate) {
         if (endDate == null) return null;
-
         long days = ChronoUnit.DAYS.between(
                 LocalDate.now(), endDate);
 
         if (days < 0) {
             return "ផុតកំណត់រួច "
-                    + Math.abs(days)
-                    + " ថ្ងៃ";
+                    + Math.abs(days) + " ថ្ងៃ";
         }
         if (days == 0) {
-            return "ផុតកំណត់ថ្ងៃនេះ";
+            return "ផុតកំណត់ថ្ងៃនេះ ";
         }
         if (days <= 7) {
             return "នៅសល់ " + days
-                    + " ថ្ងៃ ⚠️";
+                    + " ថ្ងៃ ";
         }
         if (days <= 30) {
             return "នៅសល់ " + days
-                    + " ថ្ងៃ";
+                    + " ថ្ងៃ ";
         }
         return "នៅសល់ " + days + " ថ្ងៃ";
     }

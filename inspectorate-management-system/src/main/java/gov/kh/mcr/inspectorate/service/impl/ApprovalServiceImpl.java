@@ -42,9 +42,6 @@ public class ApprovalServiceImpl
     private final NotificationService            notificationService;
     private final ActivityLogService             activityLogService;
 
-    // ─────────────────────────────────────────────
-    // REQUEST APPROVAL — Officer submit
-    // ─────────────────────────────────────────────
     @Override
     public ApprovalResponse requestApproval(
             ApprovalRequest request) {
@@ -57,26 +54,17 @@ public class ApprovalServiceImpl
                                         "ឯកសារ",
                                         request.getDocumentId()));
 
-        // ១. Validate document = DRAFT
         validateDocumentStatus(document);
 
-        // ២. No duplicate pending
         checkNoDuplicatePending(
                 request.getDocumentId());
 
-        // ៣. Get current officer
         Officer currentOfficer =
                 resolveCurrentOfficer();
 
-        // Fix ៤. Check document OWNER
-        // Officer A cannot submit
-        // document of Officer B
         validateDocumentOwner(
                 document, currentOfficer);
 
-        // Fix ៥. Self approval check
-        // (already handled by owner check
-        //  but double-check)
 //        validateNotSelfApproval(
 //                document, currentOfficer);
 //
@@ -110,9 +98,6 @@ public class ApprovalServiceImpl
         return approvalMapper.toResponse(saved);
     }
 
-    // ─────────────────────────────────────────────
-    // DECIDE — Admin approve or reject
-    // ─────────────────────────────────────────────
     @Override
     public ApprovalResponse decide(
             Integer approvalId,
@@ -135,10 +120,8 @@ public class ApprovalServiceImpl
                 securityUtils.getCurrentUser()
                         .orElseThrow(() ->
                                 new UnauthorizedException(
-                                        "ត្រូវ Login"));
+                                        "សូមចូលប្រើប្រាស់ប្រព័ន្ធជាមុនសិន"));
 
-        // Fix ៣. Validate approver
-        // can approve this department's doc
         validateApproverDepartment(
                 approval, approver);
 
@@ -171,9 +154,6 @@ public class ApprovalServiceImpl
         return approvalMapper.toResponse(saved);
     }
 
-    // ─────────────────────────────────────────────
-    // GET ALL
-    // ─────────────────────────────────────────────
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ApprovalResponse> getAll(
@@ -214,9 +194,6 @@ public class ApprovalServiceImpl
                 result.map(approvalMapper::toResponse));
     }
 
-    // ─────────────────────────────────────────────
-    // GET BY ID
-    // ─────────────────────────────────────────────
     @Override
     @Transactional(readOnly = true)
     public ApprovalResponse getById(Integer id) {
@@ -228,7 +205,7 @@ public class ApprovalServiceImpl
     }
 
     // ─────────────────────────────────────────────
-    // GET MY PENDING
+    // DECIDE — Admin approve or reject
     // ─────────────────────────────────────────────
     @Override
     @Transactional(readOnly = true)
@@ -247,9 +224,6 @@ public class ApprovalServiceImpl
                         .map(approvalMapper::toResponse));
     }
 
-    // ══ Private Validations ═══════════════════════
-
-    // ── 1. Document status = DRAFT ────────────────
     private void validateDocumentStatus(
             Document document) {
 
@@ -261,8 +235,8 @@ public class ApprovalServiceImpl
 
         if (!DocumentStatusCode.isDraft(code)) {
             throw new BusinessException(
-                    "ឯកសារត្រូវ DRAFT"
-                            + " — បច្ចុប្បន្ន: " + code);
+                    "សកម្មភាពនេះអាចធ្វើទៅបានតែលើឯកសារដែលស្ថិតក្នុងស្ថានភាព «ពង្រាង» ប៉ុណ្ណោះ"
+                            + "  ស្ថានភាពបច្ចុប្បន្ន៖ " + code);
         }
     }
 

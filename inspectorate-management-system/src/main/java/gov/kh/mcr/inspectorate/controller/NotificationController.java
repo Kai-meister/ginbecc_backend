@@ -39,7 +39,7 @@ public class NotificationController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         service.create(req),
-                        "បង្កើតជោគជ័យ"));
+                        "ការបង្កើតសារជូនដំណឹងបានជោគជ័យ"));
     }
 
     // POST /notifications/bulk
@@ -56,11 +56,10 @@ public class NotificationController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         service.createBulk(req),
-                        "Bulk ជោគជ័យ"));
+                        "ការបង្កើតសារជូនដំណឹងជាច្រើនបានជោគជ័យ"));
     }
 
     // GET /notifications/my
-    // (authenticated user)
     @GetMapping("/my")
     public ResponseEntity<ApiResponse<
     PageResponse<NotificationResponse>>>
@@ -71,8 +70,6 @@ public class NotificationController {
             int page,
             @RequestParam(defaultValue = "20")
             int size) {
-
-        // Fix — ពី SecurityContext មិនប្រើ param
         Integer currentUserId =
                 securityUtils.getCurrentUserId();
 
@@ -81,7 +78,7 @@ public class NotificationController {
                         service.getMyNotifications(
                                 currentUserId,
                                 isRead, page, size),
-                        "ទទួលការជូនដំណឹង"));
+                        "ទទួលបានសារជូនដំណឹង"));
     }
 
     // GET /notifications/{id}
@@ -99,7 +96,7 @@ public class NotificationController {
                 ApiResponse.success(
                         service.getById(
                                 id, currentUserId),
-                        "ទទួលបានការជូនដំណឹង"));
+                        "ទទួលបានសារជូនដំណឹង"));
     }
 
     // GET /notifications/unread-count
@@ -114,7 +111,7 @@ public class NotificationController {
                 ApiResponse.success(
                         service.getUnreadCount(
                                 currentUserId),
-                        "ចំនួនមិនទាន់អាន"));
+                        "ចំនួនសារជូនដំណឹងមិនទាន់អាន"));
     }
 
     // PUT /notifications/{id}/read
@@ -145,6 +142,6 @@ public class NotificationController {
                 ApiResponse.success(
                         service.markAllAsRead(
                                 currentUserId),
-                        "អានទាំងអស់ជោគជ័យ"));
+                        "បានអានសារជូនដំណឹងទាំងអស់"));
     }
 }

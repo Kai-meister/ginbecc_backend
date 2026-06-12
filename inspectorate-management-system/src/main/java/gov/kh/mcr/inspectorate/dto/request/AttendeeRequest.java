@@ -9,7 +9,7 @@ import lombok.*;
 @Builder
 public class AttendeeRequest {
 
-    @NotNull(message = "មន្ត្រីចាំបាច់")
+    @NotNull(message = "សូមជ្រើសរើសមន្ត្រីអញ្ជើញចូលរួម")
     @Positive
     private Integer officerId;
 

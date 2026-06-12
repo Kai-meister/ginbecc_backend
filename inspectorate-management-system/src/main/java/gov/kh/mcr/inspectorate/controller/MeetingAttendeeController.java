@@ -2,6 +2,7 @@ package gov.kh.mcr.inspectorate.controller;
 
 import gov.kh.mcr.inspectorate.dto.request.*;
 import gov.kh.mcr.inspectorate.dto.response.*;
+import gov.kh.mcr.inspectorate.exception.ResourceNotFoundException;
 import gov.kh.mcr.inspectorate.service.MeetingAttendeeService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -33,7 +34,7 @@ public class MeetingAttendeeController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         service.getByMeetingId(meetingId),
-                        "ទទួលបន្ជីអ្នកចូលរួម"));
+                        "ទទួលបានបញ្ជីអ្នកចូលរួមជោគជ័យ"));
     }
 
     // GET /{meetingId}/attendees/{id}
@@ -51,7 +52,7 @@ public class MeetingAttendeeController {
                 ApiResponse.success(
                         service.getById(
                                 meetingId, attendeeId),
-                        "ទទួលបានអ្នកចូលរួម"));
+                        "ទទួលបានព័ត៌មានអ្នកចូលរួមជោគជ័យ"));
     }
     // POST /{meetingId}/attendees
     @PostMapping
@@ -69,7 +70,8 @@ public class MeetingAttendeeController {
                 .body(ApiResponse.success(
                         service.addAttendee(
                                 meetingId, request),
-                        "បន្ថែមជោគជ័យ"));
+                        "បន្ថែមអ្នកចូលរួមជោគជ័យ"));
+
     }
 
     // POST /{meetingId}/attendees/bulk
@@ -89,7 +91,7 @@ public class MeetingAttendeeController {
                 .body(ApiResponse.success(
                         service.addBulk(
                                 meetingId, request),
-                        "Bulk បន្ថែមជោគជ័យ"));
+                        "បន្ថែមអ្នកចូលរួមជាច្រើនជោគជ័យ"));
     }
 
     // PATCH /{meetingId}/attendees/{id}/attendance
@@ -111,8 +113,7 @@ public class MeetingAttendeeController {
                         service.updateAttendance(
                                 meetingId, attendeeId,
                                 request),
-                        "ធ្វើបច្ចុប្បន្នភាព"
-                                + "ការចូលរួម"));
+                        "ធ្វើបច្ចុប្បន្នភាពស្ថានភាពការចូលរួមជោគជ័យ"));
     }
 
     // DELETE /{meetingId}/attendees/{id}

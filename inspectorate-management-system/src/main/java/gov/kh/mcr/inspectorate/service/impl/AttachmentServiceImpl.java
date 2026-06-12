@@ -123,9 +123,7 @@ public class AttachmentServiceImpl
                 .toList();
     }
 
-    // ─────────────────────────────────────────────
-    // GET ACTIVE — Fix: Enum
-    // ─────────────────────────────────────────────
+
     @Override
     @Transactional(readOnly = true)
     public AttachmentResponse getActiveByReference(
@@ -162,7 +160,7 @@ public class AttachmentServiceImpl
 
         archiveExisting(
                 target.getReferenceId(),
-                target.getReferenceType()); // Fix — Enum
+                target.getReferenceType());
 
         target.setIsActive(true);
         Attachment saved =
@@ -273,8 +271,6 @@ public class AttachmentServiceImpl
                     "ឈ្មោះ File ខ្វះ");
         }
     }
-
-    // Fix — Enum parameter
     private void archiveExisting(
             Integer refId,
             AttachmentRefType refType) {

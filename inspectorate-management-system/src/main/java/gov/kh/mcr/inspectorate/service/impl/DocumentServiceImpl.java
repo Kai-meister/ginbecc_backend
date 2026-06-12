@@ -63,9 +63,6 @@ public class DocumentServiceImpl
                 page, size,
                 Sort.by("createdAt").descending());
 
-        // Fix — Check if current user = Officer
-        // Officer → filter by own officerId
-        // Admin/Manager → filter by param
         Integer resolvedOfficerId =
                 resolveOfficerId(officerId);
 
@@ -114,7 +111,6 @@ public class DocumentServiceImpl
 
         Document document = findById(id);
 
-        // Fix — owner check
         validateViewPermission(document);
 
         return documentMapper.toResponse(document);
@@ -133,21 +129,17 @@ public class DocumentServiceImpl
                 LocalDate.now().plusDays(withinDays);
 
         List<Document> list;
-
-        // Fix — Officer filter by own
         Officer currentOfficer =
                 securityUtils.getCurrentOfficerOrNull();
 
         if (currentOfficer != null
                 && !securityUtils.hasPermission(
                 "DOCUMENT_VIEW_ALL")) {
-            // Officer → own only
             list = documentRepo
                     .findExpiringByOfficer(
                             expiryDate,
                             currentOfficer.getOfficerId());
         } else {
-            // Admin/Manager → all
             list = documentRepo
                     .findExpiring(expiryDate);
         }
@@ -168,8 +160,6 @@ public class DocumentServiceImpl
                 findActiveDocumentType(
                         request.getDocumentTypeId());
 
-        // Fix — Officer can only create
-        // document for themselves
         Integer officerId =
                 resolveCreateOfficerId(
                         request.getOfficerId());
@@ -193,7 +183,7 @@ public class DocumentServiceImpl
         activityLogService.log(
                 "CREATE", "Document",
                 saved.getDocumentId(),
-                "បង្កើត: "
+                "បង្កើតឯកសារថ្មី "
                         + saved.getDocumentName(),
                 buildContext());
 
@@ -211,10 +201,7 @@ public class DocumentServiceImpl
 
         Document document = findById(id);
 
-        // Fix — owner check
         validateOwnership(document);
-
-        // Fix — only DRAFT can be updated
         validateIsDraft(document);
 
         if (!document.getDocumentType()
@@ -233,7 +220,7 @@ public class DocumentServiceImpl
         activityLogService.log(
                 "UPDATE", "Document",
                 id,
-                "កែប្រែ: "
+                "កកែប្រែព័ត៌មានឯកសារ "
                         + document.getDocumentName(),
                 buildContext());
 
@@ -250,10 +237,8 @@ public class DocumentServiceImpl
 
         Document document = findById(id);
 
-        // Fix — owner check
         validateOwnership(document);
 
-        // Fix — only DRAFT can be deleted
         validateIsDraft(document);
 
         if (document.getAttachment() != null) {
@@ -342,12 +327,9 @@ public class DocumentServiceImpl
         return documentRepo.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "ឯកសារ", id));
+                                "មិនមានទិន្នន័យឯកសារដែលមានលេខសម្គាល់ ", id));
     }
 
-    // Fix ── resolveOfficerId ──────────────────────
-    // Officer → force own officerId
-    // Admin   → use param (can be null = all)
     private Integer resolveOfficerId(
             Integer requestedOfficerId) {
 
@@ -357,17 +339,11 @@ public class DocumentServiceImpl
         if (currentOfficer != null
                 && !securityUtils.hasPermission(
                 "DOCUMENT_VIEW_ALL")) {
-            // Officer — force own
             return currentOfficer.getOfficerId();
         }
-
-        // Admin/Manager — use requested param
         return requestedOfficerId;
     }
 
-    // Fix ── resolveCreateOfficerId ────────────────
-    // Officer → can only create for self
-    // Admin   → can specify any officerId
     private Integer resolveCreateOfficerId(
             Integer requestedOfficerId) {
 
@@ -377,73 +353,61 @@ public class DocumentServiceImpl
         if (currentOfficer != null
                 && !securityUtils.hasPermission(
                 "DOCUMENT_VIEW_ALL")) {
-            // Officer — force own
             return currentOfficer.getOfficerId();
         }
 
-        // Admin — must specify officerId
         if (requestedOfficerId == null) {
             throw new BusinessException(
-                    "Admin ត្រូវ specify officerId");
+                    "អ្នកគ្រប់គ្រងប្រព័ន្ធ (Admin) ត្រូវតែបញ្ជាក់លេខសម្គាល់មន្ត្រី (Officer ID)");
         }
 
         return requestedOfficerId;
     }
 
-    // Fix ── validateViewPermission ────────────────
-    // Officer can only view OWN document
     private void validateViewPermission(
             Document document) {
 
         Officer currentOfficer =
                 securityUtils.getCurrentOfficerOrNull();
 
-        // Admin/Manager — can view all
         if (currentOfficer == null
                 || securityUtils.hasPermission(
                 "DOCUMENT_VIEW_ALL")) {
             return;
         }
 
-        // Officer — own only
         if (document.getOfficer() == null
                 || !document.getOfficer()
                 .getOfficerId()
                 .equals(currentOfficer
                         .getOfficerId())) {
             throw new ResourceNotFoundException(
-                    "ឯកសារ", document.getDocumentId());
+                    "មិនមានទិន្នន័យឯកសារ ឬអ្នកមិនមានសិទ្ធិចូលមើលឯកសារដែលមានលេខសម្គាល់", document.getDocumentId());
         }
     }
 
-    // Fix ── validateOwnership ─────────────────────
-    // Officer can only modify OWN document
     private void validateOwnership(
             Document document) {
 
         Officer currentOfficer =
                 securityUtils.getCurrentOfficerOrNull();
 
-        // Admin/Manager — can modify all
         if (currentOfficer == null
                 || securityUtils.hasPermission(
                 "DOCUMENT_VIEW_ALL")) {
             return;
         }
 
-        // Officer — own only
         if (document.getOfficer() == null
                 || !document.getOfficer()
                 .getOfficerId()
                 .equals(currentOfficer
                         .getOfficerId())) {
             throw new BusinessException(
-                    "មិនអាច modify ឯកសារ"
-                            + " Officer ផ្សេង");
+                    "មិនអាចកែប្រែទិន្នន័យឯកសាររបស់មន្ត្រីផ្សេងបានឡើយ");
         }
     }
 
-    // Fix ── validateIsDraft ───────────────────────
     private void validateIsDraft(
             Document document) {
 
@@ -455,9 +419,9 @@ public class DocumentServiceImpl
 
         if (!DocumentStatusCode.isDraft(code)) {
             throw new BusinessException(
-                    "ឯកសារ ស្ថានភាព: " + code
-                            + " — DRAFT ប៉ុណ្ណោះ"
-                            + " អាចកែ/លុប");
+                    "មិនអាចកែប្រែ ឬលុបបានឡើយ ដោយសារឯកសារនេះស្ថិតក្នុងស្ថានភាព «"
+                            + code
+                            + "»។ ប្រព័ន្ធអនុញ្ញាតឱ្យកែប្រែ ឬលុបតែឯកសារដែលស្ថិតក្នុងស្ថានភាព «ឯកសារព្រាង» ប៉ុណ្ណោះ។");
         }
     }
 
@@ -465,7 +429,7 @@ public class DocumentServiceImpl
         return officerRepo.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "មន្ត្រី", id));
+                                "មិនមានទិន្នន័យមន្ត្រីដែលមានលេខសម្គាល់ ", id));
     }
 
     private LookupDocumentStatus findStatus(
@@ -473,7 +437,7 @@ public class DocumentServiceImpl
         return statusRepo.findById(code)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "ស្ថានភាព", code));
+                                "មិនមានទិន្នន័យស្ថានភាពឯកសារដែលមានកូដ ", code));
     }
 
     private DocumentType findActiveDocumentType(
@@ -483,14 +447,14 @@ public class DocumentServiceImpl
                 documentTypeRepo.findById(id)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
-                                        "ប្រភេទឯកសារ", id));
+                                        "មិនមានទិន្នន័យប្រភេទឯកសារដែលមានលេខសម្គាល់៖ ", id));
 
         if (docType.getStatus()
                 != ActiveStatus.ACTIVE) {
             throw new BusinessException(
-                    "ប្រភេទឯកសារ \""
+                    "មិនអាចប្រើប្រាស់ប្រភេទឯកសារ «"
                             + docType.getDocumentTypeName()
-                            + "\" មិនអាចប្រើ");
+                            + "» នេះបានឡើយ ដោយសារស្ថានភាពមិនស្ថិតក្នុង «សកម្ម»។");
         }
 
         return docType;

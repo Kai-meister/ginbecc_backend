@@ -30,7 +30,7 @@ public interface DepartmentRepository
 
     boolean existsByDepartmentCode(String code);
 
-    // Find active only
+
     Optional<Department>
     findByDepartmentIdAndStatus(
             Integer id, ActiveStatus status);

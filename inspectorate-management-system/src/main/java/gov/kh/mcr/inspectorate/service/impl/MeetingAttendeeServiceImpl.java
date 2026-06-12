@@ -53,9 +53,6 @@ public class MeetingAttendeeServiceImpl
                 .toList();
     }
 
-    // ─────────────────────────────────────────────
-    // GET BY ID
-    // ─────────────────────────────────────────────
     @Override
     @Transactional(readOnly = true)
     public AttendeeResponse getById(
@@ -85,17 +82,13 @@ public class MeetingAttendeeServiceImpl
 
         Meeting meeting = findMeeting(meetingId);
 
-        // Check meeting cancellable
         validateMeetingActive(meeting);
-
-        // Check duplicate
         if (attendeeRepo
                 .existsByMeeting_MeetingIdAndOfficer_OfficerId(
                         meetingId,
                         request.getOfficerId())) {
             throw new DuplicateResourceException(
-                    "មន្ត្រីនេះ"
-                            + " មានក្នុងបញ្ជីរួចហើយ");
+                   "មន្ត្រីនេះមានឈ្មោះក្នុងបញ្ជីសមាសភាពចូលរួមប្រជុំរួចរាល់ហើយ។");
         }
 
         Officer officer =
@@ -113,24 +106,22 @@ public class MeetingAttendeeServiceImpl
         MeetingAttendee saved =
                 attendeeRepo.save(attendee);
 
-        // Notify officer
         notificationService.createByOfficerId(
                 officer.getOfficerId(),
-                "ការអញ្ជើញប្រជុំ",
-                "អញ្ជើញ: "
+                "សេចក្តីអញ្ជើញចូលរួមប្រជុំ",
+                "សូមគោរពអញ្ជើញចូលរួមអង្គប្រជុំស្តីពី៖ «"
                         + meeting.getTitle()
-                        + " ("
-                        + meeting.getMeetingDate()
-                        + ")",
+                        + "» នៅថ្ងៃទី "
+                        + meeting.getMeetingDate(),
                 NotificationType.MEETING,
                 meetingId);
 
         activityLogService.log(
                 "CREATE", "MeetingAttendee",
                 saved.getAttendeeId(),
-                "Add: "
+                "បន្ថែមសមាសភាពចូលរួមប្រជុំ "
                         + officer.getFullNameKh()
-                        + " → " + meeting.getTitle(),
+                        + " ទៅក្នុងកិច្ចប្រជុំ «" + meeting.getTitle() + "»",
                 buildContext());
 
         return attendeeMapper.toResponse(saved);
@@ -153,7 +144,6 @@ public class MeetingAttendeeServiceImpl
         request.getOfficerIds()
                 .forEach(officerId -> {
 
-                    // Skip duplicate
                     if (attendeeRepo
                             .existsByMeeting_MeetingIdAndOfficer_OfficerId(
                                     meetingId, officerId)) {
@@ -185,9 +175,9 @@ public class MeetingAttendeeServiceImpl
                                         notificationService
                                                 .createByOfficerId(
                                                         officerId,
-                                                        "ការអញ្ជើញប្រជុំ",
-                                                        "អញ្ជើញ: "
-                                                                + meeting.getTitle(),
+                                                        "សេចក្តីអញ្ជើញចូលរួមប្រជុំ",
+                                                        "សូមគោរពអញ្ជើញចូលរួមអង្គប្រជុំស្តីពី៖ «"
+                                                                + meeting.getTitle() + "»",
                                                         NotificationType.MEETING,
                                                         meetingId);
                                     },
@@ -199,17 +189,14 @@ public class MeetingAttendeeServiceImpl
         activityLogService.log(
                 "CREATE", "MeetingAttendee",
                 meetingId,
-                "Bulk add "
+                "បន្ថែមសមាសភាពចូលរួមប្រជុំជាចង្កោមចំនួន "
                         + results.size()
-                        + " attendees",
+                        + " រូប ទៅក្នុងកិច្ចប្រជុំ «" + meeting.getTitle() + "»",
                 buildContext());
 
         return results;
     }
 
-    // ─────────────────────────────────────────────
-    // UPDATE ATTENDANCE STATUS
-    // ─────────────────────────────────────────────
     @Override
     public AttendeeResponse updateAttendance(
             Integer meetingId,
@@ -223,7 +210,7 @@ public class MeetingAttendeeServiceImpl
                 .getMeetingId()
                 .equals(meetingId)) {
             throw new ResourceNotFoundException(
-                    "Attendee", attendeeId);
+                    "មិនមានឈ្មោះមន្ត្រីរូបនេះ នៅក្នុងកិច្ចប្រជុំដែលបានបញ្ជាក់ឡើយ សម្រាប់លេខសម្គាល់សមាសភាព", attendeeId);
         }
 
         attendee.setAttendanceStatus(
@@ -233,7 +220,6 @@ public class MeetingAttendeeServiceImpl
             attendee.setNote(request.getNote());
         }
 
-        // Auto check-in time
         if (request.getAttendanceStatus()
                 == AttendanceStatus.ATTENDED
                 && attendee.getCheckInTime() == null) {
@@ -247,7 +233,7 @@ public class MeetingAttendeeServiceImpl
         activityLogService.log(
                 "UPDATE", "MeetingAttendee",
                 attendeeId,
-                "Attendance: "
+                "បច្ចុប្បន្នភាពស្ថានភាពវត្តមាន "
                         + request.getAttendanceStatus()
                         .getLabelKh(),
                 buildContext());
@@ -255,9 +241,6 @@ public class MeetingAttendeeServiceImpl
         return attendeeMapper.toResponse(saved);
     }
 
-    // ─────────────────────────────────────────────
-    // REMOVE ATTENDEE
-    // ─────────────────────────────────────────────
     @Override
     public void removeAttendee(
             Integer meetingId,
@@ -270,7 +253,7 @@ public class MeetingAttendeeServiceImpl
                 .getMeetingId()
                 .equals(meetingId)) {
             throw new ResourceNotFoundException(
-                    "Attendee", attendeeId);
+                   "មិនមានឈ្មោះមន្ត្រីរូបនេះ នៅក្នុងកិច្ចប្រជុំដែលបានបញ្ជាក់ឡើយ សម្រាប់លេខសម្គាល់សមាសភាព ", attendeeId);
         }
 
         validateMeetingActive(
@@ -281,37 +264,35 @@ public class MeetingAttendeeServiceImpl
         activityLogService.log(
                 "DELETE", "MeetingAttendee",
                 attendeeId,
-                "Remove: "
+                "លុបសមាសភាពចូលរួមប្រជុំ "
                         + attendee.getOfficer()
-                        .getFullNameKh(),
+                        .getFullNameKh()
+                        + " ចេញពីកិច្ចប្រជុំ «" + attendee.getMeeting().getTitle() + "»",
                 buildContext());
     }
-
-    // ── Private Helpers ───────────────────────────
 
     private MeetingAttendee findById(
             Integer id) {
         return attendeeRepo.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "Attendee", id));
+                                "មិនមានទិន្នន័យសមាសភាពចូលរួមប្រជុំដែលមានលេខសម្គាល់ ", id));
     }
 
     private Meeting findMeeting(Integer id) {
         return meetingRepo.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "ការប្រជុំ", id));
+                                "មិនមានទិន្នន័យកិច្ចប្រជុំដែលមានលេខសម្គាល់ ", id));
     }
 
     private Officer findOfficer(Integer id) {
         return officerRepo.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "មន្ត្រី", id));
+                                "មិនមានទិន្នន័យមន្ត្រីដែលមានលេខសម្គាល់ ", id));
     }
 
-    // Fix validateMeetingActive — ប្រើ canEditAttendees
     private void validateMeetingActive(
             Meeting meeting) {
 
@@ -322,10 +303,9 @@ public class MeetingAttendeeServiceImpl
 
         if (!MeetingStatusCode.canEditAttendees(code)) {
             throw new BusinessException(
-                    "ការប្រជុំ \""
+                    "មិនអាចកែប្រែសមាសភាពចូលរួមបានឡើយ ដោយសារកិច្ចប្រជុំ «"
                             + meeting.getTitle()
-                            + "\" ស្ថានភាព: " + code
-                            + " — មិនអាចកែប្រែ Attendees");
+                            + "» នេះស្ថិតក្នុងស្ថានភាព «" + code + "»។");
         }
     }
 

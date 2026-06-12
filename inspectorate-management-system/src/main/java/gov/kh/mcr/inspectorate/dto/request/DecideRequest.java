@@ -7,10 +7,10 @@ import lombok.*;
 @Builder
 public class DecideRequest {
 
-    @NotBlank(message = "statusCode ចាំបាច់")
+    @NotBlank(message = "សូមជ្រើសរើសស្ថានភាពនៃការសម្រេចចិត្ត")
     @Pattern(
             regexp = "^(APPROVED|REJECTED)$",
-            message = "statusCode: APPROVED ឬ REJECTED")
+            message = "ស្ថានភាពនៃការសម្រេចចិត្តត្រូវតែជា 'អនុម័ត' ឬ 'បដិសេធ'")
     private String statusCode;
 
     // Required when REJECTED
@@ -22,7 +22,7 @@ public class DecideRequest {
                 && (comment == null
                 || comment.isBlank())) {
             throw new IllegalArgumentException(
-                    "ការបដិសេធត្រូវការ comment");
+                    "សូមបញ្ចូលមតិយោបល់ ឬមូលហេតុនៃការបដិសេធ");
         }
     }
 }

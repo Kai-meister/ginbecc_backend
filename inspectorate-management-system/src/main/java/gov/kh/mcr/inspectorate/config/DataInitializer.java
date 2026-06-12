@@ -365,7 +365,7 @@ public class DataInitializer
         }
 
         //ROLE ASSIGNMENTS
-        // SUPER_ADMIN Full control: reconcile to ALL permissions every startup.
+        // SUPER_ADMIN Full control
         roleRepository
                 .findByRoleName("SUPER_ADMIN")
                 .ifPresent(role -> {

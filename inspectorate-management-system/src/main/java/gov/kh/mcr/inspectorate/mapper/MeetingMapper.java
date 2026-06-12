@@ -32,7 +32,6 @@ public interface MeetingMapper {
             source = "statusCode.statusCode")
     @Mapping(target = "statusLabel",
             source = "statusCode.labelKh")
-    // Summary computed in Service
     @Mapping(target = "totalAttendees",
             ignore = true)
     @Mapping(target = "attendedCount",

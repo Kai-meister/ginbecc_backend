@@ -81,7 +81,6 @@ public class DocumentTypeServiceImpl
 
         DocumentType docType = findById(id);
 
-        // Fix — Block INACTIVE if has documents
         if (request.getStatus()
                 == ActiveStatus.INACTIVE
                 && docType.getStatus()
@@ -94,11 +93,10 @@ public class DocumentTypeServiceImpl
 
             if (count > 0) {
                 throw new BusinessException(
-                        "ប្រភេទឯកសារ \""
+                        "មិនអាចផ្លាស់ប្តូរស្ថានភាពប្រភេទឯកសារ «"
                                 + docType.getDocumentTypeName()
-                                + "\" មានឯកសារ "
-                                + count + " — "
-                                + "មិនអាច Deactivate");
+                                + "» ទៅជា «មិនមានសកម្មភាព» បានឡើយ ដោយសារមានឯកសារកំពុងប្រើប្រាស់ប្រភេទនេះចំនួន "
+                                + count + " ច្បាប់។");
             }
         }
 
@@ -108,7 +106,7 @@ public class DocumentTypeServiceImpl
         activityLogService.log(
                 "UPDATE", "DocumentType",
                 id,
-                "កែប្រែ: "
+                "កែប្រែព័ត៌មានប្រភេទឯកសារ "
                         + docType.getDocumentTypeName(),
                 buildContext());
 
@@ -126,18 +124,18 @@ public class DocumentTypeServiceImpl
 
         if (count > 0) {
             throw new BusinessException(
-                    "មិនអាចលុបបាន — \""
+                    "មិនអាចលុបប្រភេទឯកសារ «"
                             + type.getDocumentTypeName()
-                            + "\" មាន " + count
-                            + " ឯកសារ"
-                            + " — សូម Deactivate ជំនួស");
+                            + "» នេះបានឡើយ ដោយសារមានឯកសារកំពុងប្រើប្រាស់ចំនួន "
+                            + count
+                            + " ច្បាប់។ សូមផ្លាស់ប្តូរស្ថានភាពទៅជា «មិនមានសកម្មភាព» ជំនួសវិញ។");
         }
 
         documentTypeRepository.deleteById(id);
 
         activityLogService.log(
                 "DELETE", "DocumentType",
-                id, "លុបប្រភេទឯកសារ",
+                id, "លុបទិន្នន័យប្រភេទឯកសារ",
                 buildContext());
     }
     private ActivityLogContext buildContext() {
@@ -146,7 +144,6 @@ public class DocumentTypeServiceImpl
         return securityUtils.buildLogContext(request);
     }
 
-    // ── Get current HTTP Request ──────────────────
     private HttpServletRequest getCurrentRequest() {
         try {
             return ((ServletRequestAttributes)

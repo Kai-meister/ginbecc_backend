@@ -21,7 +21,6 @@ public interface MeetingAttendeeRepository
             Integer meetingId,
             Integer officerId);
 
-    // បន្ថែម count by meeting only
     long countByMeeting_MeetingId(
             Integer meetingId);
 
@@ -39,12 +38,9 @@ public interface MeetingAttendeeRepository
             Integer meetingId,
             AttendanceStatus status);
 
-    // All meetings of officer
     List<MeetingAttendee>
     findByOfficer_OfficerId(
             Integer officerId);
-
-    // Delete all attendees of meeting
     void deleteByMeeting_MeetingId(
             Integer meetingId);
 }

@@ -6,13 +6,11 @@ import lombok.*;
 @NoArgsConstructor @AllArgsConstructor
 @Builder
 public class ApprovalRequest {
-
-    @NotNull(message = "ឯកសារចាំបាច់")
-    @Positive(message = "documentId > 0")
+    @NotNull(message = "សូមជ្រើសរើសឯកសារ")
+    @Positive(message = "លេខសម្គាល់ឯកសារត្រូវមានតម្លៃធំជាង 0")
     private Integer documentId;
 
-    // Optional note from Officer
     @Size(max = 500,
-            message = "ghi chú អតិបរមា 500 តួ")
+            message = "កំណត់ចំណាំមិនអាចលើសពី 500 តួអក្សរបានទេ")
     private String note;
 }

@@ -45,10 +45,9 @@ public class ApprovalController {
                                 page, size,
                                 status, officerId,
                                 documentId),
-                        "ទទួលបន្ជី Approval"));
+                        "ទទួលបានបញ្ជីការអនុម័ត"));
     }
 
-    // Approver sees pending list
     // GET /approvals/my-pending
     @GetMapping("/my-pending")
     @PreAuthorize("hasAuthority('APPROVAL_REVIEW')")
@@ -64,7 +63,7 @@ public class ApprovalController {
                 ApiResponse.success(
                         approvalService.getMyPending(
                                 page, size),
-                        "Approval រង់ចាំ"));
+                        "ទទួលបានបញ្ជីរង់ចាំការអនុម័ត"));
     }
     // GET /approvals/{id}
     @GetMapping("/{id}")
@@ -77,10 +76,9 @@ public class ApprovalController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         approvalService.getById(id),
-                        "ទទួលបាន Approval"));
+                        "ទទួលបានព័ត៌មានការអនុម័ត"));
     }
 
-    // Officer submit document for approval
     // POST /approvals - Officer submit
     @PostMapping
     @PreAuthorize(
@@ -96,10 +94,8 @@ public class ApprovalController {
                 .body(ApiResponse.success(
                         approvalService
                                 .requestApproval(request),
-                        "ស្នើអនុម័តជោគជ័យ"));
+                        "បានស្នើសុំការអនុម័តដោយជោគជ័យ"));
     }
-
-
 
     // PUT /approvals/{id}/decide - Admin decide
     @PutMapping("/{id}/decide")
@@ -116,7 +112,7 @@ public class ApprovalController {
                 ApiResponse.success(
                         approvalService.decide(
                                 id, request),
-                        "ការសម្រេចចិត្ត: "
+                        "បានសម្រេចចិត្តការអនុម័ត "
                                 + request.getStatusCode()));
     }
 

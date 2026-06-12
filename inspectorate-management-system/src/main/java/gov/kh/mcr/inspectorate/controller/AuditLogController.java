@@ -67,6 +67,6 @@ public class AuditLogController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         activityLogService.getById(id),
-                        "ទទួលបាន Log"));
+                        "ទទួលបានព័ត៌មានប្រវត្តិសកម្មភាព"));
     }
 }

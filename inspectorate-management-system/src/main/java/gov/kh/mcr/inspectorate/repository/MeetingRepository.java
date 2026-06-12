@@ -13,16 +13,15 @@ import java.util.List;
 public interface MeetingRepository
         extends JpaRepository<Meeting, Integer> {
 
-    //  Filter by status
     Page<Meeting>
     findByStatusCode_StatusCode(
             String status, Pageable pageable);
 
     List<Meeting> findByMeetingDate(LocalDate date);
 
-    // Filter by room
     Page<Meeting> findByRoom_RoomId(
             Integer roomId, Pageable pageable);
+
 
     // Calendar — month/year
     @Query("""
@@ -86,7 +85,8 @@ public interface MeetingRepository
             @Param("ignoredStatuses")
             List<String> ignoredStatuses);
 
-    // Room schedule
+
+    // Report query
     @Query("""
         SELECT m FROM Meeting m
         WHERE m.room.roomId = :roomId
@@ -101,7 +101,6 @@ public interface MeetingRepository
             @Param("ignoredStatuses")
             List<String> ignoredStatuses);
 
-    // Report query
     @Query("""
         SELECT m FROM Meeting m
         LEFT JOIN FETCH m.room       r

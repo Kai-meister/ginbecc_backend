@@ -73,8 +73,6 @@ public class DocumentController {
             int page,
             @RequestParam(defaultValue = "20")
             int size,
-            // Fix — Officer ignores this param
-            // Admin/Manager uses it
             @RequestParam(required = false)
             Integer officerId,
             @RequestParam(required = false)
@@ -87,7 +85,7 @@ public class DocumentController {
                         documentService.getAll(
                                 page, size,
                                 officerId, typeId, status),
-                        "ទទួលបន្ជីឯកសារ"));
+                        "ទទួលបានបញ្ជីឯកសារ"));
     }
 
 // GET /documents/{id}
@@ -105,7 +103,7 @@ public class DocumentController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         documentService.getById(id),
-                        "ទទួលបានឯកសារ"));
+                        "ទទួលបានព័ត៌មានឯកសារ"));
     }
     // POST /documents
     @PostMapping
@@ -152,7 +150,7 @@ public class DocumentController {
                 .body(ApiResponse.success(
                         documentService
                                 .uploadAttachment(id, file),
-                        "Upload ឯកសារជោគជ័យ"));
+                        "បានលុបឯកសារដោយជោគជ័យ"));
     }
 
     // GET /documents/{id}/download
@@ -166,6 +164,6 @@ public class DocumentController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         documentService.getDownloadUrl(id),
-                        "URL Download ឯកសារ"));
+                        "ទទួលបានតំណទាញយកឯកសារ"));
     }
 }

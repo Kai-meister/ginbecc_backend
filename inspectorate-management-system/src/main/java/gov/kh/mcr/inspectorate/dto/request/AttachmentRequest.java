@@ -8,10 +8,10 @@ import lombok.*;
 @Builder
 public class AttachmentRequest {
 
-    @NotNull(message = "ប្រភេទយោងចាំបាច់")
+    @NotNull(message = "សូមជ្រើសរើសប្រភេទយោង")
     private AttachmentRefType refType;
 
-    @NotNull(message = "ID យោងចាំបាច់")
-    @Positive(message = "ref_id > 0")
+    @NotNull(message = "សូមបញ្ជាក់លេខសម្គាល់យោង")
+    @Positive(message = "លេខសម្គាល់យោងត្រូវធំជាង 0")
     private Integer refId;
 }

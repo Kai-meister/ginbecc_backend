@@ -56,9 +56,6 @@ public class MeetingRoomServiceImpl
                 .toList();
     }
 
-    // ─────────────────────────────────────────────
-    // GET BY ID
-    // ─────────────────────────────────────────────
     @Override
     @Transactional(readOnly = true)
     public MeetingRoomResponse getById(Integer id) {
@@ -75,14 +72,13 @@ public class MeetingRoomServiceImpl
         if (roomRepo.existsByRoomCode(
                 request.getRoomCode())) {
             throw new DuplicateResourceException(
-                    "កូដបន្ទប់ ["
+                    "មិនអាចបង្កើតបានឡើយ ដោយសារកូដបន្ទប់ប្រជុំ «"
                             + request.getRoomCode()
-                            + "] មានស្ទួន");
+                            + "» នេះមានក្នុងប្រព័ន្ធរួចហើយ។");
         }
 
         MeetingRoom room =
                 roomMapper.toEntity(request);
-        // Fix — attachment = null (upload later)
         room.setAttachment(null);
 
         MeetingRoom saved = roomRepo.save(room);
@@ -90,7 +86,7 @@ public class MeetingRoomServiceImpl
         activityLogService.log(
                 "CREATE", "MeetingRoom",
                 saved.getRoomId(),
-                "បង្កើតបន្ទប់: "
+                "បង្កើតបន្ទប់ប្រជុំថ្មី កូដ "
                         + saved.getRoomCode(),
                 buildContext());
 
@@ -108,12 +104,9 @@ public class MeetingRoomServiceImpl
         MeetingRoom room = findById(id);
         roomMapper.updateEntity(request, room);
 
-        // Fix — attachment unchanged on update
-        // Upload ដោយ POST /{id}/image ដាច់ដោយឡែក
-
         activityLogService.log(
                 "UPDATE", "MeetingRoom",
-                id, "កែប្រែ: " + room.getRoomCode(),
+                id, "កែប្រែព័ត៌មានបន្ទប់ប្រជុំ កូដ " + room.getRoomCode(),
                 buildContext());
 
         return roomMapper.toResponse(
@@ -125,32 +118,25 @@ public class MeetingRoomServiceImpl
     // ─────────────────────────────────────────────
     @Override
     public void delete(Integer id) {
-        findById(id);
+        MeetingRoom room = findById(id);
         roomRepo.deleteById(id);
         activityLogService.log(
                 "DELETE", "MeetingRoom",
-                id, "លុបបន្ទប់ប្រជុំ",
+                id, "លុបទិន្នន័យបន្ទប់ប្រជុំ កូដ៖ " + room.getRoomCode(),
                 buildContext());
     }
 
-    // ─────────────────────────────────────────────
-    // Fix — Upload Image + Auto-link (optional)
-    // ─────────────────────────────────────────────
     @Override
     public MeetingRoomResponse uploadImage(
             Integer roomId,
             MultipartFile file) {
 
         MeetingRoom room = findById(roomId);
-
-        // Upload image to MinIO
         AttachmentResponse resp =
                 attachmentService.upload(
                         file,
                         AttachmentRefType.MEETING_ROOM,
                         roomId);
-
-        // Auto-link → room.attachment
         attachRepo.findById(
                         resp.getAttachmentId())
                 .ifPresent(att -> {
@@ -161,7 +147,7 @@ public class MeetingRoomServiceImpl
         activityLogService.log(
                 "UPDATE", "MeetingRoom",
                 roomId,
-                "Upload Image: "
+                "ផ្ទុកឡើងរូបភាពបន្ទប់ប្រជុំ "
                         + resp.getOriginalName(),
                 buildContext());
 
@@ -169,9 +155,6 @@ public class MeetingRoomServiceImpl
                 roomRepo.save(room));
     }
 
-    // ─────────────────────────────────────────────
-    // Fix — Remove Image (set null)
-    // ─────────────────────────────────────────────
     @Override
     public MeetingRoomResponse removeImage(
             Integer roomId) {
@@ -182,31 +165,25 @@ public class MeetingRoomServiceImpl
             return roomMapper.toResponse(room);
         }
 
-        // Delete from MinIO + DB
         attachmentService.delete(
                 room.getAttachment().getAttachmentId());
 
-        // Unlink
         room.setAttachment(null);
 
         activityLogService.log(
                 "UPDATE", "MeetingRoom",
-                roomId, "លុបរូបបន្ទប់",
+                roomId, "លុបរូបភាពបន្ទប់ប្រជុំ កូដ៖ " + room.getRoomCode(),
                 buildContext());
 
         return roomMapper.toResponse(
                 roomRepo.save(room));
     }
 
-    // ─────────────────────────────────────────────
-    // Fix — Get Image URL (nullable)
-    // ─────────────────────────────────────────────
     @Override
     @Transactional(readOnly = true)
     public String getImageUrl(Integer roomId) {
         MeetingRoom room = findById(roomId);
 
-        // Fix — nullable OK (room may have no image)
         if (room.getAttachment() == null) {
             return null;
         }
@@ -220,7 +197,7 @@ public class MeetingRoomServiceImpl
         return roomRepo.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "បន្ទប់ប្រជុំ", id));
+                                "មិនមានទិន្នន័យបន្ទប់ប្រជុំដែលមានលេខសម្គាល់", id));
     }
 
     private ActivityLogContext buildContext() {

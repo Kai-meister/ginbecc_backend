@@ -226,9 +226,8 @@ public class OfficerServiceImpl implements OfficerService {
         activityLogService.log(
                 "UPDATE", "Officer",
                 id,
-                "ស្ថានភាព → "
-                        + request.getStatusCode(),
-                buildContext());           // ← Fix
+                "បានកែសម្រួលស្ថានភាពមន្ត្រីទៅជា៖ " + request.getStatusCode(),
+                buildContext());
 
         return toResponseWithAge(
                 officerRepository.save(officer));
@@ -250,14 +249,14 @@ public class OfficerServiceImpl implements OfficerService {
         return officerRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "មន្ត្រី", id));
+                                "មិនមានទិន្នន័យមន្ត្រីដែលមានលេខសម្គាល់ ", id));
     }
 
     private Department findDept(Integer id) {
         return deptRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "នាយកដ្ឋាន", id));
+                                "មិនមានទិន្នន័យនាយកដ្ឋានដែលមានលេខសម្គាល់ ", id));
     }
 
     private Position findPos(
@@ -266,7 +265,7 @@ public class OfficerServiceImpl implements OfficerService {
                 .findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "តំណែង", id));
+                                "មិនមានទិន្នន័យតំណែងដែលមានលេខសម្គាល់ ", id));
     }
 
     private LookupOfficerStatus findStatus(
@@ -274,7 +273,7 @@ public class OfficerServiceImpl implements OfficerService {
         return statusRepository.findById(code)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "ស្ថានភាព", code));
+                                "មិនមានទិន្នន័យស្ថានភាពដែលមានលេខកូដ ", code));
     }
 
     private OfficerResponse toResponseWithAge(
@@ -286,25 +285,17 @@ public class OfficerServiceImpl implements OfficerService {
         return dto;
     }
 
-
-// Fix — ក្នុង OfficerServiceImpl.java
-
     @Override
     public OfficerResponse uploadProfileImage(
             Integer officerId,
             MultipartFile file) {
-
-        // ១. Validate officer exists
         Officer officer = findById(officerId);
 
-        // ២. Upload image → get attachment
         AttachmentResponse attachmentResponse =
                 attachmentService.upload(
                         file,
                         AttachmentRefType.OFFICER,
                         officerId);
-
-        // ៣. Auto-link → officer.profileAttachment
         attachmentRepository
                 .findById(
                         attachmentResponse.getAttachmentId())
@@ -316,7 +307,7 @@ public class OfficerServiceImpl implements OfficerService {
         activityLogService.log(
                 "UPDATE", "Officer",
                 officerId,
-                "Upload Profile Image: "
+                "បានបញ្ចូលរូបភាពប្រវត្តិរូបថ្មីឈ្មោះ "
                         + attachmentResponse.getOriginalName(),
                 buildContext());
 
@@ -332,7 +323,7 @@ public class OfficerServiceImpl implements OfficerService {
         Officer officer = findById(officerId);
 
         if (officer.getProfileAttachment() == null) {
-            return null; // No image
+            return null;
         }
 
         return minioService.getPresignedUrl(

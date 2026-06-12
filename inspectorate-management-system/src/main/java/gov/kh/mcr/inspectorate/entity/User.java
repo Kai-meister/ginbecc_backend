@@ -18,7 +18,9 @@ import java.util.UUID;
                 @Index(name = "idx_user_role",
                         columnList = "role_id"),
                 @Index(name = "idx_user_officer",
-                        columnList = "officer_id")
+                        columnList = "officer_id"),
+                @Index(name = "idx_user_contract",
+                        columnList = "contract_officer_id")
         })
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
@@ -41,32 +43,39 @@ public class User {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "officer_id",
-            unique = true,
-            nullable = true)
+            unique = true, nullable = true)
     private Officer officer;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "role_id",
-            nullable = false)
+    @JoinColumn(name = "contract_officer_id",
+            unique = true, nullable = true)
+    private ContractOfficer contractOfficer;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "status_code",
+    @JoinColumn(name = "status_code",
             referencedColumnName = "status_code")
     private LookupUserStatus statusCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_type",
+            nullable = false, length = 30)
+    @Builder.Default
+    private UserType userType = UserType.OFFICER;
 
     @Column(name = "user_name_kh",
             length = 255, nullable = false)
     private String userNameKh;
 
-    @Column(name = "user_name_en",
-            length = 255)
+    @Column(name = "user_name_en", length = 255)
     private String userNameEn;
 
     @Column(name = "email",
-            length = 150,
-            unique = true, nullable = false)
+            length = 150, unique = true,
+            nullable = false)
     private String email;
 
     @Column(name = "phone", length = 20)
@@ -76,11 +85,12 @@ public class User {
             nullable = false)
     private String passwordHash;
 
+    @Builder.Default
     @Column(name = "must_change_password",
             nullable = false)
-    @Builder.Default
     private Boolean mustChangePassword = false;
 
+    @Builder.Default
     @Column(name = "failed_login_count",
             nullable = false)
     private Integer failedLoginCount = 0;

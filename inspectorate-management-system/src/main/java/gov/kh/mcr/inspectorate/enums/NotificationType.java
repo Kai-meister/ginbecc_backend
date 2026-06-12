@@ -2,23 +2,28 @@ package gov.kh.mcr.inspectorate.enums;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import gov.kh.mcr.inspectorate.exception
+        .BusinessException;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 @Getter
 @RequiredArgsConstructor
 public enum NotificationType {
 
-    MEETING      ("MEETING",
+    MEETING("MEETING",
             "ការប្រជុំ",
             "/meetings/"),
 
-    DOCUMENT     ("DOCUMENT",
+    DOCUMENT("DOCUMENT",
             "ឯកសារ",
             "/documents/"),
 
-    ANNOUNCEMENT ("ANNOUNCEMENT",
+    ANNOUNCEMENT("ANNOUNCEMENT",
             "សេចក្តីប្រកាស",
             "/announcements/"),
 
-    SYSTEM       ("SYSTEM",
+    SYSTEM("SYSTEM",
             "ប្រព័ន្ធ",
             "/profile");
 
@@ -26,8 +31,6 @@ public enum NotificationType {
     private final String labelKh;
     private final String pathPrefix;
 
-    // MEETING + 10  - /meetings/10
-    // SYSTEM + null - /profile
     public String buildPath(
             Integer referenceId) {
         if (this == SYSTEM

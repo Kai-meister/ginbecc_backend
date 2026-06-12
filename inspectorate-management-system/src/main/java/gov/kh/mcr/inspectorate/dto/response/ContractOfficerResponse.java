@@ -10,21 +10,26 @@ import java.time.LocalDateTime;
 @Builder
 public class ContractOfficerResponse {
 
-    private Integer contractOfficerId;
-    private String contractOfficerCode;
-    private String fullNameKh;
-    private String fullNameEn;
-    private Gender gender;
-    private Integer departmentId;
-    private String departmentName;
-    private String jobLevel;
-    private String jobDescription;
-    private String statusCode;
-    private String statusLabel;
-    private LocalDate startDate;
-    private LocalDate endDate;
-    private Long daysUntilExpiry;
-    private String expiryLabel;
+    private Integer       contractOfficerId;
+    private String        contractOfficerCode;
+    private String        fullNameKh;
+    private String        fullNameEn;
+    private Gender        gender;
+    private LocalDate     dob;
+    private Integer       age;
+    private String        departmentName;
+    private Integer       departmentId;
+    private String        statusCode;
+    private String        statusLabel;
+    private String        phone;
+    private String        email;
+    private String        jobLevel;
+    private LocalDate     startDate;
+    private LocalDate     endDate;
+    private String        note;
+    private String        accountingCode;
+    private Long          daysUntilExpiry;
+    private String        expiryLabel;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
