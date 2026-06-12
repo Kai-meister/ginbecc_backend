@@ -26,6 +26,9 @@ public final class ExcelUtils {
     private static final String ORG_NAME_EN =
             "National Inspectorate of Buddhist Education";
 
+    private static final String FONT_NAME =
+            "Khmer OS Siemreap";
+
 
     private static final byte[] HDR_BG =
             hex("#401E12");
@@ -676,6 +679,7 @@ public final class ExcelUtils {
         c0.setCellValue(ORG_NAME);
         CellStyle cs0 = wb.createCellStyle();
         XSSFFont f0 = (XSSFFont) wb.createFont();
+        f0.setFontName(FONT_NAME);
         f0.setBold(true);
         f0.setFontHeightInPoints((short) 12);
         f0.setColor(new XSSFColor(HDR_BG, null));
@@ -694,6 +698,7 @@ public final class ExcelUtils {
         c1.setCellValue(ORG_NAME_EN);
         CellStyle cs1 = wb.createCellStyle();
         XSSFFont f1 = (XSSFFont) wb.createFont();
+        f1.setFontName(FONT_NAME);
         f1.setFontHeightInPoints((short) 9);
         f1.setItalic(true);
         f1.setColor(new XSSFColor(
@@ -727,6 +732,7 @@ public final class ExcelUtils {
                 VerticalAlignment.CENTER);
 
         XSSFFont f = (XSSFFont) wb.createFont();
+        f.setFontName(FONT_NAME);
         f.setBold(true);
         f.setFontHeightInPoints((short) 14);
         f.setColor(new XSSFColor(WHITE, null));
@@ -794,6 +800,7 @@ public final class ExcelUtils {
                 VerticalAlignment.CENTER);
 
         XSSFFont f = (XSSFFont) wb.createFont();
+        f.setFontName(FONT_NAME);
         f.setFontHeightInPoints((short) 9);
         f.setColor(new XSSFColor(WHITE, null));
         cs.setFont(f);
@@ -841,6 +848,7 @@ public final class ExcelUtils {
                 VerticalAlignment.CENTER);
 
         XSSFFont f = (XSSFFont) wb.createFont();
+        f.setFontName(FONT_NAME);
         f.setBold(true);
         f.setFontHeightInPoints((short) 10);
         f.setColor(new XSSFColor(
@@ -871,6 +879,7 @@ public final class ExcelUtils {
         private CellStyle mkHdr(XSSFWorkbook wb) {
             CellStyle cs = wb.createCellStyle();
             XSSFFont f = (XSSFFont) wb.createFont();
+            f.setFontName(FONT_NAME);
             f.setBold(true);
             f.setColor(new XSSFColor(WHITE, null));
             f.setFontHeightInPoints((short) 10);
@@ -891,6 +900,7 @@ public final class ExcelUtils {
         private CellStyle mkData(XSSFWorkbook wb) {
             CellStyle cs = wb.createCellStyle();
             XSSFFont f = (XSSFFont) wb.createFont();
+            f.setFontName(FONT_NAME);
             f.setFontHeightInPoints((short) 10);
             f.setColor(new XSSFColor(
                     hex("#000000"), null));
@@ -908,6 +918,7 @@ public final class ExcelUtils {
         private CellStyle mkAlt(XSSFWorkbook wb) {
             CellStyle cs = wb.createCellStyle();
             XSSFFont f = (XSSFFont) wb.createFont();
+            f.setFontName(FONT_NAME);
             f.setFontHeightInPoints((short) 10);
             f.setColor(new XSSFColor(
                     hex("#000000"), null));
@@ -925,6 +936,7 @@ public final class ExcelUtils {
         private CellStyle mkWarn(XSSFWorkbook wb) {
             CellStyle cs = wb.createCellStyle();
             XSSFFont f = (XSSFFont) wb.createFont();
+            f.setFontName(FONT_NAME);
             f.setBold(true);
             f.setFontHeightInPoints((short) 10);
             f.setColor(new XSSFColor(
