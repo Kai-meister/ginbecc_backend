@@ -301,7 +301,7 @@ public class ReportController {
                         "Preview Users"));
     }
     // 1. OFFICERS
-    @GetMapping("/officers/excel")
+    @GetMapping({"/officers/excel", "/officers"})
     @PreAuthorize(
             "hasAnyAuthority('REPORT_VIEW',"
                     + "'REPORT_EXPORT')")
@@ -331,7 +331,7 @@ public class ReportController {
 
 
     // 2. CONTRACT OFFICERS
-    @GetMapping("/contract-officers/excel")
+    @GetMapping({"/contract-officers/excel", "/contract-officers"})
     @PreAuthorize(
             "hasAnyAuthority('REPORT_VIEW',"
                     + "'REPORT_EXPORT')")
@@ -353,7 +353,7 @@ public class ReportController {
     }
 
     // 3. DOCUMENTS
-    @GetMapping("/documents/excel")
+    @GetMapping({"/documents/excel", "/documents"})
     @PreAuthorize(
             "hasAnyAuthority('REPORT_VIEW',"
                     + "'REPORT_EXPORT',"
@@ -385,7 +385,7 @@ public class ReportController {
     }
 
     // 4. APPROVALS
-    @GetMapping("/approvals/excel")
+    @GetMapping({"/approvals/excel", "/approvals"})
     @PreAuthorize(
             "hasAnyAuthority('REPORT_VIEW',"
                     + "'REPORT_EXPORT',"
@@ -412,7 +412,7 @@ public class ReportController {
     }
 
     // 5. MEETINGS
-    @GetMapping("/meetings/excel")
+    @GetMapping({"/meetings/excel", "/meetings"})
     @PreAuthorize(
             "hasAnyAuthority('REPORT_VIEW',"
                     + "'REPORT_EXPORT')")
@@ -439,7 +439,7 @@ public class ReportController {
     }
 
     // 6. MEETING MINUTES
-    @GetMapping("/meeting-minutes/excel")
+    @GetMapping({"/meeting-minutes/excel", "/meeting-minutes"})
     @PreAuthorize(
             "hasAnyAuthority('REPORT_VIEW',"
                     + "'REPORT_EXPORT',"
@@ -465,7 +465,7 @@ public class ReportController {
     }
 
     // 7. ANNOUNCEMENTS
-    @GetMapping("/announcements/excel")
+    @GetMapping({"/announcements/excel", "/announcements"})
     @PreAuthorize(
             "hasAnyAuthority('REPORT_VIEW',"
                     + "'REPORT_EXPORT')")
@@ -493,7 +493,7 @@ public class ReportController {
     }
 
     // 8. AUDIT LOGS
-    @GetMapping("/audit-logs/excel")
+    @GetMapping({"/audit-logs/excel", "/audit-logs"})
     @PreAuthorize(
             "hasAnyAuthority('REPORT_ADVANCED',"
                     + "'REPORT_EXPORT',"
@@ -525,7 +525,7 @@ public class ReportController {
     }
 
     // 9. NOTIFICATIONS
-    @GetMapping("/notifications/excel")
+    @GetMapping({"/notifications/excel", "/notifications"})
     @PreAuthorize(
             "hasAuthority('REPORT_ADVANCED')")
     public ResponseEntity<Resource>
@@ -555,7 +555,7 @@ public class ReportController {
     }
 
     // 10. USERS
-    @GetMapping("/users/excel")
+    @GetMapping({"/users/excel", "/users"})
     @PreAuthorize(
             "hasAuthority('REPORT_ADVANCED')")
     public ResponseEntity<Resource>
