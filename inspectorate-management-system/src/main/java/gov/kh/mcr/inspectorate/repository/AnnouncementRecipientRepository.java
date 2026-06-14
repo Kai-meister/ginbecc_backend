@@ -12,23 +12,32 @@ public interface AnnouncementRecipientRepository
         extends JpaRepository<AnnouncementRecipient, Integer> {
 
     List<AnnouncementRecipient>
-    findByAnnouncement_AnnouncementId(Integer announcementId);
-
+    findByAnnouncement_AnnouncementId(
+            Integer announcementId);
+    // announcementId + officerId
     Optional<AnnouncementRecipient>
     findByAnnouncement_AnnouncementIdAndOfficer_OfficerId(
-            Integer announcementId, Integer officerId);
+            Integer announcementId,
+            Integer officerId);
 
+    // Count read
     @Query("""
-        SELECT COUNT(r) FROM AnnouncementRecipient r
-        WHERE r.announcement.announcementId = :id
-        AND r.isRead = true
+        SELECT COUNT(r)
+        FROM AnnouncementRecipient r
+        WHERE r.announcement.announcementId
+              = :annId
+        AND   r.isRead = true
         """)
-    long countRead(@Param("id") Integer announcementId);
+    long countRead(
+            @Param("annId") Integer annId);
 
-    @Query("""
-        SELECT COUNT(r) FROM AnnouncementRecipient r
-        WHERE r.announcement.announcementId = :id
-        AND r.isRead = false
-        """)
-    long countUnread(@Param("id") Integer announcementId);
+    // Count total recipients
+    long countByAnnouncement_AnnouncementId(
+            Integer announcementId);
+
+    // Check already read
+    boolean
+    existsByAnnouncement_AnnouncementIdAndOfficer_OfficerIdAndIsReadTrue(
+            Integer announcementId,
+            Integer officerId);
 }

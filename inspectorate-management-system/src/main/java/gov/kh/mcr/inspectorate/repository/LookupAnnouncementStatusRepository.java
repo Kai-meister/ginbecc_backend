@@ -12,5 +12,5 @@ public interface LookupAnnouncementStatusRepository
 
     List<LookupAnnouncementStatus> findByIsActiveTrueOrderBySortOrderAsc();
 
-    boolean existsByStatusCode(String statusCode);
+//    boolean existsByStatusCode(String statusCode);
 }
