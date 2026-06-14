@@ -4,7 +4,8 @@ import lombok.*;
 
 
 @Data
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class LookupResponse {
 
@@ -13,10 +14,6 @@ public class LookupResponse {
     private String  labelEn;
     private Integer sortOrder;
     private Boolean isActive;
-
-    // ── Fields ជាក់លាក់ LookupDocumentStatus ──
     private String  appliesTo;
-
-    // ── Fields ជាក់លាក់ LookupUserStatus ──────
     private String  blockReason;
 }

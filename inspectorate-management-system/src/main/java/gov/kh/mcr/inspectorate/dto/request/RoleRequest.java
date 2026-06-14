@@ -9,11 +9,11 @@ import java.util.List;
 @Builder
 public class RoleRequest {
 
-    @NotBlank(message = "ឈ្មោះតួនាទីចាំបាច់")
-    @Size(max = 100)
+    @NotBlank(message = "សូមបញ្ចូលឈ្មោះតួនាទីប្រព័ន្ធ")
+    @Size(max = 100, message = "ឈ្មោះតួនាទីប្រព័ន្ធមិនអាចលើសពី ១០០ តួអក្សរឡើយ")
     private String roleName;
 
-    @Size(max = 150)
+    @Size(max = 150, message = "ឈ្មោះសម្រាប់បង្ហាញមិនអាចលើសពី ១៥០ តួអក្សរឡើយ")
     private String displayName;
 
     private String       description;

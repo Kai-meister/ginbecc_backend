@@ -27,112 +27,110 @@ import java.util.List;
 public class OfficerController {
 
     private final OfficerService officerService;
-    private final AttachmentService attachmentService;
-
+    // GET /officers
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('OFFICER_MANAGE','SELF_PROFILE_VIEW')")
-    public ResponseEntity<ApiResponse<PageResponse<OfficerResponse>>> getAll(
-            @RequestParam(defaultValue = "0")  int page,
+    @PreAuthorize("hasAuthority('OFFICER_VIEW')")    public ResponseEntity<ApiResponse<PageResponse<OfficerResponse>>> getAll(
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Integer dept,
             @RequestParam(required = false) String status) {
         return ResponseEntity.ok(ApiResponse.success(
                 officerService.getAll(page, size, dept, status),
-                "ទទួលបន្ជីមន្ត្រី"));
+                "ទទួលបានបញ្ជីមន្ត្រី"));
     }
 
+    // GET /officers/{id}
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('OFFICER_MANAGE','SELF_PROFILE_VIEW')")
+    @PreAuthorize("hasAuthority('OFFICER_VIEW')")
     public ResponseEntity<ApiResponse<OfficerResponse>> getById(
             @PathVariable Integer id) {
         return ResponseEntity.ok(ApiResponse.success(
-                officerService.getById(id), "ទទួលបានមន្ត្រី"));
+                officerService.getById(id), "ទទួលបានព័ត៌មានមន្ត្រី"));
     }
 
+    // POST /officers
     @PostMapping
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('OFFICER_CREATE')")
     public ResponseEntity<ApiResponse<OfficerResponse>> create(
             @Valid @RequestBody OfficerRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         officerService.create(request),
-                        "បង្កើតមន្ត្រីជោគជ័យ"));
+                        "បង្កើតមន្ត្រីបានជោគជ័យ"));
     }
 
+    // PUT /officers/{id}
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('OFFICER_MANAGE','SELF_PROFILE_EDIT')")
+    @PreAuthorize("hasAuthority('OFFICER_UPDATE')")
     public ResponseEntity<ApiResponse<OfficerResponse>> update(
             @PathVariable Integer id,
             @Valid @RequestBody OfficerRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
-                officerService.update(id, request), "កែប្រែជោគជ័យ"));
+                officerService.update(id, request), "កែប្រែបានជោគជ័យ"));
     }
 
+    // PATCH /officers/{id}/status
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('OFFICER_UPDATE')")
     public ResponseEntity<ApiResponse<OfficerResponse>> updateStatus(
             @PathVariable Integer id,
             @Valid @RequestBody StatusRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
                 officerService.updateStatus(id, request),
-                "ផ្លាស់ប្ដូរស្ថានភាព"));
+                "ផ្លាស់ប្ដូរស្ថានភាពបានជោគជ័យ"));
     }
 
+    // DELETE /officers/{id}
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('USER_DELETE')")
+    @PreAuthorize("hasAuthority('OFFICER_DELETE')")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable Integer id) {
         officerService.delete(id);
         return ResponseEntity.ok(
-                ApiResponse.success(null, "លុបជោគជ័យ"));
+                ApiResponse.success(null, "លុបបានជោគជ័យ"));
     }
 
+    // GET /officers/near-retirement
     @GetMapping("/near-retirement")
-    @PreAuthorize("hasAnyAuthority('OFFICER_MANAGE','REPORT_EXPORT')")
+    @PreAuthorize("hasAuthority('OFFICER_VIEW')")
     public ResponseEntity<ApiResponse<List<OfficerResponse>>>
     getNearRetirement() {
         return ResponseEntity.ok(ApiResponse.success(
                 officerService.getNearRetirement(),
-                "ទទួលបន្ជីជិតនិវត្តន៍"));
+                "ទទួលបានបញ្ជីជិតនិវត្តន៍"));
     }
 
-
+    // POST /officers/{id}/profile-image
     @PostMapping(
-            value    = "/{id}/profile-image",
+            value = "/{id}/profile-image",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAuthority('ATTACHMENT_UPLOAD')")
-    public ResponseEntity<ApiResponse<AttachmentResponse>>
+    public ResponseEntity<ApiResponse<OfficerResponse>>
     uploadProfileImage(
-            @PathVariable
-            @Positive Integer id,
+            @PathVariable @Positive Integer id,
             @RequestParam MultipartFile file) {
 
-        // Validate image only
         AttachmentValidator.validateImage(file);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
-                        attachmentService.upload(
-                                file,
-                                // ប្រើ enum code
-                                AttachmentRefType
-                                        .OFFICER.getCode(),
-                                id),
-                        "Upload រូបភាពជោគជ័យ"));
+                        officerService
+                                .uploadProfileImage(id, file),
+                        "ផ្ទុករូបភាពប្រវត្តិរូបបានជោគជ័យ"));
     }
+
     @GetMapping("/{id}/profile-image")
-    public ResponseEntity<ApiResponse<AttachmentResponse>>
-    getProfileImage(
-            @PathVariable
-            @Positive Integer id) {
+    public ResponseEntity<ApiResponse<String>>
+    getProfileImageUrl(
+            @PathVariable @Positive Integer id) {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        attachmentService.getActiveByReference(
-                                id,
-                                AttachmentRefType
-                                        .OFFICER.getCode()),
-                        "ទទួលរូបភាព Profile"));
+                        officerService
+                                .getProfileImageUrl(id),
+                        "ទទួលបានតំណរូបភាពប្រវត្តិរូប"));
     }
+
+
 }

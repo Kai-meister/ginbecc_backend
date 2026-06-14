@@ -20,8 +20,9 @@ import org.springframework.web.bind.annotation.*;
 public class ContractOfficerController {
 
     private final ContractOfficerService service;
+    // GET /contract-officers
     @GetMapping
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('CONTRACT_OFFICER_VIEW')")
     public ResponseEntity<ApiResponse<
             PageResponse<ContractOfficerResponse>>>
     getAll(
@@ -42,11 +43,12 @@ public class ContractOfficerController {
                                 page, size,
                                 status, dept,
                                 expiring_within),
-                        "ទទួលបន្ជីមន្ត្រីកិច្ចសន្យា"));
+                        "ទទួលបានបញ្ជីមន្ត្រីកិច្ចសន្យា"));
     }
 
+    // GET /contract-officers/{id}
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('CONTRACT_OFFICER_VIEW')")
     public ResponseEntity<ApiResponse<
     ContractOfficerResponse>>
     getById(
@@ -56,11 +58,12 @@ public class ContractOfficerController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         service.getById(id),
-                        "ទទួលបានមន្ត្រីកិច្ចសន្យា"));
+                        "ទទួលបានព័ត៌មានមន្ត្រីកិច្ចសន្យាា"));
     }
 
+    // POST /contract-officers
     @PostMapping
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('CONTRACT_OFFICER_CREATE')")
     public ResponseEntity<ApiResponse<
     ContractOfficerResponse>>
     create(
@@ -71,10 +74,11 @@ public class ContractOfficerController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         service.create(req),
-                        "បង្កើតជោគជ័យ"));
+                        "បានបង្កើតមន្ត្រីកិច្ចសន្យាដោយជោគជ័យ"));
     }
+    // PUT /contract-officers/{id}
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('CONTRACT_OFFICER_UPDATE')")
     public ResponseEntity<ApiResponse<
     ContractOfficerResponse>>
     update(
@@ -86,11 +90,12 @@ public class ContractOfficerController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         service.update(id, req),
-                        "កែប្រែជោគជ័យ"));
+                        "បានកែប្រែមន្ត្រីកិច្ចសន្យាដោយជោគជ័យ"));
     }
 
+    // PATCH /contract-officers/{id}/status
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('CONTRACT_OFFICER_UPDATE')")
     public ResponseEntity<ApiResponse<
     ContractOfficerResponse>>
     updateStatus(
@@ -102,11 +107,12 @@ public class ContractOfficerController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         service.updateStatus(id, req),
-                        "ផ្លាស់ប្ដូរស្ថានភាព"));
+                        "បានផ្លាស់ប្ដូរស្ថានភាពមន្ត្រីកិច្ចសន្យាដោយជោគជ័យ"));
     }
 
+    // DELETE /contract-officers/{id}
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('CONTRACT_OFFICER_DELETE')")
     public ResponseEntity<ApiResponse<Void>>
     delete(
             @PathVariable
@@ -115,6 +121,6 @@ public class ContractOfficerController {
         service.delete(id);
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "លុបជោគជ័យ"));
+                        null, "បានលុបមន្ត្រីកិច្ចសន្យាដោយជោគជ័យ"));
     }
 }

@@ -1,42 +1,45 @@
 package gov.kh.mcr.inspectorate.service.impl;
 
-import gov.kh.mcr.inspectorate.dto.request.StatusRequest;
-import gov.kh.mcr.inspectorate.dto.request.UserRequest;
-import gov.kh.mcr.inspectorate.dto.response.PageResponse;
-import gov.kh.mcr.inspectorate.dto.response.UserResponse;
-import gov.kh.mcr.inspectorate.entity.LookupUserStatus;
-import gov.kh.mcr.inspectorate.entity.Role;
-import gov.kh.mcr.inspectorate.entity.User;
-import gov.kh.mcr.inspectorate.exception.DuplicateResourceException;
-import gov.kh.mcr.inspectorate.exception.ResourceNotFoundException;
+import gov.kh.mcr.inspectorate.dto.request.*;
+import gov.kh.mcr.inspectorate.dto.response.*;
+import gov.kh.mcr.inspectorate.entity.*;
+import gov.kh.mcr.inspectorate.exception.*;
 import gov.kh.mcr.inspectorate.mapper.UserMapper;
 import gov.kh.mcr.inspectorate.repository.*;
 import gov.kh.mcr.inspectorate.security.SecurityUtils;
-import gov.kh.mcr.inspectorate.service.ActivityLogService;
-import gov.kh.mcr.inspectorate.service.UserService;
+import gov.kh.mcr.inspectorate.service.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.password
+        .PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.transaction.annotation
+        .Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.context.request
+        .RequestContextHolder;
+import org.springframework.web.context.request
+        .ServletRequestAttributes;
 import java.util.List;
-import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl
+        implements UserService {
 
-    private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
-    private final OfficerRepository officerRepository;
-    private final LookupUserStatusRepository lookupStatusRepository;
-    private final RolePermissionRepository rolePermissionRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final UserMapper userMapper;
-    private final SecurityUtils securityUtils;
-    private final ActivityLogService activityLogService;
+    private final UserRepository             userRepo;
+    private final OfficerRepository          officerRepo;
+    private final RoleRepository             roleRepo;
+    private final LookupUserStatusRepository statusRepo;
+    private final RolePermissionRepository   rolePermRepo;
+    private final UserMapper                 userMapper;
+    private final PasswordEncoder            passwordEncoder;
+    private final SecurityUtils              securityUtils;
+    private final ActivityLogService         activityLogService;
+    private final ContractOfficerRepository  contractOfficerRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -52,25 +55,25 @@ public class UserServiceImpl implements UserService {
 
         Page<User> result;
 
-        if (roleId != null && status != null) {
-            result = userRepository
+        if (StringUtils.hasText(keyword)) {
+            result = userRepo
+                    .findByUserNameKhContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                            keyword, keyword, pageable);
+        } else if (roleId != null
+                && status != null) {
+            result = userRepo
                     .findByRole_RoleIdAndStatusCode_StatusCode(
                             roleId, status, pageable);
         } else if (roleId != null) {
-            result = userRepository
+            result = userRepo
                     .findByRole_RoleId(
                             roleId, pageable);
         } else if (status != null) {
-            result = userRepository
+            result = userRepo
                     .findByStatusCode_StatusCode(
                             status, pageable);
-        } else if (org.springframework.util
-                .StringUtils.hasText(keyword)) {
-            result = userRepository
-                    .findByUserNameKhContainingIgnoreCaseOrEmailContainingIgnoreCase(
-                            keyword, keyword, pageable);
         } else {
-            result = userRepository.findAll(pageable);
+            result = userRepo.findAll(pageable);
         }
 
         return PageResponse.of(
@@ -83,100 +86,267 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponse(findById(id));
     }
 
-    @Override
-    public UserResponse create(UserRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateResourceException(
-                    "Email [" + request.getEmail() + "] មានស្ទួន");
-        }
-
-        Role role = roleRepository.findById(request.getRoleId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "តួនាទី", request.getRoleId()));
-
-        LookupUserStatus status =
-                lookupStatusRepository.findById(request.getStatusCode())
-                        .orElseThrow(() -> new ResourceNotFoundException(
-                                "ស្ថានភាព", request.getStatusCode()));
-
-        User user = User.builder()
-                .uuid(UUID.randomUUID().toString())
-                .userNameKh(request.getUserNameKh())
-                .userNameEn(request.getUserNameEn())
-                .email(request.getEmail())
-                .phone(request.getPhone())
-                .passwordHash(
-                        passwordEncoder.encode(request.getPassword()))
-                .role(role)
-                .statusCode(status)
-                .build();
-
-        if (request.getOfficerId() != null) {
-            officerRepository.findById(request.getOfficerId())
-                    .ifPresent(user::setOfficer);
-        }
-
-        securityUtils.getCurrentUser()
-                .ifPresent(user::setCreatedBy);
-
-        User saved = userRepository.save(user);
-        activityLogService.log("CREATE", "User",
-                saved.getUserId(),
-                "បង្កើត User: " + saved.getEmail());
-
-        return userMapper.toResponse(saved);
-    }
-
-    @Override
-    public UserResponse update(Integer id, UserRequest request) {
-        User user = findById(id);
-
-        userMapper.updateEntity(request, user);
-
-        if (request.getRoleId() != null) {
-            roleRepository.findById(request.getRoleId())
-                    .ifPresent(user::setRole);
-        }
-
-        securityUtils.getCurrentUser()
-                .ifPresent(user::setUpdatedBy);
-
-        activityLogService.log("UPDATE", "User",
-                id, "កែប្រែ: " + user.getEmail());
-
-        return userMapper.toResponse(userRepository.save(user));
-    }
-    @Override
-    public UserResponse updateStatus(
-            Integer id, StatusRequest request) {
-        User user = findById(id);
-        lookupStatusRepository.findById(request.getStatusCode())
-                .ifPresent(user::setStatusCode);
-        activityLogService.log("UPDATE", "User",
-                id, "ស្ថានភាព → " + request.getStatusCode());
-        return userMapper.toResponse(userRepository.save(user));
-    }
 
     @Override
     @Transactional(readOnly = true)
-    public List<String> getPermissions(Integer id) {
+    public List<String> getPermissions(
+            Integer id) {
         User user = findById(id);
-        return rolePermissionRepository
+        return rolePermRepo
                 .findPermissionNamesByRoleId(
                         user.getRole().getRoleId());
     }
 
+
+    @Override
+    public UserResponse create(UserRequest request) {
+
+        validateOfficerByType(request);
+
+        if (request.getPassword() == null
+                || request.getPassword().isBlank()) {
+            throw new BusinessException(
+                    "ពាក្យសម្ងាត់ចាំបាច់ត្រូវបញ្ចូល");
+        }
+
+        if (userRepo.existsByEmail(request.getEmail())) {
+            throw new DuplicateResourceException(
+                    "មិនអាចបង្កើតបានទេ ដោយសារអ៊ីមែល [" + request.getEmail()
+                            + "] មានក្នុងប្រព័ន្ធរួចហើយ (ស្ទួន)។");
+        }
+
+        checkOfficerDuplicate(request, null);
+
+        User user = userMapper.toEntity(request);
+        user.setRole(findRole(request.getRoleId()));
+        user.setStatusCode(
+                findStatus(request.getStatusCode()));
+        user.setPasswordHash(
+                passwordEncoder.encode(request.getPassword()));
+        user.setMustChangePassword(true);
+        user.setFailedLoginCount(0);
+
+        setOfficerByType(user, request);
+
+        User saved = userRepo.save(user);
+
+        activityLogService.log(
+                "CREATE", "User",
+                saved.getUserId(),
+                "បានបង្កើតគណនីអ្នកប្រើប្រាស់ថ្មីសម្រាប់៖ " + saved.getEmail(),
+                buildContext());
+
+        return userMapper.toResponse(saved);
+    }
+
+
+    @Override
+    public UserResponse update(
+            Integer id, UserRequest request) {
+
+        User user = findById(id);
+
+        validateOfficerByType(request);
+
+        if (!user.getEmail().equals(request.getEmail())
+                && userRepo.existsByEmail(
+                request.getEmail())) {
+            throw new DuplicateResourceException(
+                    "មិនអាចកែប្រែបានទេ ដោយសារអ៊ីមែល [" + request.getEmail()
+                            + "] មានក្នុងប្រព័ន្ធរួចហើយ (ស្ទួន)។");
+        }
+
+        checkOfficerDuplicate(request, id);
+
+        userMapper.updateEntity(request, user);
+        user.setRole(findRole(request.getRoleId()));
+        user.setStatusCode(
+                findStatus(request.getStatusCode()));
+
+        if (request.getPassword() != null
+                && !request.getPassword().isBlank()) {
+            user.setPasswordHash(
+                    passwordEncoder.encode(
+                            request.getPassword()));
+        }
+
+        setOfficerByType(user, request);
+
+        User saved = userRepo.save(user);
+
+        activityLogService.log(
+                "UPDATE", "User",
+                id,
+                "បានកែប្រែទិន្នន័យគណនីអ្នកប្រើប្រាស់ " + saved.getEmail(),
+                buildContext());
+
+        return userMapper.toResponse(saved);
+    }
+
+    private ContractOfficer resolveContractOfficer(
+            Integer contractOfficerId) {
+
+        if (contractOfficerId == null) return null;
+
+        return contractOfficerRepository
+                .findById(contractOfficerId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "ContractOfficer",
+                                contractOfficerId));
+    }
+
+    @Override
+    public UserResponse updateStatus(
+            Integer id,
+            StatusRequest request) {
+
+        User user = findById(id);
+
+        user.setStatusCode(
+                findStatus(request.getStatusCode()));
+
+        activityLogService.log(
+                "UPDATE", "User",
+                id,
+                "បានកែប្រែស្ថានភាពគណនីទៅជា "
+                        + request.getStatusCode(),
+                buildContext());
+
+        return userMapper.toResponse(
+                userRepo.save(user));
+    }
+
     @Override
     public void delete(Integer id) {
-        findById(id);
-        userRepository.deleteById(id);
-        activityLogService.log("DELETE", "User",
-                id, "លុប User");
+        User user = findById(id);
+        Integer currentId =
+                securityUtils.getCurrentUserId();
+        if (id.equals(currentId)) {
+            throw new BusinessException(
+                    "មិនអនុញ្ញាតឱ្យលុបគណនីអ្នកប្រើប្រាស់របស់ខ្លួនឯង");
+        }
+
+        userRepo.deleteById(id);
+        activityLogService.log(
+                "DELETE", "User",
+                id, "បានលុបគណនីអ្នកប្រើប្រាស់ " + user.getEmail(),
+                buildContext());
     }
 
     private User findById(Integer id) {
-        return userRepository.findById(id)
+        return userRepo.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("អ្នកប្រើ", id));
+                        new ResourceNotFoundException(
+                                "អ្នកប្រើប្រាស់", id));
     }
+
+    private Officer resolveOfficer(
+            Integer officerId) {
+        if (officerId == null) return null;
+        return officerRepo.findById(officerId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "រកមិនឃើញព័ត៌មានមន្ត្រីដែលមានលេខសម្គាល់ ", officerId));
+    }
+
+    private Role findRole(Integer roleId) {
+        return roleRepo.findById(roleId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "រកមិនឃើញទិន្នន័យតួនាទី ដែលមានលេខសម្គាល់", roleId));
+    }
+
+    private LookupUserStatus findStatus(
+            String code) {
+        return statusRepo.findById(code)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "មិនមានទិន្នន័យស្ថានភាពអ្នកប្រើប្រាស់ដែលមានលេខកូដ ", code));
+    }
+
+    private ActivityLogContext buildContext() {
+        try {
+            var req =
+                    ((ServletRequestAttributes)
+                            RequestContextHolder
+                                    .currentRequestAttributes())
+                            .getRequest();
+            return securityUtils
+                    .buildLogContext(req);
+        } catch (Exception e) {
+            return ActivityLogContext.builder()
+                    .build();
+        }
+    }
+    private void setOfficerByType(
+            User user, UserRequest request) {
+
+        user.setOfficer(null);
+        user.setContractOfficer(null);
+        user.setUserType(request.getUserType());
+
+        switch (request.getUserType()) {
+            case OFFICER -> user.setOfficer(
+                    resolveOfficer(request.getOfficerId()));
+            case CONTRACT_OFFICER ->
+                    user.setContractOfficer(
+                            resolveContractOfficer(
+                                    request.getContractOfficerId()));
+        }
+    }
+
+    private void validateOfficerByType(
+            UserRequest request) {
+
+        switch (request.getUserType()) {
+            case OFFICER -> {
+                if (request.getOfficerId() == null)
+                    throw new BusinessException(
+                            "សូមបញ្ចូលលេខសម្គាល់មន្ត្រី (Officer ID) ឱ្យបានត្រឹមត្រូវ។");
+                if (request.getContractOfficerId() != null)
+                    throw new BusinessException(
+                            "ប្រភេទមន្ត្រីក្របខ័ណ្ឌ (OFFICER) មិនអាចមានលេខសម្គាល់មន្ត្រីជាប់កិច្ចសន្យាឡើយ។");
+            }
+            case CONTRACT_OFFICER -> {
+                if (request.getContractOfficerId() == null)
+                    throw new BusinessException(
+                            "សូមបញ្ចូលលេខសម្គាល់មន្ត្រីជាប់កិច្ចសន្យា (Contract Officer ID) ឱ្យបានត្រឹមត្រូវ។");
+                if (request.getOfficerId() != null)
+                    throw new BusinessException(
+                            "ប្រភេទមន្ត្រីជាប់កិច្ចសន្យា (CONTRACT_OFFICER) មិនអាចមានលេខសម្គាល់មន្ត្រីក្របខ័ណ្ឌឡើយ។");
+            }
+        }
+    }
+
+    private void checkOfficerDuplicate(
+            UserRequest request, Integer excludeId) {
+
+        if (request.getOfficerId() != null) {
+            boolean exists = excludeId == null
+                    ? userRepo.existsByOfficer_OfficerId(
+                    request.getOfficerId())
+                    : userRepo
+                      .existsByOfficer_OfficerIdAndUserIdNot(
+                              request.getOfficerId(), excludeId);
+            if (exists) throw new BusinessException(
+                    "មន្ត្រីនេះមានគណនីអ្នកប្រើប្រាស់រួចហើយ");
+        }
+
+        if (request.getContractOfficerId() != null) {
+            boolean exists = excludeId == null
+                    ? userRepo
+                      .existsByContractOfficer_ContractOfficerId(
+                              request.getContractOfficerId())
+                    : userRepo
+                      .existsByContractOfficer_ContractOfficerIdAndUserIdNot(
+                              request.getContractOfficerId(),
+                              excludeId);
+            if (exists) throw new BusinessException(
+                    "មន្ត្រីជាប់កិច្ចសន្យានេះមានគណនីអ្នកប្រើប្រាស់រួចហើយ");
+        }
+    }
+
+
+
 }

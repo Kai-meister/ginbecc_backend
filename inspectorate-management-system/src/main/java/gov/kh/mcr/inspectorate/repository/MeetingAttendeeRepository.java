@@ -15,27 +15,32 @@ public interface MeetingAttendeeRepository
     List<MeetingAttendee> findByMeeting_MeetingId(
             Integer meetingId);
 
+
+    boolean
+    existsByMeeting_MeetingIdAndOfficer_OfficerId(
+            Integer meetingId,
+            Integer officerId);
+
+    long countByMeeting_MeetingId(
+            Integer meetingId);
+
     Optional<MeetingAttendee>
     findByMeeting_MeetingIdAndOfficer_OfficerId(
-            Integer meetingId, Integer officerId);
+            Integer meetingId,
+            Integer officerId);
 
-    boolean existsByMeeting_MeetingIdAndOfficer_OfficerId(
-            Integer meetingId, Integer officerId);
+    List<MeetingAttendee>
+    findByMeeting_MeetingIdAndAttendanceStatus(
+            Integer meetingId,
+            AttendanceStatus status);
 
-    @Query("""
-        SELECT a.officer.officerId,
-               a.officer.fullNameKh,
-               COUNT(a)
-        FROM MeetingAttendee a
-        WHERE a.attendanceStatus = :status
-        GROUP BY a.officer.officerId,
-                 a.officer.fullNameKh
-        HAVING COUNT(a) >= :threshold
-        ORDER BY COUNT(a) DESC
-        """)
-    List<Object[]> findFrequentAbsentees(
-            @Param("status") AttendanceStatus status,
-            @Param("threshold") long threshold);
+    long countByMeeting_MeetingIdAndAttendanceStatus(
+            Integer meetingId,
+            AttendanceStatus status);
 
-    long countByMeeting_MeetingId(Integer meetingId);
+    List<MeetingAttendee>
+    findByOfficer_OfficerId(
+            Integer officerId);
+    void deleteByMeeting_MeetingId(
+            Integer meetingId);
 }

@@ -23,7 +23,6 @@ public class LookupUserStatus {
             length = 100, nullable = false)
     private String labelEn;
 
-    // ── block_reason: null unless BLOCKED/LOCKED ──
     @Column(name = "block_reason", length = 255)
     private String blockReason;
 

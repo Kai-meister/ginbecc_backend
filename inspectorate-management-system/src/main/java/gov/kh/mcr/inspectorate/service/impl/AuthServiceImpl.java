@@ -1,10 +1,12 @@
 package gov.kh.mcr.inspectorate.service.impl;
 
+import gov.kh.mcr.inspectorate.dto.request.ActivityLogContext;
 import gov.kh.mcr.inspectorate.dto.request.ChangePasswordRequest;
 import gov.kh.mcr.inspectorate.dto.request.LoginRequest;
 import gov.kh.mcr.inspectorate.dto.response.LoginResponse;
 import gov.kh.mcr.inspectorate.dto.response.ResetPasswordResponse;
 import gov.kh.mcr.inspectorate.entity.User;
+import gov.kh.mcr.inspectorate.enums.NotificationType;
 import gov.kh.mcr.inspectorate.enums.UserStatusCode;
 import gov.kh.mcr.inspectorate.exception.BusinessException;
 import gov.kh.mcr.inspectorate.exception.ResourceNotFoundException;
@@ -14,7 +16,9 @@ import gov.kh.mcr.inspectorate.repository.UserRepository;
 import gov.kh.mcr.inspectorate.security.JwtTokenProvider;
 import gov.kh.mcr.inspectorate.service.ActivityLogService;
 import gov.kh.mcr.inspectorate.service.AuthService;
+import gov.kh.mcr.inspectorate.service.NotificationService;
 import gov.kh.mcr.inspectorate.util.PasswordGenerator;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -22,6 +26,9 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -39,6 +46,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final ActivityLogService activityLogService;
     private final RedisTemplate<String, Object>   redisTemplate;
+    private final NotificationService notificationService;
 
     private static final int  MAX_ATTEMPTS = 5;
     private static final long LOCK_MINUTES = 30L;
@@ -50,10 +58,9 @@ public class AuthServiceImpl implements AuthService {
                 .findByEmail(request.getEmail())
                 .orElseThrow(() ->
                         new UnauthorizedException(
-                                "Email ឬ Password មិនត្រឹមត្រូវ"));
+                                "អាសយដ្ឋានអ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវឡើយ"));
 
         validateAccountStatus(user);
-
         checkAccountLocked(user);
 
         try {
@@ -64,7 +71,7 @@ public class AuthServiceImpl implements AuthService {
         } catch (BadCredentialsException ex) {
             handleFailedLogin(user);
             throw new UnauthorizedException(
-                    "Email ឬ Password មិនត្រឹមត្រូវ");
+                    "អាសយដ្ឋានអ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវឡើយ");
         }
 
         user.setFailedLoginCount(0);
@@ -78,8 +85,7 @@ public class AuthServiceImpl implements AuthService {
 
         String accessToken =
                 jwtProvider.generateAccessToken(
-                        user.getEmail(),
-                        user.getUserId(),
+                        user.getEmail(), user.getUserId(),
                         user.getRole().getRoleName(),
                         permissions);
 
@@ -87,10 +93,19 @@ public class AuthServiceImpl implements AuthService {
                 jwtProvider.generateRefreshToken(
                         user.getEmail());
 
+        ActivityLogContext context =
+                ActivityLogContext.builder()
+                        .userId(user.getUserId())
+                        .userEmail(user.getEmail())
+                        .ipAddress(extractIpFromRequest())
+                        .userAgent(extractUserAgent())
+                        .build();
+
         activityLogService.log(
                 "LOGIN", "User",
                 user.getUserId(),
-                "ចូលប្រព័ន្ធ: " + user.getEmail());
+                "ចូលប្រព័ន្ធ: " + user.getEmail(),
+                context);                     // ← Fix
 
         return LoginResponse.builder()
                 .accessToken(accessToken)
@@ -106,20 +121,54 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    private String extractIpFromRequest() {
+        try {
+            HttpServletRequest req =
+                    ((ServletRequestAttributes)
+                            RequestContextHolder
+                                    .currentRequestAttributes())
+                            .getRequest();
+
+            String ip = req.getHeader(
+                    "X-Forwarded-For");
+            if (ip != null && !ip.isBlank()) {
+                return ip.split(",")[0].trim();
+            }
+            ip = req.getHeader("X-Real-IP");
+            if (ip != null && !ip.isBlank()) {
+                return ip;
+            }
+            return req.getRemoteAddr();
+        } catch (Exception e) {
+            return "unknown";
+        }
+    }
+
+    private String extractUserAgent() {
+        try {
+            HttpServletRequest req =
+                    ((ServletRequestAttributes)
+                            RequestContextHolder
+                                    .currentRequestAttributes())
+                            .getRequest();
+            return req.getHeader("User-Agent");
+        } catch (Exception e) {
+            return null;
+        }
+    }
     @Override
     public LoginResponse refreshToken(
             String refreshToken) {
 
         if (!jwtProvider.validateToken(refreshToken)) {
             throw new UnauthorizedException(
-                    "Refresh Token មិនត្រឹមត្រូវ"
-                            + " ឬផុតកំណត់");
+                    "ថូខិន (Refresh Token) មិនត្រឹមត្រូវ "
+                            + "ឬអស់សុពលភាពហើយ");
         }
-
 
         if (Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:" + refreshToken))) {
             throw new UnauthorizedException(
-                    "Refresh Token ត្រូវបានលុបចោល");
+                    "ថូខិន (Refresh Token) ត្រូវបានលុបចោលហើយ");
         }
 
         String email =
@@ -129,7 +178,7 @@ public class AuthServiceImpl implements AuthService {
                 .findByEmail(email)
                 .orElseThrow(() ->
                         new UnauthorizedException(
-                                "User រកមិនឃើញ"));
+                                "ថូខិន (Refresh Token) ត្រូវបានលុបចោលហើយ"));
 
         validateAccountStatus(user);
 
@@ -149,6 +198,7 @@ public class AuthServiceImpl implements AuthService {
                                 user.getEmail()))
                 .userId(user.getUserId())
                 .userNameKh(user.getUserNameKh())
+                .userNameEn(user.getUserNameEn())
                 .email(user.getEmail())
                 .roleName(user.getRole().getRoleName())
                 .permissions(permissions)
@@ -192,15 +242,14 @@ public class AuthServiceImpl implements AuthService {
         activityLogService.log(
                 "CHANGE_PASSWORD", "User",
                 userId,
-                "ផ្លាស់ប្ដូរ Password: "
+                "ផ្លាស់ប្ដូរ ពាក្យសម្ងាត់: "
                         + user.getEmail());
 
         log.info("Password changed: {}",
                 user.getEmail());
     }
     @Override
-    public ResetPasswordResponse resetPassword(
-            Integer userId) {
+    public ResetPasswordResponse resetPassword(Integer userId) {
 
         User user = findUserById(userId);
 
@@ -220,11 +269,18 @@ public class AuthServiceImpl implements AuthService {
         activityLogService.log(
                 "RESET_PASSWORD", "User",
                 userId,
-                "Admin Reset Password: "
+                "ការកំណត់ពាក្យសម្ងាត់សារជាថ្មីដោយអ្នកគ្រប់គ្រងប្រព័ន្ធ៖"
                         + user.getEmail());
 
         log.info("Password reset by admin: {}",
                 user.getEmail());
+
+        notificationService.createByUserId(
+                user.getUserId(),
+                "ការប្រកាសប្រព័ន្ធ",
+                "Password ត្រូវបាន Reset",
+                NotificationType.SYSTEM,  // ← Enum
+                null);
 
         return ResetPasswordResponse.builder()
                 .userId(user.getUserId())
@@ -233,8 +289,8 @@ public class AuthServiceImpl implements AuthService {
                 .temporaryPassword(plainPassword)
                 .mustChangePassword(true)
                 .message(
-                        "Password នេះប្រើបានតែ 1 ដង"
-                                + " — User ត្រូវប្ដូរភ្លាម")
+                        "ពាក្យសម្ងាត់នេះអាចប្រើប្រាស់បានតែម្តងគត់ (One-time Password) "
+                                + "សូមធ្វើការផ្លាស់ប្តូរពាក្យសម្ងាត់ថ្មីជាបន្ទាន់")
                 .build();
     }
 
@@ -330,4 +386,6 @@ public class AuthServiceImpl implements AuthService {
         }
         userRepository.save(user);
     }
+    private final
+    jakarta.servlet.http.HttpServletRequest httpRequest;
 }

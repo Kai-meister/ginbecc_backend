@@ -47,23 +47,32 @@ public class JwtAuthenticationFilter
                         userDetailsService
                                 .loadUserByUsername(email);
 
-                var auth =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails, null,
-                                userDetails.getAuthorities());
+                var auth = new UsernamePasswordAuthenticationToken(
+                        userDetails, null,
+                        userDetails.getAuthorities());
 
                 auth.setDetails(
                         new WebAuthenticationDetailsSource()
                                 .buildDetails(request));
+                request.setAttribute(
+                        "clientIp",
+                        getClientIp(request));
+
+                request.setAttribute(
+                        "userAgent",
+                        request.getHeader("User-Agent"));
 
                 SecurityContextHolder
                         .getContext()
                         .setAuthentication(auth);
+
             }
         } catch (Exception ex) {
             log.warn("JWT filter error: {}",
                     ex.getMessage());
             SecurityContextHolder.clearContext();
+
+
         }
 
         chain.doFilter(request, response);
@@ -97,5 +106,20 @@ public class JwtAuthenticationFilter
                 || path.startsWith("/swagger-ui")
                 || path.startsWith("/v3/api-docs")
                 || path.equals("/actuator/health");
+    }
+    private String getClientIp(
+            HttpServletRequest request) {
+
+        String ip = request.getHeader(
+                "X-Forwarded-For");
+        if (ip != null && !ip.isBlank()
+                && !"unknown".equalsIgnoreCase(ip)) {
+            return ip.split(",")[0].trim();
+        }
+        ip = request.getHeader("X-Real-IP");
+        if (ip != null && !ip.isBlank()) {
+            return ip;
+        }
+        return request.getRemoteAddr();
     }
 }

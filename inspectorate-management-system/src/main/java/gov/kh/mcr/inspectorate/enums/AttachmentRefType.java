@@ -1,6 +1,5 @@
 package gov.kh.mcr.inspectorate.enums;
 
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -8,23 +7,28 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum AttachmentRefType {
 
-    OFFICER              ("OFFICER",           "មន្ត្រី"),
-    CONTRACT_OFFICER     ("CONTRACT_OFFICER",   "មន្ត្រីកិច្ចសន្យា"),
-    USER                 ("USER",               "អ្នកប្រើប្រាស់"),
-    DOCUMENT             ("DOCUMENT",           "ឯកសារ"),
-    MEETING_ROOM         ("MEETING_ROOM",       "បន្ទប់ប្រជុំ"),
-    MEETING_MINUTE       ("MEETING_MINUTE",     "កំណត់ហេតុប្រជុំ"),
-    ANNOUNCEMENT         ("ANNOUNCEMENT",       "សេចក្តីប្រកាស");
+    OFFICER          ("OFFICER",
+            "មន្ត្រីរាជការ"),
+    USER             ("USER",
+            "អ្នកប្រើប្រាស់"),
+    DOCUMENT         ("DOCUMENT",
+            "ឯកសារ"),
+    MEETING_ROOM     ("MEETING_ROOM",
+            "បន្ទប់ប្រជុំ"),
+    MEETING_MINUTE   ("MEETING_MINUTE",
+            "កំណត់ហេតុប្រជុំ"),
+    ANNOUNCEMENT     ("ANNOUNCEMENT",
+            "សេចក្តីប្រកាស");
 
     private final String code;
     private final String labelKh;
 
-    public static boolean isValid(String code) {
-        if (code == null || code.isBlank()) {
+    public static boolean isValid(String value) {
+        if (value == null || value.isBlank()) {
             return false;
         }
-        for (AttachmentRefType type : values()) {
-            if (type.code.equalsIgnoreCase(code)) {
+        for (AttachmentRefType t : values()) {
+            if (t.code.equalsIgnoreCase(value)) {
                 return true;
             }
         }
@@ -35,22 +39,22 @@ public enum AttachmentRefType {
             String code) {
         if (code == null) {
             throw new IllegalArgumentException(
-                    "AttachmentRefType code null");
+                    "កូដនៃប្រភេទឯកសារភ្ជាប់ មិនអាចទទេបានឡើយ");
         }
-        for (AttachmentRefType type : values()) {
-            if (type.code.equalsIgnoreCase(code)) {
-                return type;
+        for (AttachmentRefType t : values()) {
+            if (t.code.equalsIgnoreCase(code)) {
+                return t;
             }
         }
         throw new IllegalArgumentException(
-                "AttachmentRefType មិនស្គាល់: " + code);
+                "ប្រភេទឯកសារភ្ជាប់មិនត្រឹមត្រូវ: " + code);
     }
 
     public String toPathPrefix() {
-        return this.code.toLowerCase()
+        return this.code
+                .toLowerCase()
                 .replace("_", "-");
     }
-
 
     public static String[] allCodes() {
         AttachmentRefType[] types = values();

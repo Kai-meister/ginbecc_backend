@@ -1,9 +1,7 @@
 package gov.kh.mcr.inspectorate.service;
-import gov.kh.mcr.inspectorate.dto.request.StatusRequest;
-import gov.kh.mcr.inspectorate.dto.request.UserRequest;
-import gov.kh.mcr.inspectorate.dto.response.PageResponse;
-import gov.kh.mcr.inspectorate.dto.response.UserResponse;
 
+import gov.kh.mcr.inspectorate.dto.request.*;
+import gov.kh.mcr.inspectorate.dto.response.*;
 import java.util.List;
 
 public interface UserService {
@@ -16,13 +14,16 @@ public interface UserService {
 
     UserResponse getById(Integer id);
 
+    List<String> getPermissions(Integer id);
+
     UserResponse create(UserRequest request);
 
-    UserResponse update(Integer id, UserRequest request);
+    // update with officer link
+    UserResponse update(
+            Integer id, UserRequest request);
 
-    UserResponse updateStatus(Integer id, StatusRequest request);
-
-    List<String> getPermissions(Integer id);
+    UserResponse updateStatus(
+            Integer id, StatusRequest request);
 
     void delete(Integer id);
 }

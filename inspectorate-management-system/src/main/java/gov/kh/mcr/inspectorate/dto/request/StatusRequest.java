@@ -8,6 +8,6 @@ import lombok.*;
 @Builder
 public class StatusRequest {
 
-    @NotBlank(message = "ស្ថានភាពចាំបាច់")
+    @NotBlank(message = "សូមជ្រើសរើសស្ថានភាព")
     private String statusCode;
 }

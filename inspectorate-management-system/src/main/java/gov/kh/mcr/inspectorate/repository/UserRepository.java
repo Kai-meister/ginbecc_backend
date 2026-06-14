@@ -1,7 +1,10 @@
 package gov.kh.mcr.inspectorate.repository;
+
 import gov.kh.mcr.inspectorate.entity.User;
 import org.springframework.data.domain.*;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query
+        .Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
@@ -12,17 +15,22 @@ public interface UserRepository
 
     Optional<User> findByEmail(String email);
 
-    Optional<User> findByUuid(String uuid);
+    boolean existsByEmail(String email);
 
     Optional<User> findByOfficer_OfficerId(
             Integer officerId);
 
-    boolean existsByEmail(String email);
+    boolean existsByOfficer_OfficerId(
+            Integer officerId);
+    boolean
+    existsByOfficer_OfficerIdAndUserIdNot(
+            Integer officerId, Integer userId);
 
     Page<User> findByRole_RoleId(
             Integer roleId, Pageable pageable);
 
-    Page<User> findByStatusCode_StatusCode(
+    Page<User>
+    findByStatusCode_StatusCode(
             String status, Pageable pageable);
 
     Page<User>
@@ -33,10 +41,35 @@ public interface UserRepository
 
     Page<User>
     findByUserNameKhContainingIgnoreCaseOrEmailContainingIgnoreCase(
-            String nameKeyword,
-            String emailKeyword,
+            String name,
+            String email,
             Pageable pageable);
 
-    List<User> findByRole_RoleName(
-            String roleName);
+    Optional<User>
+    findByContractOfficer_ContractOfficerId(
+            Integer contractOfficerId);
+
+    boolean
+    existsByContractOfficer_ContractOfficerId(
+            Integer contractOfficerId);
+
+    boolean
+    existsByContractOfficer_ContractOfficerIdAndUserIdNot(
+            Integer contractOfficerId,
+            Integer userId);
+    @Query("""
+        SELECT u FROM User u
+        LEFT JOIN FETCH u.role       r
+        LEFT JOIN FETCH u.statusCode s
+        LEFT JOIN FETCH u.officer    o
+        WHERE (:roleId IS NULL
+               OR r.roleId = :roleId)
+        AND   (:status IS NULL
+               OR s.statusCode = :status)
+        ORDER BY r.roleName   ASC,
+                 u.userNameKh ASC
+        """)
+    List<User> findForReport(
+            @Param("roleId") Integer roleId,
+            @Param("status") String status);
 }

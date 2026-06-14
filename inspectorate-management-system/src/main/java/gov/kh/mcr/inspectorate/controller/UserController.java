@@ -1,16 +1,16 @@
 package gov.kh.mcr.inspectorate.controller;
-import gov.kh.mcr.inspectorate.dto.request.StatusRequest;
-import gov.kh.mcr.inspectorate.dto.request.UserRequest;
-import gov.kh.mcr.inspectorate.dto.response.ApiResponse;
-import gov.kh.mcr.inspectorate.dto.response.PageResponse;
-import gov.kh.mcr.inspectorate.dto.response.UserResponse;
+
+import gov.kh.mcr.inspectorate.dto.request.*;
+import gov.kh.mcr.inspectorate.dto.response.*;
 import gov.kh.mcr.inspectorate.service.UserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.security.access.prepost
+        .PreAuthorize;
+import org.springframework.validation.annotation
+        .Validated;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -22,15 +22,16 @@ public class UserController {
 
     private final UserService userService;
 
+    // GET /users
     @GetMapping
-    @PreAuthorize("hasAuthority('USER_CREATE')")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
     public ResponseEntity<ApiResponse<
-            PageResponse<UserResponse>>>
+    PageResponse<UserResponse>>>
     getAll(
-            @RequestParam(defaultValue = "0")
-            int page,
-            @RequestParam(defaultValue = "20")
-            int size,
+            @RequestParam(
+                    defaultValue = "0") int page,
+            @RequestParam(
+                    defaultValue = "20") int size,
             @RequestParam(required = false)
             Integer roleId,
             @RequestParam(required = false)
@@ -43,16 +44,12 @@ public class UserController {
                         userService.getAll(
                                 page, size,
                                 roleId, status, keyword),
-                        "ទទួលបន្ជីអ្នកប្រើ"));
+                        "ទទួលបានបញ្ជីអ្នកប្រើប្រាស់"));
     }
 
-    // ─────────────────────────────────────────────
     // GET /users/{id}
-    // ─────────────────────────────────────────────
     @GetMapping("/{id}")
-    @PreAuthorize(
-            "hasAnyAuthority('USER_CREATE',"
-                    + "'USER_UPDATE')")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
     public ResponseEntity<ApiResponse<
     UserResponse>>
     getById(
@@ -62,14 +59,12 @@ public class UserController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         userService.getById(id),
-                        "ទទួលបានអ្នកប្រើ"));
+                        "ទទួលបានព័ត៌មានអ្នកប្រើប្រាស់"));
     }
 
-    // ─────────────────────────────────────────────
     // GET /users/{id}/permissions
-    // ─────────────────────────────────────────────
     @GetMapping("/{id}/permissions")
-    @PreAuthorize("hasAuthority('ROLE_ASSIGN')")
+    @PreAuthorize("hasAuthority('PERMISSION_VIEW')")
     public ResponseEntity<ApiResponse<
     List<String>>>
     getPermissions(
@@ -79,12 +74,10 @@ public class UserController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         userService.getPermissions(id),
-                        "ទទួលសិទ្ធិ"));
+                        "ទទួលបានសិទ្ធិរបស់អ្នកប្រើប្រាស់"));
     }
 
-    // ─────────────────────────────────────────────
-    // POST
-    // ─────────────────────────────────────────────
+    // POST /users
     @PostMapping
     @PreAuthorize("hasAuthority('USER_CREATE')")
     public ResponseEntity<ApiResponse<
@@ -97,12 +90,10 @@ public class UserController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         userService.create(request),
-                        "បង្កើតអ្នកប្រើជោគជ័យ"));
+                        "បង្កើតអ្នកប្រើប្រាស់បានជោគជ័យ"));
     }
 
-    // ─────────────────────────────────────────────
-    // PUT /{id}
-    // ─────────────────────────────────────────────
+    // PUT /users/{id}
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('USER_UPDATE')")
     public ResponseEntity<ApiResponse<
@@ -116,16 +107,12 @@ public class UserController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         userService.update(id, request),
-                        "កែប្រែជោគជ័យ"));
+                        "កែប្រែព័ត៌មានអ្នកប្រើប្រាស់បានជោគជ័យ"));
     }
 
-    // ─────────────────────────────────────────────
-    // PATCH /{id}/status
-    // ─────────────────────────────────────────────
+    // PATCH /users/{id}/status
     @PatchMapping("/{id}/status")
-    @PreAuthorize(
-            "hasAnyAuthority('USER_SUSPEND',"
-                    + "'USER_UPDATE')")
+    @PreAuthorize("hasAuthority('USER_UPDATE')")
     public ResponseEntity<ApiResponse<
     UserResponse>>
     updateStatus(
@@ -138,12 +125,10 @@ public class UserController {
                 ApiResponse.success(
                         userService.updateStatus(
                                 id, request),
-                        "ផ្លាស់ប្ដូរស្ថានភាព"));
+                        "ផ្លាស់ប្ដូរស្ថានភាពអ្នកប្រើប្រាស់បានជោគជ័យ"));
     }
 
-    // ─────────────────────────────────────────────
-    // DELETE /{id}
-    // ─────────────────────────────────────────────
+    // DELETE /users/{id}
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('USER_DELETE')")
     public ResponseEntity<ApiResponse<Void>>
@@ -154,6 +139,6 @@ public class UserController {
         userService.delete(id);
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "លុបជោគជ័យ"));
+                        null, "លុបអ្នកប្រើប្រាស់បានជោគជ័យ"));
     }
 }

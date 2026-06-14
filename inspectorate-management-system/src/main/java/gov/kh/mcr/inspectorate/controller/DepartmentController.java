@@ -22,7 +22,9 @@ public class DepartmentController {
 
     private final DepartmentService departmentService;
 
+    // GET /departments
     @GetMapping
+    @PreAuthorize("hasAuthority('DEPARTMENT_VIEW')")
     public ResponseEntity<ApiResponse<
             List<DepartmentResponse>>>
     getAll(
@@ -34,9 +36,11 @@ public class DepartmentController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         departmentService.getAll(status, keyword),
-                        "ទទួលបន្ជីនាយកដ្ឋាន"));
+                        "ទទួលបានបញ្ជីទិន្នន័យនាយកដ្ឋាន"));
     }
+    // GET /departments/{id}
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('DEPARTMENT_VIEW')")
     public ResponseEntity<ApiResponse<
             DepartmentResponse>>
     getById(
@@ -46,11 +50,12 @@ public class DepartmentController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         departmentService.getById(id),
-                        "ទទួលបាននាយកដ្ឋាន"));
+                        "ទទួលបានព័ត៌មានលម្អិតនាយកដ្ឋាន"));
     }
 
+    // POST /departments
     @PostMapping
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('DEPARTMENT_MANAGE')")
     public ResponseEntity<ApiResponse<
             DepartmentResponse>>
     create(
@@ -61,11 +66,12 @@ public class DepartmentController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         departmentService.create(request),
-                        "បង្កើតនាយកដ្ឋានជោគជ័យ"));
+                        "បានបង្កើតនាយកដ្ឋានដោយជោគជ័យ"));
     }
 
+    // PUT /departments/{id}
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('DEPARTMENT_MANAGE')")
     public ResponseEntity<ApiResponse<
     DepartmentResponse>>
     update(
@@ -78,11 +84,12 @@ public class DepartmentController {
                 ApiResponse.success(
                         departmentService.update(
                                 id, request),
-                        "កែប្រែជោគជ័យ"));
+                        "បានកែប្រែនាយកដ្ឋានដោយជោគជ័យ"));
     }
 
+    // DELETE /departments/{id}
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('DEPARTMENT_MANAGE')")
     public ResponseEntity<ApiResponse<Void>>
     delete(
             @PathVariable
@@ -91,6 +98,6 @@ public class DepartmentController {
         departmentService.delete(id);
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "លុបជោគជ័យ"));
+                        null, "បានលុបនាយកដ្ឋានដោយជោគជ័យ"));
     }
 }

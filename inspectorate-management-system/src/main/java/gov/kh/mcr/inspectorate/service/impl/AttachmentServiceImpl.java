@@ -42,9 +42,9 @@ public class AttachmentServiceImpl
                     "text/plain", "text/csv");
 
     private static final long MAX_SIZE =
-            10L * 1024 * 1024;
+            10L * 1024 * 1024; // 10MB
 
-    private final AttachmentRepository attachmentRepository;
+    private final AttachmentRepository attachmentRepo;
     private final MinioService minioService;
     private final AttachmentMapper attachmentMapper;
     private final SecurityUtils securityUtils;
@@ -53,29 +53,33 @@ public class AttachmentServiceImpl
     @Override
     public AttachmentResponse upload(
             MultipartFile file,
-            String refTypeCode,
+            AttachmentRefType refType,
             Integer refId) {
 
-        AttachmentRefType refType =
-                parseRefType(refTypeCode);
-
+        // ១. Validate file
         validateFile(file);
 
-        archiveExisting(refId, refType.getCode());
+        // ២. Archive existing active
+        archiveExisting(refId, refType);
 
+        // ៣. Upload to MinIO
+        // toPathPrefix(): MEETING_ROOM → "meeting-room"
         String filePath = minioService.uploadFile(
                 file,
                 refType.toPathPrefix(),
                 refId);
 
+        // ៤. Build + Save entity
         Attachment attachment = Attachment.builder()
                 .filePath(filePath)
                 .referenceId(refId)
-                .referenceType(refType.getCode())
-                .originalName(file.getOriginalFilename())
+                .referenceType(refType)  // Fix — Enum
+                .originalName(
+                        file.getOriginalFilename())
                 .fileSize(file.getSize())
-                .fileType(getExtension(Objects.requireNonNull(
-                        file.getOriginalFilename())))
+                .fileType(getExtension(
+                        Objects.requireNonNull(
+                                file.getOriginalFilename())))
                 .isActive(true)
                 .build();
 
@@ -83,7 +87,7 @@ public class AttachmentServiceImpl
                 .ifPresent(attachment::setUploadedBy);
 
         Attachment saved =
-                attachmentRepository.save(attachment);
+                attachmentRepo.save(attachment);
 
         activityLogService.log(
                 "CREATE", "Attachment",
@@ -92,8 +96,9 @@ public class AttachmentServiceImpl
                         + " [" + refType.getLabelKh()
                         + "/" + refId + "]");
 
-        log.info("Uploaded: {} → {}",
-                saved.getOriginalName(), filePath);
+        log.info("Uploaded: {} → [{}]",
+                saved.getOriginalName(),
+                refType.getCode());
 
         return attachmentMapper.toResponse(saved);
     }
@@ -101,34 +106,31 @@ public class AttachmentServiceImpl
     @Override
     @Transactional(readOnly = true)
     public List<AttachmentResponse> getByReference(
-            Integer refId, String refTypeCode) {
+            Integer refId,
+            AttachmentRefType refType) {
 
-        AttachmentRefType refType =
-                parseRefType(refTypeCode);
-
-        return attachmentRepository
+        return attachmentRepo
                 .findByReferenceIdAndReferenceType(
-                        refId, refType.getCode())
+                        refId, refType)
                 .stream()
                 .map(attachmentMapper::toResponse)
                 .toList();
     }
 
+
     @Override
     @Transactional(readOnly = true)
     public AttachmentResponse getActiveByReference(
-            Integer refId, String refTypeCode) {
+            Integer refId,
+            AttachmentRefType refType) {
 
-        AttachmentRefType refType =
-                parseRefType(refTypeCode);
-
-        return attachmentRepository
+        return attachmentRepo
                 .findByReferenceIdAndReferenceTypeAndIsActiveTrue(
-                        refId, refType.getCode())
+                        refId, refType)
                 .map(attachmentMapper::toResponse)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "ឯកសារ Active ["
+                                "Active File ["
                                         + refType.getLabelKh()
                                         + "/" + refId + "]", ""));
     }
@@ -136,31 +138,29 @@ public class AttachmentServiceImpl
     @Override
     @Transactional(readOnly = true)
     public String getDownloadUrl(Integer id) {
-        Attachment a = findById(id);
         return minioService.getPresignedUrl(
-                a.getFilePath());
+                findById(id).getFilePath());
     }
 
     @Override
     public AttachmentResponse setActive(Integer id) {
         Attachment target = findById(id);
 
-        AttachmentRefType refType =
-                parseRefType(target.getReferenceType());
-
         archiveExisting(
                 target.getReferenceId(),
-                refType.getCode());
+                target.getReferenceType());
 
         target.setIsActive(true);
         Attachment saved =
-                attachmentRepository.save(target);
+                attachmentRepo.save(target);
 
         activityLogService.log(
                 "UPDATE", "Attachment", id,
                 "Set Active: "
                         + saved.getOriginalName()
-                        + " [" + refType.getLabelKh() + "]");
+                        + " ["
+                        + saved.getReferenceType()
+                        .getLabelKh() + "]");
 
         return attachmentMapper.toResponse(saved);
     }
@@ -169,9 +169,6 @@ public class AttachmentServiceImpl
     public void delete(Integer id) {
         Attachment a = findById(id);
 
-        AttachmentRefType refType =
-                parseRefType(a.getReferenceType());
-
         try {
             minioService.deleteFile(a.getFilePath());
         } catch (Exception ex) {
@@ -179,46 +176,45 @@ public class AttachmentServiceImpl
                     ex.getMessage());
         }
 
-        attachmentRepository.deleteById(id);
+        attachmentRepo.deleteById(id);
 
         activityLogService.log(
                 "DELETE", "Attachment", id,
                 "លុប: " + a.getOriginalName()
-                        + " [" + refType.getLabelKh() + "]");
+                        + " ["
+                        + a.getReferenceType().getLabelKh()
+                        + "]");
     }
 
     @Override
     public int cleanupArchived(
-            Integer refId, String refTypeCode) {
-
-        AttachmentRefType refType =
-                parseRefType(refTypeCode);
+            Integer refId,
+            AttachmentRefType refType) {
 
         List<Attachment> archived =
-                attachmentRepository
+                attachmentRepo
                         .findByReferenceIdAndReferenceTypeAndIsActive(
-                                refId, refType.getCode(), false);
+                                refId, refType, false);
 
         archived.forEach(a -> {
             try {
                 minioService.deleteFile(
                         a.getFilePath());
             } catch (Exception ex) {
-                log.warn("MinIO delete failed: {}",
+                log.warn(
+                        "MinIO delete failed: {}",
                         ex.getMessage());
             }
         });
 
-        int count =
-                attachmentRepository
-                        .deleteArchivedByReference(
-                                refId, refType.getCode());
+        int count = attachmentRepo
+                .deleteArchivedByReference(
+                        refId, refType);
 
         log.info(
                 "Cleaned {} archived [{}={}]",
                 count,
-                refType.getLabelKh(),
-                refId);
+                refType.getLabelKh(), refId);
 
         return count;
     }
@@ -229,17 +225,6 @@ public class AttachmentServiceImpl
     }
 
     // ── Private Helpers ───────────────────────────
-    private AttachmentRefType parseRefType(
-            String code) {
-        try {
-            return AttachmentRefType.fromCode(code);
-        } catch (IllegalArgumentException ex) {
-            throw new BusinessException(
-                    "ref_type មិនត្រឹមត្រូវ: ["
-                            + code + "]");
-        }
-    }
-
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new BusinessException(
@@ -250,15 +235,14 @@ public class AttachmentServiceImpl
                     "File ធំពេក: "
                             + attachmentMapper.formatFileSize(
                             file.getSize())
-                            + " / អតិបរមា 10 MB");
+                            + " / អតិបរមា 10MB");
         }
         String mime = file.getContentType();
         if (mime == null
                 || !ALLOWED_MIME.contains(
                 mime.toLowerCase())) {
             throw new BusinessException(
-                    "ប្រភេទ File មិនអនុញ្ញាត: "
-                            + mime);
+                    "ប្រភេទ File មិនអនុញ្ញាត: " + mime);
         }
         if (!StringUtils.hasText(
                 file.getOriginalFilename())) {
@@ -266,22 +250,22 @@ public class AttachmentServiceImpl
                     "ឈ្មោះ File ខ្វះ");
         }
     }
-
     private void archiveExisting(
-            Integer refId, String refTypeCode) {
-        attachmentRepository
+            Integer refId,
+            AttachmentRefType refType) {
+        attachmentRepo
                 .findByReferenceIdAndReferenceTypeAndIsActiveTrue(
-                        refId, refTypeCode)
+                        refId, refType)
                 .ifPresent(old -> {
                     old.setIsActive(false);
-                    attachmentRepository.save(old);
+                    attachmentRepo.save(old);
                     log.debug("Archived: {}",
                             old.getOriginalName());
                 });
     }
 
     private Attachment findById(Integer id) {
-        return attachmentRepository.findById(id)
+        return attachmentRepo.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "ឯកសារ", id));
@@ -290,7 +274,8 @@ public class AttachmentServiceImpl
     private String getExtension(String filename) {
         int i = filename.lastIndexOf('.');
         return i >= 0
-                ? filename.substring(i + 1).toLowerCase()
+                ? filename.substring(i + 1)
+                  .toLowerCase()
                 : "unknown";
     }
 }

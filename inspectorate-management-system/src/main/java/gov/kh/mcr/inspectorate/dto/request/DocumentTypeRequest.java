@@ -9,12 +9,12 @@ import lombok.*;
 @Builder
 public class DocumentTypeRequest {
 
-    @NotBlank(message = "កូដចាំបាច់")
-    @Size(max = 20)
+    @NotBlank(message = "សូមបញ្ចូលលេខកូដប្រភេទឯកសារ")
+    @Size(max = 20, message = "លេខកូដប្រភេទឯកសារមិនអាចលើសពី ២០ តួអក្សរឡើយ")
     private String documentTypeCode;
 
-    @NotBlank(message = "ឈ្មោះចាំបាច់")
-    @Size(max = 255)
+    @NotBlank(message = "សូមបញ្ចូលឈ្មោះប្រភេទឯកសារ")
+    @Size(max = 255, message = "ឈ្មោះប្រភេទឯកសារមិនអាចលើសពី ២៥៥ តួអក្សរឡើយ")
     private String documentTypeName;
 
     private String description;

@@ -1,17 +1,18 @@
 package gov.kh.mcr.inspectorate.dto.request;
+
 import gov.kh.mcr.inspectorate.enums.AttendeeRole;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor @AllArgsConstructor
 @Builder
 public class AttendeeRequest {
 
-    @NotNull(message = "មន្ត្រីចាំបាច់")
+    @NotNull(message = "សូមជ្រើសរើសមន្ត្រីអញ្ជើញចូលរួម")
+    @Positive
     private Integer officerId;
 
-    @NotNull(message = "តួនាទីចាំបាច់")
+    @NotNull(message = "សូមបញ្ជាក់តួនាទីរបស់មន្ត្រីចូលរួម")
     private AttendeeRole role;
 }

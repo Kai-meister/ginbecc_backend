@@ -47,8 +47,9 @@ public class RoleServiceImpl implements RoleService {
     public RoleResponse create(RoleRequest request) {
         if (roleRepository.existsByRoleName(request.getRoleName())) {
             throw new DuplicateResourceException(
-                    "តួនាទី [" + request.getRoleName()
-                            + "] មានស្ទួន");
+                    "មិនអាចបង្កើតបានទេ ដោយសារឈ្មោះតួនាទី ["
+                            + request.getRoleName()
+                            + "] នេះមានក្នុងប្រព័ន្ធរួចហើយ (ស្ទួន)។");
         }
 
         Role saved = roleRepository.save(
@@ -58,7 +59,7 @@ public class RoleServiceImpl implements RoleService {
 
         activityLogService.log("CREATE", "Role",
                 saved.getRoleId(),
-                "បង្កើតតួនាទី: " + saved.getRoleName());
+                "បានបង្កើតទិន្នន័យតួនាទីថ្មីឈ្មោះ " + saved.getRoleName());
 
         return toResponse(saved);
     }
@@ -75,7 +76,7 @@ public class RoleServiceImpl implements RoleService {
         }
 
         activityLogService.log("UPDATE", "Role",
-                id, "កែប្រែ: " + role.getRoleName());
+                id, "បានកែប្រែទិន្នន័យតួនាទីឈ្មោះ " + role.getRoleName());
 
         return toResponse(role);
     }
@@ -105,6 +106,6 @@ public class RoleServiceImpl implements RoleService {
     private Role findById(Integer id) {
         return roleRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("តួនាទី", id));
+                        new ResourceNotFoundException("មិនមានទិន្នន័យតួនាទីដែលមានលេខសម្គាល់", id));
     }
 }

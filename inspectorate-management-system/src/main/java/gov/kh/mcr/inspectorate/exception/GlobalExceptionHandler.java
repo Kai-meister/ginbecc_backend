@@ -1,199 +1,175 @@
 package gov.kh.mcr.inspectorate.exception;
-import gov.kh.mcr.inspectorate.dto.response.ApiResponse;
+
+import gov.kh.mcr.inspectorate.dto.response
+        .ApiResponse;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.*;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.method.annotation
+        .MethodArgumentTypeMismatchException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>>
-    handleNotFound(ResourceNotFoundException ex) {
-        return build(HttpStatus.NOT_FOUND, ex);
-    }
-
-    @ExceptionHandler(DuplicateResourceException.class)
-    public ResponseEntity<ApiResponse<Void>>
-    handleDuplicate(DuplicateResourceException ex) {
-        return build(HttpStatus.CONFLICT, ex);
-    }
-
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiResponse<Void>>
-    handleBusiness(BusinessException ex) {
-        return build(HttpStatus.BAD_REQUEST, ex);
-    }
-
-    @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ApiResponse<Void>>
-    handleUnauthorized(UnauthorizedException ex) {
-        return build(HttpStatus.UNAUTHORIZED, ex);
-    }
-
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ApiResponse<Void>>
-    handleForbidden(ForbiddenException ex) {
-        return build(HttpStatus.FORBIDDEN, ex);
-    }
-
-    @ExceptionHandler(RoomConflictException.class)
-    public ResponseEntity<ApiResponse<Map<String, String>>>
-    handleRoomConflict(RoomConflictException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.<Map<String, String>>builder()
-                        .success(false)
-                        .code(ex.getCode())
-                        .message(ex.getMessage())
-                        .data(Map.of(
-                                "roomCode",      ex.getRoomCode(),
-                                "conflictTitle", ex.getConflictTitle(),
-                                "conflictTime",  ex.getConflictTime()))
-                        .build());
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Map<String, String>>>
-    handleValidation(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new LinkedHashMap<>();
-        ex.getBindingResult().getFieldErrors()
-                .forEach((FieldError fe) ->
-                        errors.put(fe.getField(),
-                                fe.getDefaultMessage()));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.<Map<String, String>>builder()
-                        .success(false)
-                        .code("VALIDATION_FAILED")
-                        .message("ទិន្នន័យបញ្ចូលមិនត្រឹមត្រូវ")
-                        .data(errors)
-                        .build());
-    }
-
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiResponse<Void>>
-    handleConstraint(
-            ConstraintViolationException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(
-                        "CONSTRAINT_VIOLATION", ex.getMessage()));
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Void>
+    handleBusiness(
+            BusinessException ex) {
+        log.warn("Business: {}", ex.getMessage());
+        return ApiResponse.error(
+                ex.getMessage());
     }
 
     @ExceptionHandler(
-            MissingServletRequestParameterException.class)
-    public ResponseEntity<ApiResponse<Void>>
-    handleMissingParam(
-            MissingServletRequestParameterException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(
-                        "MISSING_PARAMETER",
-                        "Parameter ខ្វះ: " + ex.getParameterName()));
+            ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiResponse<Void>
+    handleNotFound(
+            ResourceNotFoundException ex) {
+        return ApiResponse.error(
+                ex.getMessage());
+    }
+
+    @ExceptionHandler(
+            DuplicateResourceException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiResponse<Void>
+    handleDuplicate(
+            DuplicateResourceException ex) {
+        return ApiResponse.error(
+                ex.getMessage());
+    }
+
+    @ExceptionHandler(
+            UnauthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiResponse<Void>
+    handleUnauthorized(
+            UnauthorizedException ex) {
+        return ApiResponse.error(
+                ex.getMessage());
+    }
+
+    @ExceptionHandler(
+            ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Map<String, String>>
+    handleConstraintViolation(
+            ConstraintViolationException ex) {
+
+        Map<String, String> errors =
+                ex.getConstraintViolations()
+                        .stream()
+                        .collect(Collectors.toMap(
+                                v -> {
+                                    String path =
+                                            v.getPropertyPath()
+                                                    .toString();
+                                    int dot = path.lastIndexOf('.');
+                                    return dot >= 0
+                                            ? path.substring(dot + 1)
+                                            : path;
+                                },
+                                ConstraintViolation::getMessage,
+                                (a, b) -> a));
+
+        log.warn("Validation: {}", errors);
+
+        return ApiResponse.errorWithData(
+                "ទិន្នន័យបញ្ចូលមិនត្រឹមត្រូវ",
+                errors);
     }
 
     @ExceptionHandler(
             MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ApiResponse<Void>>
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Void>
     handleTypeMismatch(
-            MethodArgumentTypeMismatchException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(
-                        "TYPE_MISMATCH",
-                        "Parameter ប្រភេទខុស: "
-                                + ex.getName()));
+            MethodArgumentTypeMismatchException
+                    ex) {
+
+        String param = ex.getName();
+        String required =
+                ex.getRequiredType() != null
+                        ? ex.getRequiredType().getSimpleName()
+                        : "unknown";
+        String value =
+                ex.getValue() != null
+                        ? ex.getValue().toString()
+                        : "null";
+
+        String msg = buildTypeMismatchMsg(
+                param, required, value);
+
+        log.warn("Type mismatch: {}", msg);
+
+        return ApiResponse.error(msg);
     }
 
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiResponse<Void>>
-    handleUnreadable(
-            HttpMessageNotReadableException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(
-                        "UNREADABLE_BODY",
-                        "Request body មិនអាចអានបាន"));
+    @ExceptionHandler(
+            org.springframework.web.bind
+                    .MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Map<String, String>>
+    handleMethodArgumentNotValid(
+            org.springframework.web.bind
+                    .MethodArgumentNotValidException
+                    ex) {
+
+        Map<String, String> errors =
+                new LinkedHashMap<>();
+
+        ex.getBindingResult()
+                .getFieldErrors()
+                .forEach(fe ->
+                        errors.put(
+                                fe.getField(),
+                                fe.getDefaultMessage()));
+
+        return ApiResponse.errorWithData(
+                "ទិន្នន័យបញ្ចូលមិនត្រឹមត្រូវ",
+                errors);
     }
 
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ApiResponse<Void>>
-    handleAccessDenied(AccessDeniedException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.error(
-                        "ACCESS_DENIED", "គ្មានសិទ្ធិ"));
-    }
+    private String buildTypeMismatchMsg(
+            String param,
+            String required,
+            String value) {
 
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiResponse<Void>>
-    handleBadCredentials(BadCredentialsException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error(
-                        "INVALID_CREDENTIALS",
-                        "Email ឬ Password មិនត្រឹមត្រូវ"));
-    }
+        return switch (param) {
+            case "month" ->
+                    "តម្លៃ [" + value + "] សម្រាប់ " + param + " មិនត្រឹមត្រូវ"
+                            + " - សូមបញ្ចូលលេខពី ១ ដល់ ១២ (ឧ. ខែ: 3)";
 
-    @ExceptionHandler(LockedException.class)
-    public ResponseEntity<ApiResponse<Void>>
-    handleLocked(LockedException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error(
-                        "ACCOUNT_LOCKED",
-                        "គណនីត្រូវបានចាក់សោ"));
-    }
+            case "year" ->
+                    "តម្លៃ [" + value + "] សម្រាប់ " + param + " មិនត្រឹមត្រូវ"
+                            + " - សូមបញ្ចូលឆ្នាំចាប់ពី ២០០០ ដល់ ២១០០ (ឧ. ឆ្នាំ: 2025)";
 
-    @ExceptionHandler(DisabledException.class)
-    public ResponseEntity<ApiResponse<Void>>
-    handleDisabled(DisabledException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error(
-                        "ACCOUNT_DISABLED",
-                        "គណនីត្រូវបានបិទ"));
-    }
+            case "from", "to" ->
+                    "ទម្រង់កាលបរិច្ឆេទ [" + value + "] សម្រាប់ " + param + " មិនត្រឹមត្រូវ"
+                            + " - ទម្រង់ត្រឹមត្រូវគឺ yyyy-MM-dd (ឧ. " + param + ": 2025-01-01)";
 
-    @ExceptionHandler(UsernameNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>>
-    handleUsernameNotFound(
-            UsernameNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error(
-                        "USER_NOT_FOUND",
-                        "រកមិនឃើញ User"));
-    }
+            case "departmentId", "officerId", "typeId", "userId", "roleId" ->
+                    "លេខសម្គាល់ [" + value + "] សម្រាប់ " + param + " មិនត្រឹមត្រូវ"
+                            + " - តម្លៃត្រូវជាលេខធំជាង ០ (ឧ. " + param + ": 1)";
 
-    @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<ApiResponse<Void>>
-    handleMaxUpload(
-            MaxUploadSizeExceededException ex) {
-        return ResponseEntity.status(
-                        HttpStatus.PAYLOAD_TOO_LARGE)
-                .body(ApiResponse.error(
-                        "FILE_TOO_LARGE",
-                        "ទំហំ File ធំពេក (អតិបរមា 10MB)"));
-    }
+            case "isRead" ->
+                    "តម្លៃ [" + value + "] សម្រាប់ isRead មិនត្រឹមត្រូវ"
+                            + " - សូមបញ្ចូល true ឬ false";
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>>
-    handleGeneral(Exception ex) {
-        log.error("Unhandled exception", ex);
-        return ResponseEntity.status(
-                        HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error(
-                        "INTERNAL_ERROR", "មានបញ្ហាប្រព័ន្ធ"));
-    }
+            case "expiringWithinDays" ->
+                    "តម្លៃ [" + value + "] សម្រាប់ សម្រាប់ចំនួនថ្ងៃផុតកំណត់មិនត្រឹមត្រូវ"
+                            + " - សូមបញ្ចូលលេខពី ១ ដល់ ៣៦៥ (ឧ. សម្រាប់ចំនួនថ្ងៃផុតកំណត់មិនត្រឹមត្រូវ: 30)";
 
-    private ResponseEntity<ApiResponse<Void>> build(
-            HttpStatus status, ApiException ex) {
-        return ResponseEntity.status(status)
-                .body(ApiResponse.error(
-                        ex.getCode(), ex.getMessage()));
+            default ->
+                    "តម្លៃ [" + value + "] សម្រាប់ " + param + " មិនត្រឹមត្រូវ"
+                            + " - ទម្រង់ដែលត្រូវការគឺ " + required;
+        };
     }
 }

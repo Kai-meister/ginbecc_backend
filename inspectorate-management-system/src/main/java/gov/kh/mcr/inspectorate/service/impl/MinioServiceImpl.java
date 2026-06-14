@@ -27,27 +27,15 @@ public class MinioServiceImpl implements MinioService {
     @Override
     public String uploadFile(
             MultipartFile file,
-            String refTypeCodeOrPrefix,
+            String refTypePrefix,
             Integer refId) {
         try {
             createBucketIfNotExists();
 
-            String prefix;
-            try {
-                prefix = AttachmentRefType
-                        .fromCode(refTypeCodeOrPrefix)
-                        .toPathPrefix();
-            } catch (IllegalArgumentException ex) {
-                // Already lowercase prefix
-                prefix = refTypeCodeOrPrefix
-                        .toLowerCase()
-                        .replace("_", "-");
-            }
-
             String ext = getExt(
                     file.getOriginalFilename());
             String objectName =
-                    prefix
+                    refTypePrefix
                             + "/" + refId
                             + "/" + UUID.randomUUID()
                             + "." + ext;
@@ -63,15 +51,12 @@ public class MinioServiceImpl implements MinioService {
                                     file.getContentType())
                             .build());
 
-            log.info("MinIO uploaded: {}",
-                    objectName);
+            log.info("Uploaded: {}", objectName);
             return objectName;
 
         } catch (Exception ex) {
-            log.error("MinIO upload error", ex);
             throw new BusinessException(
-                    "Upload File មានបញ្ហា: "
-                            + ex.getMessage());
+                    "ការផ្ទុកឡើងឯកសារមានបញ្ហា ឬមិនជោគជ័យ " + ex.getMessage());
         }
     }
 
@@ -95,7 +80,7 @@ public class MinioServiceImpl implements MinioService {
         } catch (Exception ex) {
             log.error("Presigned URL error", ex);
             throw new BusinessException(
-                    "ទាញ URL Download មានបញ្ហា: "
+                    "ការទាញយកតំណភ្ជាប់សម្រាប់ទាញយកឯកសារមានបញ្ហា "
                             + ex.getMessage());
         }
     }
@@ -113,7 +98,7 @@ public class MinioServiceImpl implements MinioService {
         } catch (Exception ex) {
             log.error("MinIO delete error", ex);
             throw new BusinessException(
-                    "លុប File មានបញ្ហា: "
+                    "ការលុបឯកសារមានបញ្ហា ឬមិនជោគជ័យ "
                             + ex.getMessage());
         }
     }
@@ -133,11 +118,11 @@ public class MinioServiceImpl implements MinioService {
                 return false;
             }
             throw new BusinessException(
-                    "MinIO check error: "
+                    "ការពិនិត្យវត្តមានឯកសារក្នុងប្រព័ន្ធផ្ទុកទិន្នន័យមានបញ្ហា "
                             + ex.getMessage());
         } catch (Exception ex) {
             throw new BusinessException(
-                    "MinIO check error: "
+                    "ការពិនិត្យវត្តមានឯកសារក្នុងប្រព័ន្ធផ្ទុកទិន្នន័យមានបញ្ហា "
                             + ex.getMessage());
         }
     }
@@ -176,7 +161,7 @@ public class MinioServiceImpl implements MinioService {
         } catch (Exception ex) {
             log.error("Bucket create error", ex);
             throw new BusinessException(
-                    "MinIO bucket error: "
+                    "ការពិនិត្យ ឬបង្កើតប្រអប់ផ្ទុកទិន្នន័យមានបញ្ហា "
                             + ex.getMessage());
         }
     }

@@ -20,16 +20,17 @@ import java.time.LocalDateTime;
 public class MeetingRoom {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(
+            strategy = GenerationType.IDENTITY)
     @Column(name = "room_id")
     private Integer roomId;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "image_path")
-    private Attachment imagePath;
+    @JoinColumn(name = "image_path", nullable = true)
+    private Attachment attachment;
 
     @Column(name = "room_code",
-            length = 20, unique = true, nullable = false)
+            length = 20,
+            unique = true, nullable = false)
     private String roomCode;
 
     @Column(name = "location", length = 255)
@@ -43,12 +44,12 @@ public class MeetingRoom {
     @Builder.Default
     private RoomStatus status = RoomStatus.AVAILABLE;
 
-    @Column(name = "facilities",
-            columnDefinition = "TEXT")
+    @Column(name = "facilities", columnDefinition = "TEXT")
     private String facilities;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at",
+            updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
