@@ -1,0 +1,6 @@
+# macOS
+.DS_Store
+
+# Maven build output at the repo root
+# (the inspectorate-management-system module has its own .gitignore for its target/)
+/target/
