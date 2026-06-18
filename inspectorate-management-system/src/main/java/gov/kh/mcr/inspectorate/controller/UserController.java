@@ -48,8 +48,13 @@ public class UserController {
     }
 
     // GET /users/{id}
+    // Admins (USER_VIEW) can view anyone; any user may view their own
+    // profile (SELF_PROFILE_VIEW). Self-view includes officerInfo, which
+    // the mobile app needs to resolve the user's avatar.
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('USER_VIEW')")
+    @PreAuthorize("hasAuthority('USER_VIEW') or "
+            + "(@securityUtils.isSelf(#id) and "
+            + "hasAuthority('SELF_PROFILE_VIEW'))")
     public ResponseEntity<ApiResponse<
     UserResponse>>
     getById(

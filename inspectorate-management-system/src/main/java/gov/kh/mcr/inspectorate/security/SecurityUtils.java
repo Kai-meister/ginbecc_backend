@@ -47,6 +47,16 @@ public class SecurityUtils {
                 : null;
     }
 
+    // ── Check is current user (self) ──────────────
+    // Null-safe; returns false when not logged in.
+    // Used in @PreAuthorize to allow self-access.
+    public boolean isSelf(Integer userId) {
+        if (userId == null) return false;
+        return getCurrentUser()
+                .map(u -> userId.equals(u.getUserId()))
+                .orElse(false);
+    }
+
     // ── Get permanent Officer ─────────────────────
     // Throw if no officer
     public Officer getCurrentOfficer() {
