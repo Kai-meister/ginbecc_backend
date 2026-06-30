@@ -531,7 +531,7 @@ public class DataInitializer
 
     private void initSuperAdmin() {
         if (userRepository.existsByEmail(
-                "admin@system.kh")) return;
+                "system.supperadmin@inspectorate.gov.kh")) return;
 
         roleRepository
                 .findByRoleName("SUPER_ADMIN")
@@ -551,11 +551,11 @@ public class DataInitializer
                                             "អ្នកគ្រប់គ្រងប្រព័ន្ធ")
                                     .userNameEn(
                                             "System Administrator")
-                                    .email("admin@system.kh")
-                                    .phone("012000000")
+                                    .email("system.supperadmin@inspectorate.gov.kh")
+                                    .phone(null)
                                     .passwordHash(
                                             passwordEncoder.encode(
-                                                    "Admin@1234"))
+                                                    "Inspectorate@936396$"))
                                     .role(role)
                                     .statusCode(active)
                                     .failedLoginCount(0)
@@ -563,8 +563,7 @@ public class DataInitializer
 
                     log.info(
                             "Super Admin: "
-                                    + "admin@system.kh"
-                                    + " | Pass: Admin@1234");
+                                    + "system.supperadmin@inspectorate.gov.kh");
                 });
     }
 }
