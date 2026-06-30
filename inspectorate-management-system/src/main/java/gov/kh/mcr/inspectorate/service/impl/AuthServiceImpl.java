@@ -105,7 +105,7 @@ public class AuthServiceImpl implements AuthService {
                 "LOGIN", "User",
                 user.getUserId(),
                 "ចូលប្រព័ន្ធ: " + user.getEmail(),
-                context);                     // ← Fix
+                context);
 
         return LoginResponse.builder()
                 .accessToken(accessToken)
@@ -116,8 +116,6 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .roleName(user.getRole().getRoleName())
                 .permissions(permissions)
-                .mustChangePassword(
-                        user.getMustChangePassword())
                 .build();
     }
 
@@ -202,8 +200,6 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .roleName(user.getRole().getRoleName())
                 .permissions(permissions)
-                .mustChangePassword(
-                        user.getMustChangePassword())
                 .build();
     }
 
@@ -236,7 +232,6 @@ public class AuthServiceImpl implements AuthService {
         user.setPasswordHash(
                 passwordEncoder.encode(
                         req.getNewPassword()));
-        user.setMustChangePassword(false);
         userRepository.save(user);
 
         activityLogService.log(
@@ -259,8 +254,6 @@ public class AuthServiceImpl implements AuthService {
         user.setPasswordHash(
                 passwordEncoder.encode(plainPassword));
 
-        user.setMustChangePassword(true);
-
         user.setFailedLoginCount(0);
         user.setLockedUntil(null);
 
@@ -279,7 +272,7 @@ public class AuthServiceImpl implements AuthService {
                 user.getUserId(),
                 "ការប្រកាសប្រព័ន្ធ",
                 "Password ត្រូវបាន Reset",
-                NotificationType.SYSTEM,  // ← Enum
+                NotificationType.SYSTEM,
                 null);
 
         return ResetPasswordResponse.builder()

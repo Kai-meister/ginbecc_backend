@@ -2,14 +2,16 @@ package gov.kh.mcr.inspectorate.controller;
 
 import gov.kh.mcr.inspectorate.dto.request.*;
 import gov.kh.mcr.inspectorate.dto.response.*;
-import gov.kh.mcr.inspectorate.exception.ResourceNotFoundException;
-import gov.kh.mcr.inspectorate.service.MeetingAttendeeService;
+import gov.kh.mcr.inspectorate.service
+        .MeetingAttendeeService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.security.access.prepost
+        .PreAuthorize;
+import org.springframework.validation.annotation
+        .Validated;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -20,11 +22,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MeetingAttendeeController {
 
-    private final MeetingAttendeeService service;
+    private final MeetingAttendeeService
+            service;
 
-    // GET /{meetingId}/attendees
     @GetMapping
-    @PreAuthorize("hasAuthority('MEETING_VIEW')")
+    @PreAuthorize(
+            "hasAuthority('MEETING_VIEW')")
     public ResponseEntity<ApiResponse<
     List<AttendeeResponse>>>
     getAll(
@@ -33,13 +36,14 @@ public class MeetingAttendeeController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        service.getByMeetingId(meetingId),
-                        "ទទួលបានបញ្ជីអ្នកចូលរួមជោគជ័យ"));
+                        service.getByMeetingId(
+                                meetingId),
+                        "ទាញយកបញ្ជីអ្នកចូលរួមបានដោយជោគជ័យ"));
     }
 
-    // GET /{meetingId}/attendees/{id}
     @GetMapping("/{attendeeId}")
-    @PreAuthorize("hasAuthority('MEETING_VIEW')")
+    @PreAuthorize(
+            "hasAuthority('MEETING_VIEW')")
     public ResponseEntity<ApiResponse<
     AttendeeResponse>>
     getById(
@@ -52,11 +56,13 @@ public class MeetingAttendeeController {
                 ApiResponse.success(
                         service.getById(
                                 meetingId, attendeeId),
-                        "ទទួលបានព័ត៌មានអ្នកចូលរួមជោគជ័យ"));
+                        "ទាញយកព័ត៌មានអ្នកចូលរួមដោយជោគជ័យ"));
     }
-    // POST /{meetingId}/attendees
+
     @PostMapping
-    @PreAuthorize("hasAuthority('MEETING_MANAGE_ATTENDEES')")
+    @PreAuthorize(
+            "hasAuthority"
+                    + "('MEETING_MANAGE_ATTENDEES')")
     public ResponseEntity<ApiResponse<
     AttendeeResponse>>
     add(
@@ -70,14 +76,13 @@ public class MeetingAttendeeController {
                 .body(ApiResponse.success(
                         service.addAttendee(
                                 meetingId, request),
-                        "បន្ថែមអ្នកចូលរួមជោគជ័យ"));
-
+                        "អ្នកចូលរួមត្រូវបានបន្ថែមទៅក្នុងកិច្ចប្រជុំដោយជោគជ័យ"));
     }
 
-    // POST /{meetingId}/attendees/bulk
     @PostMapping("/bulk")
     @PreAuthorize(
-            "hasAuthority('MEETING_MANAGE_ATTENDEES')")
+            "hasAuthority"
+                    + "('MEETING_MANAGE_ATTENDEES')")
     public ResponseEntity<ApiResponse<
     List<AttendeeResponse>>>
     addBulk(
@@ -91,13 +96,14 @@ public class MeetingAttendeeController {
                 .body(ApiResponse.success(
                         service.addBulk(
                                 meetingId, request),
-                        "បន្ថែមអ្នកចូលរួមជាច្រើនជោគជ័យ"));
+                        "ការបន្ថែមបញ្ជីឈ្មោះមន្ត្រីចូលរួមកិច្ចប្រជុំត្រូវបានអនុវត្តដោយជោគជ័យ"));
     }
 
-    // PATCH /{meetingId}/attendees/{id}/attendance
     @PatchMapping("/{attendeeId}/attendance")
     @PreAuthorize(
-            "hasAuthority('MEETING_MARK_ATTENDANCE')")
+            "hasAnyAuthority"
+                    + "('MEETING_MANAGE_ATTENDEES',"
+                    + "'MEETING_MARK_ATTENDANCE')")
     public ResponseEntity<ApiResponse<
     AttendeeResponse>>
     updateAttendance(
@@ -106,19 +112,21 @@ public class MeetingAttendeeController {
             @PathVariable
             @Positive Integer attendeeId,
             @Valid @RequestBody
-            AttendanceUpdateRequest request) {
+            AttendanceUpdateRequest
+                    request) {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
                         service.updateAttendance(
                                 meetingId, attendeeId,
                                 request),
-                        "ធ្វើបច្ចុប្បន្នភាពស្ថានភាពការចូលរួមជោគជ័យ"));
+                        "ស្ថានភាពវត្តមានរបស់មន្ត្រីត្រូវបានធ្វើបច្ចុប្បន្នភាពដោយជោគជ័យ"));
     }
 
-    // DELETE /{meetingId}/attendees/{id}
     @DeleteMapping("/{attendeeId}")
-    @PreAuthorize("hasAuthority('MEETING_MANAGE_ATTENDEES')")
+    @PreAuthorize(
+            "hasAuthority"
+                    + "('MEETING_MANAGE_ATTENDEES')")
     public ResponseEntity<ApiResponse<Void>>
     remove(
             @PathVariable
@@ -131,6 +139,6 @@ public class MeetingAttendeeController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "លុបអ្នកចូលរួមជោគជ័យ"));
+                        null, "ការលុបបានជោគជ័យ"));
     }
 }

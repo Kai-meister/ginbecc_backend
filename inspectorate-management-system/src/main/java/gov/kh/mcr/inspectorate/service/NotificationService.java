@@ -12,20 +12,11 @@ import java.util.List;
 
 public interface NotificationService {
 
-
     NotificationResponse create(
             NotificationCreateRequest request);
 
     List<NotificationResponse> createBulk(
             NotificationCreateRequest request);
-
-
-    void createByOfficerId(
-            Integer officerId,
-            String title,
-            String message,
-            NotificationType type,
-            Integer referenceId);
 
     void createByUserId(
             Integer userId,
@@ -34,23 +25,37 @@ public interface NotificationService {
             NotificationType type,
             Integer referenceId);
 
-    //  currentUserId for security check
+    void createBulkByUserIds(
+            List<Integer> userIds,
+            String title,
+            String message,
+            NotificationType type,
+            Integer referenceId);
+
+
     PageResponse<NotificationResponse>
     getMyNotifications(
             Integer currentUserId,
             Boolean isRead,
             int page, int size);
 
-    // Fix — currentUserId for owner check
     NotificationResponse getById(
             Integer notificationId,
             Integer currentUserId);
 
     long getUnreadCount(Integer currentUserId);
 
+
     void markAsRead(
             Integer notificationId,
             Integer currentUserId);
+
+    PageResponse<NotificationResponse>
+    getMyNotificationsByType(
+            Integer currentUserId,
+            NotificationType type,
+            Boolean isRead,
+            int page, int size);
 
     int markAllAsRead(Integer currentUserId);
 }

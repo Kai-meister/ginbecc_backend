@@ -36,8 +36,10 @@ public class DocumentTypeServiceImpl
 
     @Override
     @Transactional(readOnly = true)
-    public List<DocumentTypeResponse> getAll() {
-        return documentTypeRepository.findAll()
+    public List<DocumentTypeResponse>
+    getAll() {
+         return documentTypeRepository
+                .findAllByOrderByDocumentTypeNameAsc()
                 .stream()
                 .map(documentTypeMapper::toResponse)
                 .toList();

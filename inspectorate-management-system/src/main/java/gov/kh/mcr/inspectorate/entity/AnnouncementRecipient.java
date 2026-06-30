@@ -9,18 +9,20 @@ import java.time.LocalDateTime;
 @Table(name = "announcement_recipients",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_ann_officer",
+                        name = "uk_ann_user",
+                        // Fix — officer_id → user_id
                         columnNames = {
                                 "announcement_id",
-                                "officer_id"})
+                                "user_id"})
         },
         indexes = {
                 @Index(
                         name = "idx_recipient_ann",
                         columnList = "announcement_id"),
+                // Fix — officer_id → user_id
                 @Index(
-                        name = "idx_recipient_officer",
-                        columnList = "officer_id"),
+                        name = "idx_recipient_user",
+                        columnList = "user_id"),
                 @Index(
                         name = "idx_recipient_read",
                         columnList =
@@ -41,11 +43,10 @@ public class AnnouncementRecipient {
     @JoinColumn(name = "announcement_id",
             nullable = false)
     private Announcement announcement;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "officer_id",
+    @JoinColumn(name = "user_id",
             nullable = false)
-    private Officer officer;
+    private User user;
 
     @Column(name = "is_read",
             nullable = false)

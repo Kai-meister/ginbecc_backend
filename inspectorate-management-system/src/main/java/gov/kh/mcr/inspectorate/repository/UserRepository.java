@@ -13,12 +13,11 @@ import java.util.Optional;
 public interface UserRepository
         extends JpaRepository<User, Integer> {
 
+
     Optional<User> findByEmail(String email);
 
     boolean existsByEmail(String email);
 
-    Optional<User> findByOfficer_OfficerId(
-            Integer officerId);
 
     boolean existsByOfficer_OfficerId(
             Integer officerId);
@@ -44,11 +43,6 @@ public interface UserRepository
             String name,
             String email,
             Pageable pageable);
-
-    Optional<User>
-    findByContractOfficer_ContractOfficerId(
-            Integer contractOfficerId);
-
     boolean
     existsByContractOfficer_ContractOfficerId(
             Integer contractOfficerId);
@@ -57,6 +51,72 @@ public interface UserRepository
     existsByContractOfficer_ContractOfficerIdAndUserIdNot(
             Integer contractOfficerId,
             Integer userId);
+
+    @Query("""
+    SELECT u FROM User u
+    LEFT JOIN FETCH u.officer o
+    LEFT JOIN FETCH u.contractOfficer co
+    WHERE u.statusCode.statusCode = 'ACTIVE'
+    AND (
+        (o IS NOT NULL
+         AND o.department.departmentId
+             = :deptId)
+        OR
+        (co IS NOT NULL
+         AND co.department.departmentId
+             = :deptId)
+    )
+    ORDER BY u.userNameKh ASC
+    """)
+    List<User> findActiveByDepartmentId(
+            @Param("deptId") Integer deptId);
+
+    // All active users (SUPER_ADMIN use case)
+    @Query("""
+    SELECT u FROM User u
+    LEFT JOIN FETCH u.officer o
+    LEFT JOIN FETCH u.contractOfficer co
+    LEFT JOIN FETCH u.role r
+    WHERE u.statusCode.statusCode = 'ACTIVE'
+    ORDER BY r.roleName   ASC,
+             u.userNameKh ASC
+    """)
+    List<User> findAllActive();
+    // Existing — keep
+    Optional<User> findByOfficer_OfficerId(
+            Integer officerId);
+
+    // Add for contract officer lookup
+    Optional<User>
+    findByContractOfficer_ContractOfficerId(
+            Integer contractOfficerId);
+
+    @Query("""
+    SELECT u FROM User u
+    WHERE u.statusCode.statusCode = 'ACTIVE'
+    AND (
+        u.officer IS NOT NULL
+        AND u.officer.department.departmentId
+            IN :deptIds
+        OR
+        u.contractOfficer IS NOT NULL
+        AND u.contractOfficer.department
+            .departmentId IN :deptIds
+    )
+    ORDER BY u.userNameKh ASC
+    """)
+    List<User> findActiveByDepartments(
+            @Param("deptIds")
+            List<Integer> deptIds);
+
+    // Active users by IDs
+    @Query("""
+    SELECT u FROM User u
+    WHERE u.statusCode.statusCode = 'ACTIVE'
+    AND   u.userId IN :userIds
+    """)
+    List<User> findActiveByIds(
+            @Param("userIds") List<Integer> userIds);
     @Query("""
         SELECT u FROM User u
         LEFT JOIN FETCH u.role       r

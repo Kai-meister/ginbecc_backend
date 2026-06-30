@@ -31,7 +31,8 @@ public interface OfficerRepository extends JpaRepository<Officer, Integer>,
             Integer deptId, Pageable pageable);
 
     @Query("""
-        SELECT o FROM Officer o
+
+            SELECT o FROM Officer o
         WHERE o.dob <= :retirementDate
         AND o.statusCode.statusCode = 'ACTIVE'
         ORDER BY o.dob ASC
@@ -55,26 +56,60 @@ public interface OfficerRepository extends JpaRepository<Officer, Integer>,
         ORDER BY COUNT(o) DESC
         """)
     List<Object[]> countByDepartment();
+// for auto recipient
 
+    // All ACTIVE officers
     @Query("""
-SELECT o FROM Officer o
-LEFT JOIN FETCH o.department d
-LEFT JOIN FETCH o.position p
-LEFT JOIN FETCH o.statusCode s
-WHERE (:deptId IS NULL
-       OR d.departmentId = :deptId)
-AND (:status IS NULL
-       OR s.statusCode = :status)
-AND (CAST(:from AS date) IS NULL
-       OR o.joinDate >= :from)
-AND (CAST(:to AS date) IS NULL
-       OR o.joinDate <= :to)
-ORDER BY d.departmentName,
-         o.fullNameKh
-""")
+    SELECT o FROM Officer o
+    LEFT JOIN FETCH o.department d
+    WHERE o.statusCode.statusCode = 'ACTIVE'
+    ORDER BY d.departmentName ASC,
+             o.fullNameKh     ASC
+    """)
+    List<Officer> findAllActive();
+
+    // Active officers by departments
+    @Query("""
+    SELECT o FROM Officer o
+    LEFT JOIN FETCH o.department d
+    WHERE o.statusCode.statusCode = 'ACTIVE'
+    AND   d.departmentId IN :deptIds
+    ORDER BY d.departmentName ASC,
+             o.fullNameKh     ASC
+    """)
+    List<Officer> findActiveByDepartments(
+            @Param("deptIds")
+            List<Integer> deptIds);
+
+    // Active officers by IDs
+    @Query("""
+    SELECT o FROM Officer o
+    WHERE o.statusCode.statusCode = 'ACTIVE'
+    AND   o.officerId IN :ids
+    """)
+    List<Officer> findActiveByIds(
+            @Param("ids") List<Integer> ids);
+
+    // ═══ OfficerRepository.java — Report query ═══
+    @Query("""
+    SELECT o FROM Officer o
+    LEFT JOIN FETCH o.department d
+    LEFT JOIN FETCH o.position   p
+    LEFT JOIN FETCH o.statusCode s
+    WHERE (:deptId IS NULL
+           OR d.departmentId = :deptId)
+    AND   (:status IS NULL
+           OR s.statusCode = :status)
+    AND   (:from IS NULL
+           OR o.joinDate >= :from)
+    AND   (:to IS NULL
+           OR o.joinDate <= :to)
+    ORDER BY d.departmentName ASC,
+             o.fullNameKh     ASC
+    """)
     List<Officer> findForReport(
             @Param("deptId") Integer deptId,
             @Param("status") String status,
             @Param("from")   LocalDate from,
             @Param("to")     LocalDate to);
-}
+    }

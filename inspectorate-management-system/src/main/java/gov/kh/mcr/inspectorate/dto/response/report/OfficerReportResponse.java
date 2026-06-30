@@ -1,6 +1,5 @@
 package gov.kh.mcr.inspectorate.dto.response.report;
 
-import gov.kh.mcr.inspectorate.enums.Gender;
 import lombok.*;
 import java.time.LocalDate;
 
@@ -13,22 +12,20 @@ public class OfficerReportResponse {
     private String    officerCode;
     private String    fullNameKh;
     private String    fullNameEn;
-    private Gender    gender;
     @Builder.Default
-    private String  genderLabel    = "";
+    private String    genderLabel    = "";
     private LocalDate dob;
     private Integer   age;
     @Builder.Default
-    private String  departmentName = "";
+    private String    departmentName = "";
     @Builder.Default
-    private String  positionName   = "";
+    private String    positionName   = "";
     private LocalDate joinDate;
     private String    phone;
     private String    email;
     private String    educationLevel;
     @Builder.Default
-    private String  statusCode     = "";
+    private String    statusCode     = "";
     @Builder.Default
-    private String  statusLabel    = "";
-
+    private String    statusLabel    = "";
 }

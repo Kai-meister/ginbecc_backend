@@ -112,7 +112,7 @@ public class UserServiceImpl
         if (userRepo.existsByEmail(request.getEmail())) {
             throw new DuplicateResourceException(
                     "មិនអាចបង្កើតបានទេ ដោយសារអ៊ីមែល [" + request.getEmail()
-                            + "] មានក្នុងប្រព័ន្ធរួចហើយ (ស្ទួន)។");
+                            + "] មានក្នុងប្រព័ន្ធរួចហើយ។");
         }
 
         checkOfficerDuplicate(request, null);
@@ -122,9 +122,7 @@ public class UserServiceImpl
         user.setStatusCode(
                 findStatus(request.getStatusCode()));
         user.setPasswordHash(
-                passwordEncoder.encode(request.getPassword()));
-        user.setMustChangePassword(true);
-        user.setFailedLoginCount(0);
+                passwordEncoder.encode(request.getPassword()));user.setFailedLoginCount(0);
 
         setOfficerByType(user, request);
 
@@ -139,7 +137,6 @@ public class UserServiceImpl
         return userMapper.toResponse(saved);
     }
 
-
     @Override
     public UserResponse update(
             Integer id, UserRequest request) {
@@ -153,7 +150,7 @@ public class UserServiceImpl
                 request.getEmail())) {
             throw new DuplicateResourceException(
                     "មិនអាចកែប្រែបានទេ ដោយសារអ៊ីមែល [" + request.getEmail()
-                            + "] មានក្នុងប្រព័ន្ធរួចហើយ (ស្ទួន)។");
+                            + "] មានក្នុងប្រព័ន្ធរួចហើយ។");
         }
 
         checkOfficerDuplicate(request, id);
@@ -192,7 +189,7 @@ public class UserServiceImpl
                 .findById(contractOfficerId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "ContractOfficer",
+                                "មន្ត្រីជាប់កិច្ចសន្យា",
                                 contractOfficerId));
     }
 
@@ -346,7 +343,5 @@ public class UserServiceImpl
                     "មន្ត្រីជាប់កិច្ចសន្យានេះមានគណនីអ្នកប្រើប្រាស់រួចហើយ");
         }
     }
-
-
 
 }

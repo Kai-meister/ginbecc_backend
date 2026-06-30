@@ -36,60 +36,102 @@ import java.util.List;
 public class DocumentServiceImpl
         implements DocumentService {
 
-    private final DocumentRepository             documentRepo;
-    private final DocumentTypeRepository         documentTypeRepo;
-    private final OfficerRepository              officerRepo;
-    private final LookupDocumentStatusRepository statusRepo;
-    private final AttachmentRepository           attachmentRepo;
-    private final DocumentMapper                 documentMapper;
-    private final SecurityUtils                  securityUtils;
-    private final ActivityLogService             activityLogService;
-    private final AttachmentService              attachmentService;
-    private final MinioService                   minioService;
+    private final DocumentRepository
+            documentRepo;
+    private final DocumentTypeRepository
+            documentTypeRepo;
+    private final UserRepository
+            userRepo;
+    private final LookupDocumentStatusRepository
+            statusRepo;
+    private final AttachmentRepository
+            attachmentRepo;
+    private final DocumentMapper
+            documentMapper;
+    private final SecurityUtils
+            securityUtils;
+    private final ActivityLogService
+            activityLogService;
+    private final AttachmentService
+            attachmentService;
+    private final MinioService
+            minioService;
+    private final ApprovalService
+            approvalService;
+
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<DocumentResponse> getAll(
-            int page, int size,
-            Integer officerId,
-            Integer typeId,
-            String status) {
+    public PageResponse<DocumentResponse>
+    getAll(int page, int size,
+           Integer userId,
+           Integer typeId,
+           String status) {
 
         Pageable pageable = PageRequest.of(
                 page, size,
-                Sort.by("createdAt").descending());
+                Sort.by("createdAt")
+                        .descending());
 
-        Integer resolvedOfficerId =
-                resolveOfficerId(officerId);
+         boolean canSeeAll =
+                securityUtils
+                        .canBypassDepartmentScope();
 
         Page<Document> result;
 
-        if (resolvedOfficerId != null
-                && status != null) {
-            result = documentRepo
-                    .findByOfficer_OfficerIdAndStatusCode_StatusCode(
-                            resolvedOfficerId,
-                            status, pageable);
-        } else if (resolvedOfficerId != null) {
-            result = documentRepo
-                    .findByOfficer_OfficerId(
-                            resolvedOfficerId, pageable);
-        } else if (status != null
-                && typeId != null) {
-            result = documentRepo
-                    .findByStatusCode_StatusCodeAndDocumentType_DocumentTypeId(
-                            status, typeId, pageable);
-        } else if (status != null) {
-            result = documentRepo
-                    .findByStatusCode_StatusCode(
-                            status, pageable);
-        } else if (typeId != null) {
-            result = documentRepo
-                    .findByDocumentType_DocumentTypeId(
-                            typeId, pageable);
+        if (canSeeAll) {
+
+            if (userId != null
+                    && status != null) {
+                result = documentRepo
+                        .findByUser_UserIdAndStatusCode_StatusCode(
+                                userId, status,
+                                pageable);
+            } else if (userId != null) {
+                result = documentRepo
+                        .findByUser_UserId(
+                                userId, pageable);
+            } else if (status != null
+                    && typeId != null) {
+                result = documentRepo
+                        .findByStatusCode_StatusCodeAndDocumentType_DocumentTypeId(
+                                status, typeId,
+                                pageable);
+            } else if (status != null) {
+                result = documentRepo
+                        .findByStatusCode_StatusCode(
+                                status, pageable);
+            } else if (typeId != null) {
+                result = documentRepo
+                        .findByDocumentType_DocumentTypeId(
+                                typeId, pageable);
+            } else {
+                result = documentRepo
+                        .findAll(pageable);
+            }
         } else {
-            result = documentRepo
-                    .findAll(pageable);
+             Integer ownDeptId =
+                    securityUtils
+                            .getCurrentDepartmentId();
+
+            boolean hasViewAll =
+                    securityUtils.hasPermission(
+                            "DOCUMENT_VIEW_ALL");
+
+            if (hasViewAll
+                    && ownDeptId != null) {
+                result = documentRepo
+                        .findByUserDepartmentId(
+                                ownDeptId, pageable);
+            } else {
+                Integer currentUserId =
+                        securityUtils
+                                .getCurrentUserId();
+                result = documentRepo
+                        .findByUser_UserId(
+                                currentUserId,
+                                pageable);
+            }
         }
 
         return PageResponse.of(
@@ -97,45 +139,21 @@ public class DocumentServiceImpl
                         documentMapper::toResponse));
     }
 
+
+
     @Override
     @Transactional(readOnly = true)
-    public DocumentResponse getById(Integer id) {
+    public DocumentResponse getById(
+            Integer id) {
 
         Document document = findById(id);
 
         validateViewPermission(document);
 
-        return documentMapper.toResponse(document);
+        return documentMapper.toResponse(
+                document);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<DocumentResponse> getExpiring(
-            int withinDays) {
-
-        LocalDate expiryDate =
-                LocalDate.now().plusDays(withinDays);
-
-        List<Document> list;
-        Officer currentOfficer =
-                securityUtils.getCurrentOfficerOrNull();
-
-        if (currentOfficer != null
-                && !securityUtils.hasPermission(
-                "DOCUMENT_VIEW_ALL")) {
-            list = documentRepo
-                    .findExpiringByOfficer(
-                            expiryDate,
-                            currentOfficer.getOfficerId());
-        } else {
-            list = documentRepo
-                    .findExpiring(expiryDate);
-        }
-
-        return list.stream()
-                .map(documentMapper::toResponse)
-                .toList();
-    }
 
     @Override
     public DocumentResponse create(
@@ -145,22 +163,24 @@ public class DocumentServiceImpl
                 findActiveDocumentType(
                         request.getDocumentTypeId());
 
-        Integer officerId =
-                resolveCreateOfficerId(
-                        request.getOfficerId());
+        Integer currentUserId =
+                securityUtils.getCurrentUserId();
+
+        User currentUser =
+                findUser(currentUserId);
 
         Document document =
                 documentMapper.toEntity(request);
         document.setDocumentType(docType);
-        document.setOfficer(
-                findOfficer(officerId));
+        document.setUser(currentUser);
+
+
         document.setStatusCode(
                 findStatus(
-                        DocumentStatusCode.DRAFT
-                                .getCode()));
+                        DocumentStatusCode
+                                .DRAFT.getCode()));
 
-        securityUtils.getCurrentUser()
-                .ifPresent(document::setUploadedBy);
+        document.setUploadedBy(currentUser);
 
         Document saved =
                 documentRepo.save(document);
@@ -168,12 +188,15 @@ public class DocumentServiceImpl
         activityLogService.log(
                 "CREATE", "Document",
                 saved.getDocumentId(),
-                "បង្កើតឯកសារថ្មី "
+                "បង្កើត: "
                         + saved.getDocumentName(),
                 buildContext());
 
-        return documentMapper.toResponse(saved);
+
+        return documentMapper.toResponse(
+                saved);
     }
+
 
     @Override
     public DocumentResponse update(
@@ -181,27 +204,25 @@ public class DocumentServiceImpl
             DocumentRequest request) {
 
         Document document = findById(id);
-
-        validateOwnership(document);
+        validateStrictOwnership(document);
         validateIsDraft(document);
 
         if (!document.getDocumentType()
                 .getDocumentTypeId()
-                .equals(
-                        request
-                                .getDocumentTypeId())) {
+                .equals(request
+                        .getDocumentTypeId())) {
             document.setDocumentType(
                     findActiveDocumentType(
-                            request.getDocumentTypeId()));
+                            request
+                                    .getDocumentTypeId()));
         }
 
         documentMapper.updateEntity(
                 request, document);
 
         activityLogService.log(
-                "UPDATE", "Document",
-                id,
-                "កកែប្រែព័ត៌មានឯកសារ "
+                "UPDATE", "Document", id,
+                "កែប្រែ: "
                         + document.getDocumentName(),
                 buildContext());
 
@@ -214,11 +235,11 @@ public class DocumentServiceImpl
 
         Document document = findById(id);
 
-        validateOwnership(document);
-
+        validateStrictOwnership(document);
         validateIsDraft(document);
 
-        if (document.getAttachment() != null) {
+        if (document.getAttachment()
+                != null) {
             attachmentService.delete(
                     document.getAttachment()
                             .getAttachmentId());
@@ -227,9 +248,8 @@ public class DocumentServiceImpl
         documentRepo.deleteById(id);
 
         activityLogService.log(
-                "DELETE", "Document",
-                id,
-                "លុបទិន្នន័យឯកសារ "
+                "DELETE", "Document", id,
+                "លុប: "
                         + document.getDocumentName(),
                 buildContext());
     }
@@ -239,9 +259,10 @@ public class DocumentServiceImpl
             Integer documentId,
             MultipartFile file) {
 
-        Document document = findById(documentId);
+        Document document =
+                findById(documentId);
 
-        validateOwnership(document);
+        validateStrictOwnership(document);
 
         var resp = attachmentService.upload(
                 file,
@@ -259,7 +280,7 @@ public class DocumentServiceImpl
         activityLogService.log(
                 "UPDATE", "Document",
                 documentId,
-                "បង្ហោះឯកសារ "
+                "Upload: "
                         + resp.getOriginalName(),
                 buildContext());
 
@@ -272,12 +293,16 @@ public class DocumentServiceImpl
     public String getDownloadUrl(
             Integer documentId) {
 
-        Document document = findById(documentId);
+        Document document =
+                findById(documentId);
+
         validateViewPermission(document);
 
-        if (document.getAttachment() == null) {
-            throw new ResourceNotFoundException(
-                    "មិនមានឯកសារភ្ជាប់នៅក្នុងប្រព័ន្ធឡើយ សម្រាប់លេខសម្គាល់ ",
+        if (document.getAttachment()
+                == null) {
+            throw new
+                    ResourceNotFoundException(
+                    "ឯកសារ មិនមាន File",
                     documentId);
         }
 
@@ -286,113 +311,69 @@ public class DocumentServiceImpl
                         .getFilePath());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<DocumentResponse>
+    getExpiring(int withinDays) {
+
+        LocalDate expiryDate =
+                LocalDate.now()
+                        .plusDays(withinDays);
+
+        List<Document> list;
+
+        boolean canSeeAll =
+                securityUtils
+                        .canBypassDepartmentScope();
+
+        if (canSeeAll) {
+            list = documentRepo
+                    .findExpiring(expiryDate);
+        } else {
+            Integer ownDeptId =
+                    securityUtils
+                            .getCurrentDepartmentId();
+
+            boolean hasViewAll =
+                    securityUtils.hasPermission(
+                            "DOCUMENT_VIEW_ALL");
+
+            if (hasViewAll
+                    && ownDeptId != null) {
+                list = documentRepo
+                        .findExpiringByDepartment(
+                                expiryDate,
+                                ownDeptId);
+            } else {
+                Integer currentUserId =
+                        securityUtils
+                                .getCurrentUserId();
+                list = documentRepo
+                        .findExpiringByUser(
+                                expiryDate,
+                                currentUserId);
+            }
+        }
+
+        return list.stream()
+                .map(documentMapper::toResponse)
+                .toList();
+    }
+
+
+
     private Document findById(Integer id) {
         return documentRepo.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "មិនមានទិន្នន័យឯកសារដែលមានលេខសម្គាល់ ", id));
+                                "ឯកសារ", id));
     }
 
-    private Integer resolveOfficerId(
-            Integer requestedOfficerId) {
-
-        Officer currentOfficer =
-                securityUtils.getCurrentOfficerOrNull();
-
-        if (currentOfficer != null
-                && !securityUtils.hasPermission(
-                "DOCUMENT_VIEW_ALL")) {
-            return currentOfficer.getOfficerId();
-        }
-        return requestedOfficerId;
-    }
-
-    private Integer resolveCreateOfficerId(
-            Integer requestedOfficerId) {
-
-        Officer currentOfficer =
-                securityUtils.getCurrentOfficerOrNull();
-
-        if (currentOfficer != null
-                && !securityUtils.hasPermission(
-                "DOCUMENT_VIEW_ALL")) {
-            return currentOfficer.getOfficerId();
-        }
-
-        if (requestedOfficerId == null) {
-            throw new BusinessException(
-                    "អ្នកគ្រប់គ្រងប្រព័ន្ធ (Admin) ត្រូវតែបញ្ជាក់លេខសម្គាល់មន្ត្រី (Officer ID)");
-        }
-
-        return requestedOfficerId;
-    }
-
-    private void validateViewPermission(
-            Document document) {
-
-        Officer currentOfficer =
-                securityUtils.getCurrentOfficerOrNull();
-
-        if (currentOfficer == null
-                || securityUtils.hasPermission(
-                "DOCUMENT_VIEW_ALL")) {
-            return;
-        }
-
-        if (document.getOfficer() == null
-                || !document.getOfficer()
-                .getOfficerId()
-                .equals(currentOfficer
-                        .getOfficerId())) {
-            throw new ResourceNotFoundException(
-                    "មិនមានទិន្នន័យឯកសារ ឬអ្នកមិនមានសិទ្ធិចូលមើលឯកសារដែលមានលេខសម្គាល់", document.getDocumentId());
-        }
-    }
-
-    private void validateOwnership(
-            Document document) {
-
-        Officer currentOfficer =
-                securityUtils.getCurrentOfficerOrNull();
-
-        if (currentOfficer == null
-                || securityUtils.hasPermission(
-                "DOCUMENT_VIEW_ALL")) {
-            return;
-        }
-
-        if (document.getOfficer() == null
-                || !document.getOfficer()
-                .getOfficerId()
-                .equals(currentOfficer
-                        .getOfficerId())) {
-            throw new BusinessException(
-                    "មិនអាចកែប្រែទិន្នន័យឯកសាររបស់មន្ត្រីផ្សេងបានឡើយ");
-        }
-    }
-
-    private void validateIsDraft(
-            Document document) {
-
-        String code =
-                document.getStatusCode() != null
-                        ? document.getStatusCode()
-                          .getStatusCode()
-                        : "";
-
-        if (!DocumentStatusCode.isDraft(code)) {
-            throw new BusinessException(
-                    "មិនអាចកែប្រែ ឬលុបបានឡើយ ដោយសារឯកសារនេះស្ថិតក្នុងស្ថានភាព «"
-                            + code
-                            + "»។ ប្រព័ន្ធអនុញ្ញាតឱ្យកែប្រែ ឬលុបតែឯកសារដែលស្ថិតក្នុងស្ថានភាព «ឯកសារព្រាង» ប៉ុណ្ណោះ។");
-        }
-    }
-
-    private Officer findOfficer(Integer id) {
-        return officerRepo.findById(id)
+    private User findUser(Integer id) {
+        return userRepo.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "មិនមានទិន្នន័យមន្ត្រីដែលមានលេខសម្គាល់ ", id));
+                                "User", id));
     }
 
     private LookupDocumentStatus findStatus(
@@ -400,30 +381,131 @@ public class DocumentServiceImpl
         return statusRepo.findById(code)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "មិនមានទិន្នន័យស្ថានភាពឯកសារដែលមានកូដ ", code));
+                                "ស្ថានភាព", code));
     }
 
-    private DocumentType findActiveDocumentType(
+    private DocumentType
+    findActiveDocumentType(
             Integer id) {
 
         DocumentType docType =
                 documentTypeRepo.findById(id)
                         .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "មិនមានទិន្នន័យប្រភេទឯកសារដែលមានលេខសម្គាល់៖ ", id));
+                                new
+                                        ResourceNotFoundException(
+                                        "ប្រភេទឯកសារ", id));
 
         if (docType.getStatus()
                 != ActiveStatus.ACTIVE) {
             throw new BusinessException(
-                    "មិនអាចប្រើប្រាស់ប្រភេទឯកសារ «"
-                            + docType.getDocumentTypeName()
-                            + "» នេះបានឡើយ ដោយសារស្ថានភាពមិនស្ថិតក្នុង «សកម្ម»។");
+                    "ប្រភេទឯកសារ \""
+                            + docType
+                            .getDocumentTypeName()
+                            + "\" មិនអាចប្រើ");
         }
 
         return docType;
     }
 
-    private ActivityLogContext buildContext() {
+    private void validateViewPermission(
+            Document document) {
+
+        if (securityUtils
+                .canBypassDepartmentScope()) {
+            return;
+        }
+
+        Integer docDeptId =
+                resolveDocumentDeptId(document);
+
+        boolean hasViewAll =
+                securityUtils.hasPermission(
+                        "DOCUMENT_VIEW_ALL");
+
+        if (hasViewAll) {
+
+            Integer ownDeptId =
+                    securityUtils
+                            .getCurrentDepartmentId();
+
+            if (ownDeptId == null
+                    || docDeptId == null
+                    || !ownDeptId.equals(
+                    docDeptId)) {
+                throw new
+                        ResourceNotFoundException(
+                        "ឯកសារ",
+                        document
+                                .getDocumentId());
+            }
+            return;
+        }
+
+        Integer currentUserId =
+                securityUtils
+                        .getCurrentUserId();
+
+        if (document.getUser() == null
+                || !document.getUser()
+                .getUserId()
+                .equals(
+                        currentUserId)) {
+            throw new
+                    ResourceNotFoundException(
+                    "ឯកសារ",
+                    document
+                            .getDocumentId());
+        }
+    }
+
+
+    private Integer resolveDocumentDeptId(
+            Document document) {
+
+        User u = document.getUser();
+        if (u == null) return null;
+
+        if (u.getOfficer() != null
+                && u.getOfficer()
+                .getDepartment()
+                != null) {
+            return u.getOfficer()
+                    .getDepartment()
+                    .getDepartmentId();
+        }
+
+        if (u.getContractOfficer() != null
+                && u.getContractOfficer()
+                .getDepartment()
+                != null) {
+            return u.getContractOfficer()
+                    .getDepartment()
+                    .getDepartmentId();
+        }
+
+        return null;
+    }
+
+    private void validateIsDraft(
+            Document document) {
+
+        String code =
+                document.getStatusCode()
+                        != null
+                        ? document.getStatusCode()
+                        .getStatusCode()
+                        : "";
+
+        if (!DocumentStatusCode
+                .isDraft(code)) {
+            throw new BusinessException(
+                    "មិនអាចកែប្រែ ឬលុបបានឡើយ ព្រោះឯកសារនេះមិនស្ថិតក្នុងស្ថានភាព «រក្សាទុកបណ្តោះអាសន្ន/ឯកសារព្រាង» ឡើយ "
+                            + "(ស្ថានភាពបច្ចុប្បន្ន: " + code + ")");
+        }
+    }
+
+    private ActivityLogContext
+    buildContext() {
         try {
             var req =
                     ((ServletRequestAttributes)
@@ -433,8 +515,71 @@ public class DocumentServiceImpl
             return securityUtils
                     .buildLogContext(req);
         } catch (Exception e) {
-            return ActivityLogContext.builder()
-                    .build();
+            return ActivityLogContext
+                    .builder().build();
+        }
+    }
+
+    @Override
+    public DocumentResponse submitForApproval(
+            Integer documentId) {
+
+        Document document =
+                findById(documentId);
+
+        validateStrictOwnership(document);
+        validateIsDraft(document);
+
+        document.setStatusCode(
+                findStatus(
+                        DocumentStatusCode
+                                .PENDING.getCode()));
+
+        Document saved =
+                documentRepo.save(document);
+        approvalService
+                .autoCreateApproval(saved);
+
+        activityLogService.log(
+                "UPDATE", "Document",
+                documentId,
+                "ស្នើអនុម័ត: "
+                        + document.getDocumentName(),
+                buildContext());
+
+        return documentMapper.toResponse(
+                saved);
+    }
+    private void validateStrictOwnership(
+            Document document) {
+
+        if (securityUtils
+                .canBypassDepartmentScope()) {
+            return;
+        }
+
+        Integer currentUserId =
+                securityUtils
+                        .getCurrentUserId();
+
+        if (document.getUser() == null
+                || !document.getUser()
+                .getUserId()
+                .equals(
+                        currentUserId)) {
+
+            throw new
+                    PermissionDeniedException(
+                    "កែប្រែ/លុបឯកសារនេះ",
+                    "ម្ចាស់ឯកសារ"
+                            + " (Document Owner)"
+                            + " ប៉ុណ្ណោះ — ឯកសារនេះ"
+                            + " ជារបស់ User ផ្សេង"
+                            + " — ប្រសិនបើអ្នកជា"
+                            + " Admin សូមប្រើ"
+                            + " Account ដែលមាន"
+                            + " Role ADMIN/"
+                            + "SUPER_ADMIN");
         }
     }
 }

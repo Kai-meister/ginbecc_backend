@@ -8,16 +8,14 @@ import java.time.LocalDateTime;
 public interface ActivityLogService {
 
 
-    // ប្រើពី Service (Controller inject context)
-    void log(String action,
+     void log(String action,
              String entityType,
              Integer entityId,
              String details,
              ActivityLogContext context);
 
 
-    // ប្រើពី Service ដែល SecurityContext OK
-    void log(String action,
+     void log(String action,
              String entityType,
              Integer entityId,
              String details);

@@ -3,32 +3,31 @@ package gov.kh.mcr.inspectorate.dto.request;
 import gov.kh.mcr.inspectorate.enums.Priority;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class AnnouncementRequest {
 
-    private Integer meetingId;
-
-    @NotBlank(message = "ចំណងជើងចាំបាច់")
-    @Size(max = 255)
+    @NotBlank(message = "ចំណងជើងមិនអាចទទេបានឡើយ")
+    @Size(max = 255, message = "ចំណងជើងមិនអាចលើសពី ២៥៥ តួអក្សរ")
     private String title;
 
-    @NotBlank(message = "ខ្លឹមសារចាំបាច់")
+    @NotBlank(message = "ខ្លឹមសារនៃសេចក្តីជូនដំណឹងមិនអាចទទេបានឡើយ")
     private String content;
 
-    private LocalDateTime publishAt;
-
-    @NotBlank(message = "ស្ថានភាពចាំបាច់")
-    private String statusCode;
-
-    @NotNull(message = "អាទិភាពចាំបាច់")
+    @NotNull(message = "កម្រិតអាទិភាពចាំបាច់ត្រូវតែមាន")
     private Priority priority;
 
-    @Size(max = 500,
-            message = "អ្នកទទួលអតិបរមា 500 នាក់")
-    private List<Integer> recipientOfficerIds;
+    @NotBlank(message = "ស្ថានភាពនៃសេចក្តីជូនដំណឹងចាំបាច់ត្រូវតែមាន")
+    private String statusCode;
+
+    @FutureOrPresent(message = "កាលបរិច្ឆេទផ្សព្វផ្សាយមិនអាចជាថ្ងៃអតីតកាលបានទេ")
+    private LocalDateTime publishAt;
+
+    @Future(message = "កាលបរិច្ឆេទផុតកំណត់ត្រូវតែជាថ្ងៃអនាគត")
+    private LocalDate expireAt;
 }

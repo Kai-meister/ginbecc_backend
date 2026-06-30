@@ -63,8 +63,7 @@ public class AttachmentServiceImpl
         archiveExisting(refId, refType);
 
         // ៣. Upload to MinIO
-        // toPathPrefix(): MEETING_ROOM → "meeting-room"
-        String filePath = minioService.uploadFile(
+         String filePath = minioService.uploadFile(
                 file,
                 refType.toPathPrefix(),
                 refId);
@@ -73,7 +72,7 @@ public class AttachmentServiceImpl
         Attachment attachment = Attachment.builder()
                 .filePath(filePath)
                 .referenceId(refId)
-                .referenceType(refType)  // Fix — Enum
+                .referenceType(refType)
                 .originalName(
                         file.getOriginalFilename())
                 .fileSize(file.getSize())
@@ -224,7 +223,7 @@ public class AttachmentServiceImpl
         return attachmentMapper.formatFileSize(bytes);
     }
 
-    // ── Private Helpers ───────────────────────────
+
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new BusinessException(

@@ -40,21 +40,18 @@ public class ContractOfficerServiceImpl
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<ContractOfficerResponse>
-    getAll(
+    public PageResponse<ContractOfficerResponse> getAll(
             int page, int size,
             String status,
             Integer deptId,
             Integer expiringWithinDays) {
 
-        Integer resolvedId =
-                resolveContractOfficerId();
+        Integer resolvedId = resolveContractOfficerId();
+        Integer resolvedDeptId = resolveDepartmentScope(deptId); // Fix
 
         if (expiringWithinDays != null) {
-            LocalDate expiry =
-                    LocalDate.now()
-                            .plusDays(expiringWithinDays);
-
+            LocalDate expiry = LocalDate.now()
+                    .plusDays(expiringWithinDays);
             List<ContractOfficer> list;
 
             if (resolvedId != null) {
@@ -62,10 +59,8 @@ public class ContractOfficerServiceImpl
                         .findByContractOfficerIdAndExpiring(
                                 resolvedId, expiry);
             } else {
-                list = contractRepo
-                        .findExpiring(expiry);
+                list = contractRepo.findExpiring(expiry);
             }
-
             return toPage(list);
         }
 
@@ -76,40 +71,34 @@ public class ContractOfficerServiceImpl
         Page<ContractOfficer> result;
 
         if (resolvedId != null) {
-            result = contractRepo
-                    .findById(resolvedId)
+            result = contractRepo.findById(resolvedId)
                     .map(c -> {
-                        List<ContractOfficer> l =
-                                List.of(c);
+                        List<ContractOfficer> l = List.of(c);
                         return (Page<ContractOfficer>)
-                                new PageImpl<>(l, pageable,
-                                        l.size());
+                                new PageImpl<>(l, pageable, l.size());
                     })
                     .orElse(Page.empty(pageable));
 
-        } else if (status != null
-                && deptId != null) {
+        } else if (status != null && resolvedDeptId != null) { // Fix
             result = contractRepo
                     .findByDepartment_DepartmentIdAndStatusCode_StatusCode(
-                            deptId, status, pageable);
+                            resolvedDeptId, status, pageable); // Fix
+
         } else if (status != null) {
             result = contractRepo
-                    .findByStatusCode_StatusCode(
-                            status, pageable);
-        } else if (deptId != null) {
+                    .findByStatusCode_StatusCode(status, pageable);
+
+        } else if (resolvedDeptId != null) {
             result = contractRepo
                     .findByDepartment_DepartmentId(
-                            deptId, pageable);
+                            resolvedDeptId, pageable);
         } else {
-            result = contractRepo
-                    .findAll(pageable);
+            result = contractRepo.findAll(pageable);
         }
 
         return PageResponse.of(
-                result.map(
-                        contractMapper::toResponse));
+                result.map(contractMapper::toResponse));
     }
-
     @Override
     @Transactional(readOnly = true)
     public ContractOfficerResponse getById(
@@ -119,6 +108,13 @@ public class ContractOfficerServiceImpl
 
         validateViewPermission(contract);
 
+
+        securityUtils.validateDepartmentScope(
+                contract.getDepartment() != null
+                        ? contract.getDepartment()
+                        .getDepartmentId()
+                        : null);
+
         return contractMapper.toResponse(contract);
     }
 
@@ -126,13 +122,15 @@ public class ContractOfficerServiceImpl
     public ContractOfficerResponse create(
             ContractOfficerRequest request) {
 
-
-        if (securityUtils
-                .isContractOfficer()) {
+        if (securityUtils.isContractOfficer()) {
             throw new BusinessException(
-                    "មន្ត្រីកិច្ចសន្យា"
-                            + " មិនមានសិទ្ធិបង្កើតទិន្នន័យថ្មីក្នុងប្រព័ន្ធឡើយ");
+                    "Contract Officer"
+                            + " មិនអាចបង្កើត Record ថ្មី");
         }
+
+
+        securityUtils.validateDepartmentScope(
+                request.getDepartmentId());
 
         if (contractRepo
                 .existsByContractOfficerCode(
@@ -143,7 +141,7 @@ public class ContractOfficerServiceImpl
                             + request.getContractOfficerCode()
                             + "] មានស្ទួន");
         }
-        validateDates(request);
+
         ContractOfficer contract =
                 contractMapper.toEntity(request);
         contract.setDepartment(
@@ -158,12 +156,12 @@ public class ContractOfficerServiceImpl
         activityLogService.log(
                 "CREATE", "ContractOfficer",
                 saved.getContractOfficerId(),
-                "បង្កើត: "
-                        + saved.getFullNameKh(),
+                "បង្កើត: " + saved.getFullNameKh(),
                 buildContext());
 
         return contractMapper.toResponse(saved);
     }
+
 
     @Override
     public ContractOfficerResponse update(
@@ -175,25 +173,36 @@ public class ContractOfficerServiceImpl
                     "មន្ត្រីកិច្ចសន្យា"
                             + " មិនមានសិទ្ធិក្នុងការកែប្រែទិន្នន័យឡើយ");
         }
+
+
         ContractOfficer contract = findById(id);
+
+        securityUtils.validateDepartmentScope(
+                contract.getDepartment() != null
+                        ? contract.getDepartment()
+                        .getDepartmentId()
+                        : null);
+
+        securityUtils.validateDepartmentScope(
+                request.getDepartmentId());
+
         if (!contract
                 .getContractOfficerCode()
-                .equals(request
-                        .getContractOfficerCode())
+                .equals(request.getContractOfficerCode())
                 && contractRepo
                 .existsByContractOfficerCode(
-                        request
-                                .getContractOfficerCode())) {
+                        request.getContractOfficerCode())) {
             throw new DuplicateResourceException(
                     "លេខកូដ ["
                             + request.getContractOfficerCode()
                             + "] មានស្ទួន");
         }
+
         validateDates(request);
+
         if (!contract.getDepartment()
                 .getDepartmentId()
-                .equals(request
-                        .getDepartmentId())) {
+                .equals(request.getDepartmentId())) {
             contract.setDepartment(
                     findActiveDept(
                             request.getDepartmentId()));
@@ -202,14 +211,12 @@ public class ContractOfficerServiceImpl
         contract.setStatusCode(
                 findStatus(request.getStatusCode()));
 
-        contractMapper.updateEntity(
-                request, contract);
+        contractMapper.updateEntity(request, contract);
 
         activityLogService.log(
                 "UPDATE", "ContractOfficer",
                 id,
-                "កែប្រែ: "
-                        + contract.getFullNameKh(),
+                "កែប្រែ: " + contract.getFullNameKh(),
                 buildContext());
 
         return contractMapper.toResponse(
@@ -267,22 +274,43 @@ public class ContractOfficerServiceImpl
     @Override
     public void delete(Integer id) {
 
-        // Contract Officer cannot delete
         if (securityUtils.isContractOfficer()) {
             throw new BusinessException(
-                    "មន្ត្រីកិច្ចសន្យា"
-                            + " មិនមានសិទ្ធិក្នុងការលុបទិន្នន័យចេញពីប្រព័ន្ធឡើយ");
+                    "មន្ត្រីជាប់កិច្ចសន្យា មិនមានសិទ្ធិក្នុងការលុបព័ត៌មាន ឬទិន្នន័យនេះឡើយ");
         }
 
         ContractOfficer contract = findById(id);
+
+        securityUtils.validateDepartmentScope(
+                contract.getDepartment() != null
+                        ? contract.getDepartment()
+                        .getDepartmentId()
+                        : null);
+
         contractRepo.deleteById(id);
 
         activityLogService.log(
-                "DELETE", "ContractOfficer",
-                id,
-                "លុបទិន្នន័យមន្ត្រីកិច្ចសន្យា "
-                        + contract.getFullNameKh(),
+                "DELETE", "ContractOfficer", id,
+                "លុប: " + contract.getFullNameKh(),
                 buildContext());
+    }
+
+    private Integer resolveDepartmentScope(
+            Integer requestedDeptId) {
+
+        if (securityUtils
+                .canBypassDepartmentScope()) {
+            return requestedDeptId;
+        }
+
+        Integer ownDeptId =
+                securityUtils.getCurrentDepartmentId();
+
+        if (ownDeptId == null) {
+            return requestedDeptId;
+        }
+
+        return ownDeptId;
     }
 
     private Integer resolveContractOfficerId() {

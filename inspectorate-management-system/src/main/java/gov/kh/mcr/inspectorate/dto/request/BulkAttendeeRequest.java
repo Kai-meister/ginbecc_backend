@@ -6,15 +6,15 @@ import lombok.*;
 import java.util.List;
 
 @Data
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class BulkAttendeeRequest {
 
-    @NotEmpty(message = "សូមជ្រើសរើសបញ្ជីឈ្មោះមន្ត្រីយ៉ាងហោចណាស់ម្នាក់")
-    private List<Integer> officerIds;
+    @NotEmpty(message = "បញ្ជីឈ្មោះមន្ត្រីមិនអាចទុកជាទទេបានឡើយ")
+    private List<Integer> userIds;
 
-    @NotNull(message = "សូមបញ្ជាក់តួនាទីរបស់មន្ត្រីចូលរួម")
+    @NotNull(message = "តួនាទីរបស់អ្នកចូលរួមចាំបាច់ត្រូវតែជ្រើសរើស")
     @Builder.Default
-    private AttendeeRole role =
-            AttendeeRole.ATTENDEE;
+    private AttendeeRole role = AttendeeRole.ATTENDEE;
 }

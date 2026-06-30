@@ -9,10 +9,13 @@ import java.time.LocalDateTime;
 public class AuditLogReportResponse {
 
     private Integer       no;
-    private String        userNameKh;
-    private String        userEmail;
+    @Builder.Default
+    private String        userNameKh   = "SYSTEM";
+    @Builder.Default
+    private String        userEmail    = "system";
     private String        action;
-    private String        actionLabel;
+    @Builder.Default
+    private String        actionLabel  = "";
     private String        entityType;
     private Integer       entityId;
     private String        details;

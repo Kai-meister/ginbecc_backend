@@ -5,12 +5,14 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 @Data
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class AttendanceUpdateRequest {
 
-    @NotNull(message = "ស្ថានភាពចាំបាច់")
+    @NotNull(message = "ស្ថានភាពវត្តមានចាំបាច់ត្រូវតែជ្រើសរើស")
     private AttendanceStatus attendanceStatus;
 
+    @Size(max = 500, message = "កំណត់ចំណាំមិនអាចលើសពី ៥០០ តួអក្សរបានឡើយ")
     private String note;
 }

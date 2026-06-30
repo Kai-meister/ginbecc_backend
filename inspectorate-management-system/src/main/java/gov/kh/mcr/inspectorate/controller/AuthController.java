@@ -71,12 +71,12 @@ public class AuthController {
 
         if (!StringUtils.hasText(token)) {
             throw new BusinessException(
-                    "Refresh Token ត្រូវបានទាមទារ");
+                    "សូមផ្តល់ជូន Refresh Token សម្រាប់ដំណើរការនេះរ");
         }
 
         return ResponseEntity.ok(ApiResponse.success(
                 authService.refreshToken(token),
-                "បានបង្កើត Token ថ្មីដោយជោគជ័យ"));
+                "បង្កើត Token ថ្មីដោយជោគជ័យ"));
     }
 
     @PostMapping("/change-password")

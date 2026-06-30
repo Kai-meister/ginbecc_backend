@@ -29,7 +29,7 @@ public class PermissionController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         permissionService.getAll(),
-                        "ទទួលបានបញ្ជីសិទ្ធិ"));
+                        "ទាញយកបញ្ជីសិទ្ធិទាំងអស់បានដោយជោគជ័យ"));
     }
 
     // GET /permissions/{id}
@@ -43,7 +43,7 @@ public class PermissionController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         permissionService.getById(id),
-                        "ទទួលបានព័ត៌មានសិទ្ធិ"));
+                        "ទាញយកព័ត៌មានសិទ្ធិបានដោយជោគជ័យិ"));
     }
 
     // GET /permissions/module/{module}
@@ -59,6 +59,6 @@ public class PermissionController {
                         permissionService
                                 .getByModule(
                                         module.toUpperCase()),
-                        "ទទួលបានបញ្ជីសិទ្ធិតាមម៉ូឌុល"));
+                        "ទាញយកបញ្ជីសិទ្ធិសម្រាប់ម៉ូឌុលនេះបានដោយជោគជ័យ"));
     }
 }

@@ -37,9 +37,9 @@ public class ContractOfficer {
     private Department department;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "status_code",
-            referencedColumnName = "status_code")
+    @JoinColumn(name = "status_code",
+            referencedColumnName = "status_code",
+            nullable = false)
     private LookupOfficerStatus statusCode;
 
     @Column(name = "contract_officer_code",
@@ -79,19 +79,13 @@ public class ContractOfficer {
             nullable = false)
     private LocalDate endDate;
 
-    // Fix — កំណត់ចំណាំ
-    @Column(name = "note",
-            columnDefinition = "TEXT")
+    @Column(name = "note",columnDefinition = "TEXT")
     private String note;
-
-    // Fix — លេខកូដគណនេយ្យ
-    @Column(name = "accounting_code",
-            length = 50)
+    @Column(name = "accounting_code", length = 50)
     private String accountingCode;
 
     @CreationTimestamp
-    @Column(name = "created_at",
-            updatable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp

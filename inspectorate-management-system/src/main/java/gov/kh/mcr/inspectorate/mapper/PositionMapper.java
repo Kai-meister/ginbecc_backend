@@ -26,6 +26,7 @@ public interface PositionMapper {
             source = "department.departmentId")
     @Mapping(target = "departmentName",
             source = "department.departmentName")
+
     PositionResponse toResponse(Position entity);
 
     @BeanMapping(

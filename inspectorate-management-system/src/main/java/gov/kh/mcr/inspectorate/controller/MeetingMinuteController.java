@@ -52,7 +52,7 @@ public class MeetingMinuteController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         meetingMinuteService.create(request),
-                        "ការបង្កើតបានជោគជ័យ"));
+                        "កំណត់ហេតុកិច្ចប្រជុំត្រូវបានបង្កើតដោយជោគជ័យ"));
     }
 
     // PUT /meeting-minutes/{id}
@@ -63,7 +63,7 @@ public class MeetingMinuteController {
             @Valid @RequestBody MeetingMinuteRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
                 meetingMinuteService.update(id, request),
-                "ការកែប្រែបានជោគជ័យ"));
+                "ព័ត៌មានកំណត់ហេតុកិច្ចប្រជុំត្រូវបានកែប្រែដោយជោគជ័យ"));
     }
 
     @PostMapping(
@@ -81,7 +81,7 @@ public class MeetingMinuteController {
                 .body(ApiResponse.success(
                         meetingMinuteService
                                 .uploadAttachment(id, file),
-                        "ការផ្ទុកឯកសារ PDF បានជោគជ័យ"));
+                        "ឯកសារភ្ជាប់ត្រូវបានផ្ទុកឡើងដោយជោគជ័យ"));
     }
 
     // GET /meeting-minutes/{id}/download
@@ -95,6 +95,6 @@ public class MeetingMinuteController {
                 ApiResponse.success(
                         meetingMinuteService
                                 .getDownloadUrl(id),
-                        "ទទួលបានតំណទាញយកឯកសារ PDF"));
+                        "តំណភ្ជាប់សម្រាប់ទាញយកឯកសារត្រូវបានផ្តល់ជូនដោយជោគជ័យ"));
     }
 }

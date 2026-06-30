@@ -21,14 +21,16 @@ public interface MeetingMinuteRepository
 
     // MeetingMinuteRepository
     @Query("""
-    SELECT m FROM MeetingMinute m
-    LEFT JOIN FETCH m.meeting    mt
-    LEFT JOIN FETCH m.recordedBy u
-    WHERE MONTH(mt.meetingDate) = :month
-    AND   YEAR(mt.meetingDate)  = :year
-    ORDER BY mt.meetingDate ASC
-    """)
+SELECT m FROM MeetingMinute m
+LEFT JOIN FETCH m.meeting    mt
+LEFT JOIN FETCH m.recordedBy u
+WHERE MONTH(mt.meetingDate) = :month
+AND   YEAR(mt.meetingDate)  = :year
+AND   (:meetingId IS NULL OR mt.meetingId = :meetingId)
+ORDER BY mt.meetingDate ASC
+""")
     List<MeetingMinute> findForReport(
             @Param("month") int month,
-            @Param("year")  int year);
+            @Param("year")  int year,
+            @Param("meetingId") Long meetingId);
 }

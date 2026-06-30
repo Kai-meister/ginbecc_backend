@@ -22,6 +22,10 @@ public interface MeetingRepository
     Page<Meeting> findByRoom_RoomId(
             Integer roomId, Pageable pageable);
 
+    Page<Meeting>
+    findByOrganizer_Officer_Department_DepartmentId(
+            Integer departmentId,
+            Pageable pageable);
     @Query("""
         SELECT m FROM Meeting m
         LEFT JOIN FETCH m.room        r

@@ -6,14 +6,13 @@ import lombok.*;
 @NoArgsConstructor @AllArgsConstructor
 @Builder
 public class DecideRequest {
-
     @NotBlank(message = "សូមជ្រើសរើសស្ថានភាពនៃការសម្រេចចិត្ត")
     @Pattern(
             regexp = "^(APPROVED|REJECTED)$",
-            message = "ស្ថានភាពនៃការសម្រេចចិត្តត្រូវតែជា 'អនុម័ត' ឬ 'បដិសេធ'")
+            message = "ស្ថានភាពនៃការសម្រេចចិត្តត្រូវតែជា 'APPROVED' (អនុម័ត) ឬ 'REJECTED' (បដិសេធ)")
     private String statusCode;
 
-    // Required when REJECTED
+    @Size(max = 500, message = "មតិយោបល់មិនអាចលើសពី ៥០០ តួអក្សរឡើយ")
     private String comment;
 
     // Custom validation

@@ -43,9 +43,9 @@ public class Meeting {
     private User organizer;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "status_code",
-            referencedColumnName = "status_code")
+    @JoinColumn(name = "status_code",
+            referencedColumnName = "status_code",
+            nullable = false)
     private LookupMeetingStatus statusCode;
 
     @Column(name = "title",

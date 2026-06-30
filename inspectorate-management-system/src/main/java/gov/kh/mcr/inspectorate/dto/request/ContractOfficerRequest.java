@@ -6,11 +6,13 @@ import lombok.*;
 import java.time.LocalDate;
 
 @Data
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class ContractOfficerRequest {
-    @NotNull(message = "សូមជ្រើសរើសនាយកដ្ឋាន")
-    @Positive
+
+    @NotNull(message = "សូមជ្រើសរើសនាយកដ្ឋានសាមីខ្លួន")
+    @Positive(message = "លេខសម្គាល់នាយកដ្ឋានត្រូវតែជាលេខវិជ្ជមាន")
     private Integer departmentId;
 
     @NotBlank(message = "សូមបញ្ចូលលេខកូដមន្ត្រីកិច្ចសន្យា")
@@ -38,10 +40,10 @@ public class ContractOfficerRequest {
     @Size(max = 50, message = "កម្រិតការងារ ឬមុខតំណែងមិនអាចលើសពី ៥០ តួអក្សរឡើយ")
     private String jobLevel;
 
-    @NotNull(message = "សូមជ្រើសរើសកាលបរិច្ឆេទចាប់ផ្តើម")
+    @NotNull(message = "សូមជ្រើសរើសកាលបរិច្ឆេទចាប់ផ្តើមចុះកិច្ចសន្យា")
     private LocalDate startDate;
 
-    @NotNull(message = "សូមជ្រើសរើសកាលបរិច្ឆេទបញ្ចប់")
+    @NotNull(message = "សូមជ្រើសរើសកាលបរិច្ឆេទបញ្ចប់កិច្ចសន្យា")
     private LocalDate endDate;
 
     private String note;
@@ -49,6 +51,6 @@ public class ContractOfficerRequest {
     @Size(max = 50, message = "កូដគណនេយ្យមិនអាចលើសពី ៥០ តួអក្សរឡើយ")
     private String accountingCode;
 
-    @NotBlank(message = "សូមជ្រើសរើសស្ថានភាព")
+    @NotBlank(message = "សូមជ្រើសរើសស្ថានភាពនៃកិច្ចសន្យា")
     private String statusCode;
 }

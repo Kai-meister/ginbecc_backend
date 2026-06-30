@@ -31,6 +31,25 @@ public interface NotificationRepository
     long countByUser_UserIdAndIsRead(
             Integer userId, Boolean isRead);
 
+    Page<Notification>
+    findByUser_UserIdAndType(
+            Integer userId,
+            NotificationType type,
+            Pageable pageable);
+
+    // Fix — Filter by type + isRead
+    Page<Notification>
+    findByUser_UserIdAndTypeAndIsRead(
+            Integer userId,
+            NotificationType type,
+            Boolean isRead,
+            Pageable pageable);
+
+    // Count by type
+    long countByUser_UserIdAndType(
+            Integer userId,
+            NotificationType type);
+
     @Modifying
     @Query("""
         UPDATE Notification n
@@ -66,23 +85,24 @@ public interface NotificationRepository
             @Param("before") LocalDateTime before);
 
 
+    // ═══ NotificationRepository.java ═══
     @Query("""
-        SELECT n FROM Notification n
-        LEFT JOIN FETCH n.user u
-        WHERE (:userId IS NULL
-               OR u.userId = :userId)
-        AND   (:type IS NULL
-               OR n.type = :type)
-        AND   (:isRead IS NULL
-               OR n.isRead = :isRead)
-        AND   (:from IS NULL
-               OR CAST(n.createdAt AS date)
-                  >= :from)
-        AND   (:to IS NULL
-               OR CAST(n.createdAt AS date)
-                  <= :to)
-        ORDER BY n.createdAt DESC
-        """)
+    SELECT n FROM Notification n
+    LEFT JOIN FETCH n.user u
+    WHERE (:userId IS NULL
+           OR u.userId = :userId)
+    AND   (:type IS NULL
+           OR n.type = :type)
+    AND   (:isRead IS NULL
+           OR n.isRead = :isRead)
+    AND   (:from IS NULL
+           OR CAST(n.createdAt AS date)
+              >= :from)
+    AND   (:to IS NULL
+           OR CAST(n.createdAt AS date)
+              <= :to)
+    ORDER BY n.createdAt DESC
+    """)
     List<Notification> findForReport(
             @Param("userId") Integer userId,
             @Param("type")   String type,

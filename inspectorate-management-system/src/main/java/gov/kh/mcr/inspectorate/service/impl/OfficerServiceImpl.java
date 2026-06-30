@@ -58,17 +58,19 @@ public class OfficerServiceImpl implements OfficerService {
         if (officerRepository.existsByOfficerCode(
                 request.getOfficerCode())) {
             throw new DuplicateResourceException(
-                    "មិនអាចបង្កើតបានទេ ដោយសារលេខកូដមន្ត្រី ["
-                            + request.getOfficerCode()
-                            + "] នេះមានក្នុងប្រព័ន្ធរួចហើយ (ស្ទួន)។");
+                    "មិនអាចចុះឈ្មោះមន្ត្រីថ្មីបានឡើយ ព្រោះលេខកូដសម្គាល់មន្ត្រី «"
+                            + request.getOfficerCode() + "» នេះ មាននៅក្នុងប្រព័ន្ធរួចរាល់ហើយ។");
         }
+
+        securityUtils.validateDepartmentScope(
+                request.getDepartmentId());
 
         Officer officer =
                 officerMapper.toEntity(request);
+
         officer.setDepartment(
                 findActiveDept(
                         request.getDepartmentId()));
-
         officer.setPosition(
                 findPos(request.getPositionId()));
         officer.setStatusCode(
@@ -79,12 +81,11 @@ public class OfficerServiceImpl implements OfficerService {
         activityLogService.log(
                 "CREATE", "Officer",
                 saved.getOfficerId(),
-                "បានបង្កើតទិន្នន័យមន្ត្រីឈ្មោះ " + saved.getFullNameKh(),
+                "បង្កើត: " + saved.getFullNameKh(),
                 buildContext());
 
         return toResponseWithAge(saved);
     }
-
     @Override
     public OfficerResponse update(
             Integer id,
@@ -92,9 +93,19 @@ public class OfficerServiceImpl implements OfficerService {
 
         Officer officer = findById(id);
 
+        securityUtils.validateDepartmentScope(
+                officer.getDepartment() != null
+                        ? officer.getDepartment()
+                        .getDepartmentId()
+                        : null);
+
+        securityUtils.validateDepartmentScope(
+                request.getDepartmentId());
+
         if (!officer.getDepartment()
                 .getDepartmentId()
-                .equals(request.getDepartmentId())) {
+                .equals(request
+                        .getDepartmentId())) {
             officer.setDepartment(
                     findActiveDept(
                             request.getDepartmentId()));
@@ -105,17 +116,18 @@ public class OfficerServiceImpl implements OfficerService {
         officer.setStatusCode(
                 findStatus(request.getStatusCode()));
 
-        officerMapper.updateEntity(request, officer);
+        officerMapper.updateEntity(
+                request, officer);
 
         activityLogService.log(
-                "UPDATE", "Officer",
-                id,
-                "បានកែប្រែទិន្នន័យមន្ត្រីឈ្មោះ៖ " + officer.getFullNameKh(),
+                "UPDATE", "Officer", id,
+                "កែប្រែ: " + officer.getFullNameKh(),
                 buildContext());
 
         return toResponseWithAge(
                 officerRepository.save(officer));
     }
+
     private Department findActiveDept(Integer id) {
 
         Department dept =
@@ -137,15 +149,41 @@ public class OfficerServiceImpl implements OfficerService {
 
     @Override
     public void delete(Integer id) {
-        findById(id);
+
+        Officer officer = findById(id);
+
+        securityUtils.validateDepartmentScope(
+                officer.getDepartment() != null
+                        ? officer.getDepartment()
+                        .getDepartmentId()
+                        : null);
+
         officerRepository.deleteById(id);
 
         activityLogService.log(
-                "DELETE", "Officer",
-                id, "បានលុបទិន្នន័យមន្ត្រីលេខសម្គាល់ " + id,
+                "DELETE", "Officer", id,
+                "លុប: " + officer.getFullNameKh(),
                 buildContext());
     }
 
+    private Integer resolveDepartmentScope(
+            Integer requestedDeptId) {
+
+        if (securityUtils
+                .canBypassDepartmentScope()) {
+            return requestedDeptId;
+        }
+
+        Integer ownDeptId =
+                securityUtils
+                        .getCurrentDepartmentId();
+
+        if (ownDeptId == null) {
+            return requestedDeptId;
+        }
+
+        return ownDeptId;
+    }
     private ActivityLogContext buildContext() {
         HttpServletRequest request =
                 getCurrentRequest();
@@ -167,22 +205,28 @@ public class OfficerServiceImpl implements OfficerService {
     @Transactional(readOnly = true)
     public PageResponse<OfficerResponse> getAll(
             int page, int size,
-            Integer deptId, String status) {
+            Integer departmentId,
+            String status) {
+
+        Integer resolvedDeptId =
+                resolveDepartmentScope(departmentId);
 
         Pageable pageable = PageRequest.of(
                 page, size,
-                Sort.by("createdAt").descending());
+                Sort.by("fullNameKh").ascending());
 
         Page<Officer> result;
 
-        if (deptId != null && status != null) {
+        if (resolvedDeptId != null
+                && status != null) {
             result = officerRepository
                     .findByDepartment_DepartmentIdAndStatusCode_StatusCode(
-                            deptId, status, pageable);
-        } else if (deptId != null) {
+                            resolvedDeptId, status,
+                            pageable);
+        } else if (resolvedDeptId != null) {
             result = officerRepository
                     .findByDepartment_DepartmentId(
-                            deptId, pageable);
+                            resolvedDeptId, pageable);
         } else if (status != null) {
             result = officerRepository
                     .findByStatusCode_StatusCode(
@@ -198,9 +242,16 @@ public class OfficerServiceImpl implements OfficerService {
     @Override
     @Transactional(readOnly = true)
     public OfficerResponse getById(Integer id) {
-        return toResponseWithAge(findById(id));
-    }
 
+        Officer officer = findById(id);
+        securityUtils.validateDepartmentScope(
+                officer.getDepartment() != null
+                        ? officer.getDepartment()
+                        .getDepartmentId()
+                        : null);
+
+        return toResponseWithAge(officer);
+    }
     @Override
     public OfficerResponse updateStatus(
             Integer id, StatusRequest request) {

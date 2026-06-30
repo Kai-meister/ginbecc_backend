@@ -25,6 +25,7 @@ import org.springframework.web.context.request
 import org.springframework.web.context.request
         .ServletRequestAttributes;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -33,14 +34,92 @@ import java.time.LocalDateTime;
 public class ApprovalServiceImpl
         implements ApprovalService {
 
-    private final ApprovalRepository             approvalRepo;
-    private final DocumentRepository             documentRepo;
-    private final OfficerRepository              officerRepo;
-    private final LookupDocumentStatusRepository statusRepo;
-    private final ApprovalMapper                 approvalMapper;
-    private final SecurityUtils                  securityUtils;
-    private final NotificationService            notificationService;
-    private final ActivityLogService             activityLogService;
+    private final ApprovalRepository
+            approvalRepo;
+    private final DocumentRepository
+            documentRepo;
+    private final DepartmentManagerRepository
+            deptManagerRepo;
+    private final LookupDocumentStatusRepository
+            statusRepo;
+    private final ApprovalMapper
+            approvalMapper;
+    private final SecurityUtils
+            securityUtils;
+    private final NotificationService
+            notificationService;
+    private final ActivityLogService
+            activityLogService;
+
+    @Override
+    public void autoCreateApproval(
+            Document document) {
+
+        boolean hasPending =
+                approvalRepo
+                        .existsByDocument_DocumentIdAndStatusCode_StatusCode(
+                                document.getDocumentId(),
+                                DocumentStatusCode
+                                        .PENDING.getCode());
+
+        if (hasPending) {
+            log.warn(
+                    "Approval already PENDING"
+                            + " for doc={}",
+                    document.getDocumentId());
+            return;
+        }
+
+        LookupDocumentStatus pending =
+                findStatus(
+                        DocumentStatusCode.PENDING
+                                .getCode());
+
+        Department dept =
+                resolveDepartment(
+                        document.getUser());
+
+        Approval approval = Approval.builder()
+                .document(document)
+                 .department(dept)
+                .statusCode(pending)
+                .requestedAt(
+                        LocalDateTime.now())
+                .build();
+
+        Approval saved =
+                approvalRepo.save(approval);
+
+        activityLogService.log(
+                "CREATE", "Approval",
+                saved.getApprovalId(),
+                "ស្នើស្វ័យប្រវត្តិ: "
+                        + document.getDocumentName(),
+                buildContext());
+        notifyAllManagers(dept, document);
+    }
+
+    private Department resolveDepartment(
+            User u) {
+
+        if (u == null) return null;
+
+        if (u.getOfficer() != null
+                && u.getOfficer()
+                .getDepartment() != null) {
+            return u.getOfficer()
+                    .getDepartment();
+        }
+
+        if (u.getContractOfficer() != null
+                && u.getContractOfficer()
+                .getDepartment() != null) {
+            return u.getContractOfficer()
+                    .getDepartment();
+        }
+
+        return null;
+    }
 
     @Override
     public ApprovalResponse requestApproval(
@@ -50,24 +129,43 @@ public class ApprovalServiceImpl
                 documentRepo.findById(
                                 request.getDocumentId())
                         .orElseThrow(() ->
-                                new ResourceNotFoundException(
+                                new
+                                        ResourceNotFoundException(
                                         "ឯកសារ",
-                                        request.getDocumentId()));
+                                        request
+                                                .getDocumentId()));
 
         validateDocumentStatus(document);
+
+        User currentUser =
+                securityUtils.getCurrentUser()
+                        .orElseThrow(() ->
+                                new
+                                        UnauthorizedException(
+                                        "សូមចូលប្រើប្រាស់ប្រព័ន្ធ (Login) ជាមុនសិន ដើម្បីមានសិទ្ធិអនុវត្តមុខងារនេះ។"));
+
+        if (document.getUser() == null
+                || !document.getUser()
+                .getUserId()
+                .equals(currentUser
+                        .getUserId())) {
+            throw new BusinessException(
+                    "លោកអ្នកមិនអាចស្នើសុំការអនុម័តលើឯកសារនេះបានឡើយ ព្រោះលោកអ្នកមិនមែនជាម្ចាស់ នៃឯកសារនេះទេ។");
+        }
+
 
         checkNoDuplicatePending(
                 request.getDocumentId());
 
-        Officer currentOfficer =
-                resolveCurrentOfficer();
+        Department dept =
+                resolveDepartment(
+                        document.getUser());
 
-        validateDocumentOwner(
-                document, currentOfficer);
-
-//        validateNotSelfApproval(
-//                document, currentOfficer);
-//
+        if (dept == null) {
+            throw new BusinessException(
+                    "គណនីមន្ត្រី «" + currentUser.getUserNameKh()
+                            + "» មិនទាន់ត្រូវបានភ្ជាប់ទៅនឹងនាយកដ្ឋាន ឬអង្គភាពណាមួយនៅក្នុងប្រព័ន្ធឡើយ។");
+        }
 
         LookupDocumentStatus pending =
                 findStatus(
@@ -76,10 +174,11 @@ public class ApprovalServiceImpl
 
         Approval approval = Approval.builder()
                 .document(document)
-                .requestedBy(currentOfficer)
+                .department(dept)
                 .statusCode(pending)
                 .comment(request.getNote())
-                .requestedAt(LocalDateTime.now())
+                .requestedAt(
+                        LocalDateTime.now())
                 .build();
 
         document.setStatusCode(pending);
@@ -95,7 +194,128 @@ public class ApprovalServiceImpl
                         + document.getDocumentName(),
                 buildContext());
 
-        return approvalMapper.toResponse(saved);
+        notifyAllManagers(dept, document);
+
+        return approvalMapper.toResponse(
+                saved);
+    }
+
+    private void checkNoDuplicatePending(
+            Integer documentId) {
+
+        boolean hasPending =
+                approvalRepo
+                        .existsByDocument_DocumentIdAndStatusCode_StatusCode(
+                                documentId,
+                                DocumentStatusCode
+                                        .PENDING.getCode());
+
+        if (hasPending) {
+            throw new BusinessException(
+                    "មិនអាចបញ្ជូនឯកសារនេះបានឡើយ ព្រោះឯកសារនេះកំពុងស្ថិតក្នុង «ដំណើរការរង់ចាំការអនុម័ត» រួចរាល់ហើយ។");
+        }
+    }
+
+    private void
+    validateIsDepartmentManager(
+            Approval approval,
+            User approver) {
+
+        if (securityUtils
+                .canBypassDepartmentScope()) {
+            return;
+        }
+
+        Department dept =
+                approval.getDepartment();
+        if (dept == null) {
+            throw new
+                    PermissionDeniedException(
+                    "ពិនិត្យ និងសម្រេចលើការស្នើសុំនេះ",
+                    "មិនអាចដំណើរការបានឡើយ ព្រោះទិន្នន័យនាយកដ្ឋាន ឬអង្គភាពមិនទាន់ត្រូវបានកំណត់។ "
+                            + "សូមទាក់ទងទៅកាន់អ្នកគ្រប់គ្រងប្រព័ន្ធ (SUPER_ADMIN/ADMIN) ដើម្បីពិនិត្យមើលគណនីរបស់ម្ចាស់ឯកសារឡើងវិញ។");
+        }
+
+        boolean isManager =
+                deptManagerRepo
+                        .existsByDepartment_DepartmentIdAndUser_UserId(
+                                dept.getDepartmentId(),
+                                approver.getUserId());
+
+        if (!isManager) {
+            throw new
+                    DepartmentScopeException(
+                    resolveCurrentUserDeptName(
+                            approver),
+                    dept.getDepartmentName());
+        }
+    }
+    private String
+    resolveCurrentUserDeptName(
+            User u) {
+
+        if (u.getOfficer() != null
+                && u.getOfficer()
+                .getDepartment() != null) {
+            return u.getOfficer()
+                    .getDepartment()
+                    .getDepartmentName();
+        }
+
+        if (u.getContractOfficer() != null
+                && u.getContractOfficer()
+                .getDepartment()
+                != null) {
+            return u.getContractOfficer()
+                    .getDepartment()
+                    .getDepartmentName();
+        }
+
+        return "គ្មាន Department";
+    }
+    private void notifyAllManagers(
+            Department dept,
+            Document document) {
+
+        if (dept == null) {
+            log.warn(
+                    "No department resolved"
+                            + " for doc={} — cannot"
+                            + " notify managers",
+                    document.getDocumentId());
+            return;
+        }
+
+        List<DepartmentManager> managers =
+                deptManagerRepo
+                        .findByDepartment_DepartmentId(
+                                dept.getDepartmentId());
+
+        if (managers.isEmpty()) {
+            log.warn(
+                    "Department {} has no"
+                            + " Manager assigned",
+                    dept.getDepartmentName());
+            return;
+        }
+
+        for (DepartmentManager dm :
+                managers) {
+            notificationService
+                    .createByUserId(
+                            dm.getUser()
+                                    .getUserId(),
+                            "មានសំណើអនុម័តថ្មី",
+                            "ឯកសារ \""
+                                    + document
+                                    .getDocumentName()
+                                    + "\" ត្រូវការ"
+                                    + " ការអនុម័តរបស់អ្នក",
+                            NotificationType
+                                    .DOCUMENT,
+                            document
+                                    .getDocumentId());
+        }
     }
 
     @Override
@@ -106,36 +326,43 @@ public class ApprovalServiceImpl
         request.validate();
 
         Approval approval =
-                approvalRepo.findById(approvalId)
+                approvalRepo.findById(
+                                approvalId)
                         .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Approval", approvalId));
+                                new
+                                        ResourceNotFoundException(
+                                        "ការស្នើសុំអនុម័ត",
+                                        approvalId));
 
-        // ១. Must be PENDING
         validateApprovalPending(approval);
 
-        // Fix ២. Check approver permission
-        // by Department
         User approver =
                 securityUtils.getCurrentUser()
                         .orElseThrow(() ->
-                                new UnauthorizedException(
-                                        "សូមចូលប្រើប្រាស់ប្រព័ន្ធជាមុនសិន"));
+                                new
+                                        UnauthorizedException(
+                                        "សូមចូលប្រើប្រាស់ប្រព័ន្ធ (Login) ជាមុនសិន ដើម្បីមានសិទ្ធិអនុវត្តមុខងារនេះ។"));
 
-        validateApproverDepartment(
+        validateIsDepartmentManager(
+                approval, approver);
+
+        validateNotSelfApproval(
                 approval, approver);
 
         LookupDocumentStatus newStatus =
-                findStatus(request.getStatusCode());
+                findStatus(
+                        request.getStatusCode());
 
         approval.setStatusCode(newStatus);
         approval.setApprovedBy(approver);
-        approval.setComment(request.getComment());
-        approval.setDecidedAt(LocalDateTime.now());
+        approval.setComment(
+                request.getComment());
+        approval.setDecidedAt(
+                LocalDateTime.now());
 
-        Document doc = approval.getDocument();
+        Document doc =
+                approval.getDocument();
         doc.setStatusCode(newStatus);
-        documentRepo.save(doc);
 
         Approval saved =
                 approvalRepo.save(approval);
@@ -148,23 +375,30 @@ public class ApprovalServiceImpl
                 "UPDATE", "Approval",
                 approvalId,
                 request.getStatusCode()
-                        + ": " + doc.getDocumentName(),
+                        + ": "
+                        + doc.getDocumentName(),
                 buildContext());
 
-        return approvalMapper.toResponse(saved);
+        return approvalMapper.toResponse(
+                saved);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<ApprovalResponse> getAll(
-            int page, int size,
-            String status,
-            Integer officerId,
-            Integer documentId) {
+    public PageResponse<ApprovalResponse>
+    getAll(int page, int size,
+           String status,
+           Integer officerId,
+           Integer documentId) {
 
         Pageable pageable = PageRequest.of(
                 page, size,
-                Sort.by("requestedAt").descending());
+                Sort.by("requestedAt")
+                        .descending());
+
+         boolean canSeeAll =
+                securityUtils
+                        .canBypassDepartmentScope();
 
         Page<Approval> result;
 
@@ -172,231 +406,367 @@ public class ApprovalServiceImpl
             result = approvalRepo
                     .findByDocument_DocumentId(
                             documentId, pageable);
-        } else if (status != null
-                && officerId != null) {
-            result = approvalRepo
-                    .findByStatusCode_StatusCodeAndRequestedBy_OfficerId(
-                            status, officerId, pageable);
-        } else if (status != null) {
-            result = approvalRepo
+        } else if (canSeeAll) {
+            result = status != null
+                    ? approvalRepo
                     .findByStatusCode_StatusCode(
-                            status, pageable);
-        } else if (officerId != null) {
-            result = approvalRepo
-                    .findByRequestedBy_OfficerId(
-                            officerId, pageable);
-        } else {
-            result = approvalRepo
+                            status, pageable)
+                    : approvalRepo
                     .findAll(pageable);
+        } else {
+            Integer currentUserId =
+                    securityUtils
+                            .getCurrentUserId();
+
+            result = status != null
+                    ? approvalRepo
+                    .findByStatusCodeAndVisibleToUser(
+                            status,
+                            currentUserId,
+                            pageable)
+                    : approvalRepo
+                    .findVisibleToUser(
+                            currentUserId,
+                            pageable);
         }
 
         return PageResponse.of(
-                result.map(approvalMapper::toResponse));
+                result.map(
+                        approvalMapper::toResponse));
     }
+
 
     @Override
     @Transactional(readOnly = true)
-    public ApprovalResponse getById(Integer id) {
-        return approvalMapper.toResponse(
-                approvalRepo.findById(id)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Approval", id)));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public PageResponse<ApprovalResponse> getMyPending(int page, int size) {
+    public PageResponse<ApprovalResponse>
+    getMyPending(int page, int size) {
 
         Pageable pageable = PageRequest.of(
                 page, size,
-                Sort.by("requestedAt").ascending());
+                Sort.by("requestedAt")
+                        .ascending());
+
+        if (securityUtils
+                .canBypassDepartmentScope()) {
+            return PageResponse.of(
+                    approvalRepo
+                            .findByStatusCode_StatusCode(
+                                    DocumentStatusCode
+                                            .PENDING.getCode(),
+                                    pageable)
+                            .map(
+                                    approvalMapper
+                                            ::toResponse));
+        }
+
+        Integer currentUserId =
+                securityUtils
+                        .getCurrentUserId();
+
+        List<Integer> managedDeptIds =
+                deptManagerRepo
+                        .findByUser_UserId(
+                                currentUserId)
+                        .stream()
+                        .map(dm ->
+                                dm.getDepartment()
+                                        .getDepartmentId())
+                        .toList();
+
+        if (managedDeptIds.isEmpty()) {
+            return PageResponse
+                    .<ApprovalResponse>builder()
+                    .content(List.of())
+                    .pageNumber(page)
+                    .pageSize(size)
+                    .totalElements(0)
+                    .totalPages(0)
+                    .first(true)
+                    .last(true)
+                    .build();
+        }
 
         return PageResponse.of(
                 approvalRepo
-                        .findByStatusCode_StatusCode(
+                        .findByStatusCode_StatusCodeAndDepartment_DepartmentIdIn(
                                 DocumentStatusCode
                                         .PENDING.getCode(),
+                                managedDeptIds,
                                 pageable)
-                        .map(approvalMapper::toResponse));
+                        .map(
+                                approvalMapper
+                                        ::toResponse));
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ApprovalResponse getById(
+            Integer id) {
+
+        Approval approval =
+                approvalRepo.findById(id)
+                        .orElseThrow(() ->
+                                new
+                                        ResourceNotFoundException(
+                                        "ការស្នើសុំអនុម័ត", id));
+
+        if (!securityUtils
+                .canBypassDepartmentScope()) {
+
+            Integer currentUserId =
+                    securityUtils
+                            .getCurrentUserId();
+
+            boolean isRequester =
+                    approval.getDocument()
+                            .getUser() != null
+                            && approval.getDocument()
+                            .getUser()
+                            .getUserId()
+                            .equals(currentUserId);
+
+            boolean isDeptManager =
+                    approval.getDepartment()
+                            != null
+                            && deptManagerRepo
+                            .existsByDepartment_DepartmentIdAndUser_UserId(
+                                    approval
+                                            .getDepartment()
+                                            .getDepartmentId(),
+                                    currentUserId);
+
+            boolean isApprover =
+                    approval.getApprovedBy()
+                            != null
+                            && approval.getApprovedBy()
+                            .getUserId()
+                            .equals(currentUserId);
+
+            if (!isRequester
+                    && !isDeptManager
+                    && !isApprover) {
+                throw new
+                        ResourceNotFoundException(
+                        "ការស្នើសុំអនុម័ត", id);
+            }
+        }
+
+        return approvalMapper.toResponse(
+                approval);
+    }
+
+//    @Override
+//    @Transactional(readOnly = true)
+//    public PageResponse<ApprovalResponse>
+//    getMyPending(int page, int size) {
+//
+//        Pageable pageable = PageRequest.of(
+//                page, size,
+//                Sort.by("requestedAt")
+//                        .ascending());
+//
+//        Integer currentUserId =
+//                securityUtils
+//                        .getCurrentUserId();
+//
+//        // Fix — Get all Departments this
+//        // user manages
+//        List<Integer> managedDeptIds =
+//                deptManagerRepo
+//                        .findByUser_UserId(
+//                                currentUserId)
+//                        .stream()
+//                        .map(dm ->
+//                                dm.getDepartment()
+//                                        .getDepartmentId())
+//                        .toList();
+//
+//        // Fix — LOG for debugging
+//        log.info(
+//                "getMyPending: user={}"
+//                        + " managedDeptIds={}",
+//                currentUserId, managedDeptIds);
+//
+//        // Fix — Empty handling — REMOVED
+//        // broken Page.empty().map(null)
+//        // pattern, use PageResponse
+//        // builder directly for empty
+//        if (managedDeptIds.isEmpty()) {
+//            log.warn(
+//                    "User {} is not assigned"
+//                            + " as Manager to ANY"
+//                            + " department — check"
+//                            + " DepartmentManager"
+//                            + " table",
+//                    currentUserId);
+//
+//            return PageResponse
+//                    .<ApprovalResponse>builder()
+//                    .content(List.of())
+//                    .pageNumber(page)
+//                    .pageSize(size)
+//                    .totalElements(0)
+//                    .totalPages(0)
+//                    .first(true)
+//                    .last(true)
+//                    .build();
+//        }
+//
+//        Page<Approval> result =
+//                approvalRepo
+//                        .findByStatusCode_StatusCodeAndDepartment_DepartmentIdIn(
+//                                DocumentStatusCode
+//                                        .PENDING.getCode(),
+//                                managedDeptIds,
+//                                pageable);
+//
+//        log.info(
+//                "getMyPending: found {}"
+//                        + " approvals for"
+//                        + " managedDeptIds={}",
+//                result.getTotalElements(),
+//                managedDeptIds);
+//
+//        return PageResponse.of(
+//                result.map(
+//                        approvalMapper::toResponse));
+//    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<ApprovalResponse>
+    getMyRequests(
+            int page, int size,
+            String status) {
+
+        Pageable pageable = PageRequest.of(
+                page, size,
+                Sort.by("requestedAt")
+                        .descending());
+
+        Integer currentUserId =
+                securityUtils
+                        .getCurrentUserId();
+
+        Page<Approval> result =
+                status != null
+                        ? approvalRepo
+                        .findByStatusCode_StatusCodeAndDocument_User_UserId(
+                                status,
+                                currentUserId,
+                                pageable)
+                        : approvalRepo
+                        .findByDocument_User_UserId(
+                                currentUserId,
+                                pageable);
+
+        return PageResponse.of(
+                result.map(
+                        approvalMapper::toResponse));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<ApprovalResponse>
+    getMyDecided(
+            int page, int size) {
+
+        Pageable pageable = PageRequest.of(
+                page, size,
+                Sort.by("decidedAt")
+                        .descending());
+
+        Integer currentUserId =
+                securityUtils
+                        .getCurrentUserId();
+
+        return PageResponse.of(
+                approvalRepo
+                        .findByApprovedBy_UserId(
+                                currentUserId,
+                                pageable)
+                        .map(
+                                approvalMapper
+                                        ::toResponse));
+    }
+
 
     private void validateDocumentStatus(
             Document document) {
 
         String code =
-                document.getStatusCode() != null
+                document.getStatusCode()
+                        != null
                         ? document.getStatusCode()
-                          .getStatusCode()
+                        .getStatusCode()
                         : "";
 
         if (!DocumentStatusCode.isDraft(code)) {
+
+            String currentStatusKh = "PENDING".equals(code) ? "«កំពុងរង់ចាំការអនុម័ត»"
+                    : "APPROVED".equals(code) ? "«ត្រូវបានអនុម័តរួចរាល់»"
+                      : "«" + code + "»";
+
             throw new BusinessException(
-                    "សកម្មភាពនេះអាចធ្វើទៅបានតែលើឯកសារដែលស្ថិតក្នុងស្ថានភាព «ពង្រាង» ប៉ុណ្ណោះ"
-                            + "  ស្ថានភាពបច្ចុប្បន្ន៖ " + code);
+                    "មិនអាចស្នើសុំការអនុម័តបានឡើយ ព្រោះឯកសារនេះត្រូវតែស្ថិតក្នុងស្ថានភាព «ព្រាង (Draft)»។ "
+                            + "ស្ថានភាពបច្ចុប្បន្ន៖ " + currentStatusKh
+            );
         }
     }
 
-    // ── 2. No duplicate pending ───────────────────
-    private void checkNoDuplicatePending(
-            Integer documentId) {
-
-        boolean has = approvalRepo
-                .existsByDocument_DocumentIdAndStatusCode_StatusCode(
-                        documentId,
-                        DocumentStatusCode
-                                .PENDING.getCode());
-
-        if (has) {
-            throw new BusinessException(
-                    "ឯកសារនេះ មាន Approval"
-                            + " PENDING រួចហើយ");
-        }
-    }
-
-    // Fix ── 3. Document owner check ───────────────
-    // Officer can only submit OWN document
-    private void validateDocumentOwner(
-            Document document,
-            Officer currentOfficer) {
-
-        if (document.getOfficer() == null) {
-            throw new BusinessException(
-                    "ឯកសារ មិនមាន Officer");
-        }
-
-        if (!document.getOfficer()
-                .getOfficerId()
-                .equals(currentOfficer
-                        .getOfficerId())) {
-            throw new BusinessException(
-                    "មិនអាចស្នើ Approval"
-                            + " ឯកសាររបស់ Officer ផ្សេង"
-                            + " — ត្រូវជា Owner ប៉ុណ្ណោះ");
-        }
-    }
-
-//    // ── 4. Self approval check ────────────────────
-//    private void validateNotSelfApproval(
-//            Document document,
-//            Officer officer) {
-//
-//        if (document.getOfficer() != null
-//                && document.getOfficer()
-//                .getOfficerId()
-//                .equals(officer
-//                        .getOfficerId())) {
-//            throw new BusinessException(
-//                    "មន្ត្រីមិនអាច Approve"
-//                            + " ឯកសារខ្លួនឯង");
-//        }
-//    }
-
-    // ── 5. Approval pending check ─────────────────
     private void validateApprovalPending(
             Approval approval) {
 
         String code =
-                approval.getStatusCode() != null
+                approval.getStatusCode()
+                        != null
                         ? approval.getStatusCode()
-                          .getStatusCode()
+                        .getStatusCode()
                         : "";
 
         if (!DocumentStatusCode
                 .isPending(code)) {
             throw new BusinessException(
-                    "Approval មិន PENDING"
-                            + " — " + code
-                            + " — មិនអាច Decide");
+                    "មិនអាចធ្វើការសម្រេចបានឡើយ ព្រោះស្ថានភាពសំណើ "
+                            + "មិនស្ថិតក្នុងដំណាក់កាល «រង់ចាំការពិនិត្យ/អនុម័ត» ឡើយ (ស្ថានភាពបច្ចុប្បន្ន: " + code + ")");
         }
     }
 
-    // Fix ── 6. Approver department check ──────────
-    // Admin can only approve documents
-    // from their managed department
-    // SUPER_ADMIN bypasses check
-    private void validateApproverDepartment(
+    private void validateNotSelfApproval(
             Approval approval,
             User approver) {
 
-        // SUPER_ADMIN bypass
-        if ("SUPER_ADMIN".equals(
-                approver.getRole()
-                        .getRoleName())) {
-            return;
-        }
-
-        // Admin must have officer
-        // to determine department
-        if (approver.getOfficer() == null) {
-            // Admin without officer
-            // = system admin → allow
-            return;
-        }
-
-        // Get document's department
-        Department docDept =
+        User docUser =
                 approval.getDocument()
-                        .getOfficer()
-                        .getDepartment();
+                        .getUser();
 
-        if (docDept == null) return;
-
-        // Get approver's department
-        Department approverDept =
-                approver.getOfficer()
-                        .getDepartment();
-
-        if (approverDept == null) return;
-
-        // Fix — Block cross-department approval
-        if (!docDept.getDepartmentId()
-                .equals(approverDept
-                        .getDepartmentId())) {
+        if (docUser != null
+                && docUser.getUserId()
+                .equals(approver
+                        .getUserId())) {
             throw new BusinessException(
-                    "Admin នាយកដ្ឋាន \""
-                            + approverDept
-                            .getDepartmentName()
-                            + "\" មិនអាច Approve"
-                            + " ឯកសារ នាយកដ្ឋាន \""
-                            + docDept.getDepartmentName()
-                            + "\"");
+                    "លោកអ្នកមិនអាចធ្វើការពិនិត្យសម្រេច ឬអនុម័តលើឯកសារ/សំណើរបស់ខ្លួនឯងបានឡើយ");
         }
-    }
-
-    // ── Resolve current officer ───────────────────
-    private Officer resolveCurrentOfficer() {
-        return securityUtils.getCurrentUser()
-                .map(user -> {
-                    if (user.getOfficer() == null) {
-                        throw new BusinessException(
-                                "Admin មិនអាច"
-                                        + " Submit Approval"
-                                        + " — Officer Account"
-                                        + " ប៉ុណ្ណោះ");
-                    }
-                    return user.getOfficer();
-                })
-                .orElseThrow(() ->
-                        new UnauthorizedException(
-                                "ត្រូវ Login"));
     }
 
     private LookupDocumentStatus findStatus(
             String code) {
         return statusRepo.findById(code)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(
+                        new
+                                ResourceNotFoundException(
                                 "ស្ថានភាព", code));
     }
+
 
     private void triggerNotification(
             Approval approval,
             String statusCode) {
 
-        Officer officer =
-                approval.getRequestedBy();
-        if (officer == null) return;
+        User docUser =
+                approval.getDocument()
+                        .getUser();
+        if (docUser == null) return;
 
         boolean approved =
                 DocumentStatusCode
@@ -407,37 +777,38 @@ public class ApprovalServiceImpl
                         .getDocumentName();
 
         String approverName =
-                approval.getApprovedBy() != null
+                approval.getApprovedBy()
+                        != null
                         ? approval.getApprovedBy()
-                          .getUserNameKh()
-                        : "Admin";
+                        .getUserNameKh()
+                        : "Manager";
 
         String title = approved
-                ? "ឯកសារបានអនុម័ត ✓"
-                : "ឯកសារបានបដិសេធ ✗";
+                ? "ឯកសារបានអនុម័ត "
+                : "ឯកសារបានបដិសេធ ";
 
         String message = approved
-                ? "ឯកសារ \""
-                  + docName
+                ? "ឯកសារ \"" + docName
                   + "\" បានអនុម័តដោយ "
                   + approverName
-                : "ឯកសារ \""
-                  + docName
+                : "ឯកសារ \"" + docName
                   + "\" បានបដិសេធ"
-                  + (approval.getComment() != null
+                  + (approval.getComment()
+                != null
                      ? " — "
                        + approval.getComment()
                      : "");
 
-        notificationService.createByOfficerId(
-                officer.getOfficerId(),
+        notificationService.createByUserId(
+                docUser.getUserId(),
                 title, message,
                 NotificationType.DOCUMENT,
                 approval.getDocument()
                         .getDocumentId());
     }
 
-    private ActivityLogContext buildContext() {
+    private ActivityLogContext
+    buildContext() {
         try {
             var req =
                     ((ServletRequestAttributes)
@@ -447,8 +818,8 @@ public class ApprovalServiceImpl
             return securityUtils
                     .buildLogContext(req);
         } catch (Exception e) {
-            return ActivityLogContext.builder()
-                    .build();
+            return ActivityLogContext
+                    .builder().build();
         }
     }
 }

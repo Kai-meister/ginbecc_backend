@@ -47,7 +47,8 @@ public class User {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "status_code",
-            referencedColumnName = "status_code")
+            referencedColumnName = "status_code",
+            nullable = false)
     private LookupUserStatus statusCode;
 
     @Enumerated(EnumType.STRING)
@@ -74,11 +75,6 @@ public class User {
     @Column(name = "password_hash",
             nullable = false)
     private String passwordHash;
-
-    @Builder.Default
-    @Column(name = "must_change_password",
-            nullable = false)
-    private Boolean mustChangePassword = false;
 
     @Builder.Default
     @Column(name = "failed_login_count",

@@ -1,10 +1,14 @@
 package gov.kh.mcr.inspectorate.entity;
-import gov.kh.mcr.inspectorate.enums.ActiveStatus;
+
+import gov.kh.mcr.inspectorate.enums
+        .ActiveStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "departments",
@@ -12,20 +16,20 @@ import java.time.LocalDateTime;
                 @Index(name = "idx_dept_code",
                         columnList = "department_code")
         })
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
 @Builder
 public class Department {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(
+            strategy = GenerationType.IDENTITY)
     @Column(name = "department_id")
     private Integer departmentId;
 
     @Column(name = "department_code",
-            length = 20, unique = true, nullable = false)
+            length = 20,
+            unique = true, nullable = false)
     private String departmentCode;
 
     @Column(name = "department_name",
@@ -36,13 +40,26 @@ public class Department {
             columnDefinition = "TEXT")
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    // Fix — លុប single "manager" FK ចេញ
+    // ប្រើ DepartmentManager Junction
+    // Table វិញ (1:N)
+    @OneToMany(mappedBy = "department",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
     @Builder.Default
-    private ActiveStatus status = ActiveStatus.ACTIVE;
+    private List<DepartmentManager>
+            managers = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status",
+            nullable = false)
+    @Builder.Default
+    private ActiveStatus status =
+            ActiveStatus.ACTIVE;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at",
+            updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp

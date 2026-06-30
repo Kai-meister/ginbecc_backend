@@ -13,6 +13,9 @@ import gov.kh.mcr.inspectorate.exception.*;
 import gov.kh.mcr.inspectorate.mapper
         .NotificationMapper;
 import gov.kh.mcr.inspectorate.repository.*;
+import gov.kh.mcr.inspectorate.resolver
+        .NotificationReferenceResolver;
+import gov.kh.mcr.inspectorate.security.SecurityUtils;
 import gov.kh.mcr.inspectorate.service
         .NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -35,9 +38,117 @@ import java.util.*;
 public class NotificationServiceImpl
         implements NotificationService {
 
-    private final NotificationRepository notifRepo;
-    private final UserRepository         userRepo;
-    private final NotificationMapper     notifMapper;
+    private final NotificationRepository
+            notifRepo;
+    private final UserRepository
+            userRepo;
+    private final NotificationMapper
+            notifMapper;
+
+    private final NotificationReferenceResolver
+            referenceResolver;
+    private final SecurityUtils securityUtils;
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<NotificationResponse>
+    getMyNotifications(
+            Integer currentUserId,
+            Boolean isRead,
+            int page, int size) {
+
+        Pageable pageable = PageRequest.of(
+                page, size,
+                Sort.by("createdAt")
+                        .descending());
+
+        Page<Notification> result =
+                isRead != null
+                        ? notifRepo
+                        .findByUser_UserIdAndIsRead(
+                                currentUserId,
+                                isRead, pageable)
+                        : notifRepo.findByUser_UserId(
+                        currentUserId, pageable);
+
+        return PageResponse.of(
+                result.map(
+                        this::toResponseWithReference));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<NotificationResponse>
+    getMyNotificationsByType(
+            Integer currentUserId,
+            NotificationType type,
+            Boolean isRead,
+            int page, int size) {
+
+        Pageable pageable = PageRequest.of(
+                page, size,
+                Sort.by("createdAt")
+                        .descending());
+
+        Page<Notification> result;
+
+        if (type != null && isRead != null) {
+            result = notifRepo
+                    .findByUser_UserIdAndTypeAndIsRead(
+                            currentUserId, type,
+                            isRead, pageable);
+        } else if (type != null) {
+            result = notifRepo
+                    .findByUser_UserIdAndType(
+                            currentUserId, type,
+                            pageable);
+        } else if (isRead != null) {
+            result = notifRepo
+                    .findByUser_UserIdAndIsRead(
+                            currentUserId,
+                            isRead, pageable);
+        } else {
+            result = notifRepo
+                    .findByUser_UserId(
+                            currentUserId, pageable);
+        }
+
+        return PageResponse.of(
+                result.map(
+                        this::toResponseWithReference));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public NotificationResponse getById(
+            Integer notificationId,
+            Integer currentUserId) {
+
+        Notification n = notifRepo
+                .findByNotificationIdAndUser_UserId(
+                        notificationId, currentUserId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "ការជូនដំណឹង",
+                                notificationId));
+
+        return toResponseWithReference(n);
+    }
+    private NotificationResponse
+    toResponseWithReference(
+            Notification n) {
+
+        NotificationResponse dto =
+                notifMapper.toResponse(n);
+        Map<String, Object> refData =
+                referenceResolver.resolve(
+                        n.getType(),
+                        n.getReferenceId());
+
+        dto.setReferenceData(refData);
+
+        return dto;
+    }
 
     @Override
     public NotificationResponse create(
@@ -49,88 +160,105 @@ public class NotificationServiceImpl
         Notification saved =
                 notifRepo.save(build(user, req));
 
-        log.info("Notification: [{}] → {}",
-                req.getType(), user.getEmail());
-
-        return notifMapper.toResponse(saved);
+        return toResponseWithReference(saved);
     }
 
     @Override
-    public List<NotificationResponse> createBulk(
+    public List<NotificationResponse>
+    createBulk(
             NotificationCreateRequest req) {
 
-        if (req.getOfficerIds() == null
-                || req.getOfficerIds().isEmpty()) {
+        if (req.getUserIds() == null
+                || req.getUserIds().isEmpty()) {
             throw new BusinessException(
-                    "បញ្ជីលេខសម្គាល់មន្ត្រី (officerIds) គឺចាំបាច់ត្រូវតែមាន។");
+                    "សូមជ្រើសរើសអ្នកប្រើប្រាស់ ឬមន្ត្រីដែលត្រូវទទួលការជូនដំណឹងយ៉ាងហោចណាស់ម្នាក់។");
+        }
+
+        if (!securityUtils
+                .canBypassDepartmentScope()) {
+
+            Integer ownDeptId =
+                    securityUtils
+                            .getCurrentDepartmentId();
+
+            if (ownDeptId != null) {
+                for (Integer uid :
+                        req.getUserIds()) {
+
+                    User target = userRepo
+                            .findById(uid)
+                            .orElse(null);
+
+                    if (target == null)
+                        continue;
+
+                    Integer targetDeptId =
+                            resolveUserDeptId(
+                                    target);
+
+                    if (targetDeptId == null
+                            || !ownDeptId.equals(
+                            targetDeptId)) {
+                        throw new
+                                BusinessException(
+                                "លោកអ្នកមិនមានសិទ្ធិផ្ញើការជូនដំណឹងទៅកាន់មន្ត្រីក្រៅនាយកដ្ឋានរបស់ខ្លួនឡើយ "
+                                        + "(មន្ត្រីទទួល៖ «" + target.getUserNameKh() + "» ស្ថិតក្នុងនាយកដ្ឋានផ្សេង)");
+                    }
+                }
+            }
         }
 
         List<NotificationResponse> results =
                 new ArrayList<>();
 
-        req.getOfficerIds().forEach(oid -> {
+        req.getUserIds().forEach(uid -> {
             try {
-                userRepo
-                        .findByOfficer_OfficerId(oid)
+                userRepo.findById(uid)
                         .ifPresentOrElse(
                                 u -> results.add(
-                                        notifMapper.toResponse(
-                                                notifRepo.save(
-                                                        build(u, req)))),
+                                        notifMapper
+                                                .toResponse(
+                                                        notifRepo
+                                                                .save(
+                                                                        build(
+                                                                                u,
+                                                                                req)))),
                                 () -> log.warn(
-                                        "No user officer: {}",
-                                        oid));
+                                        "No user: {}", uid));
             } catch (Exception ex) {
-                // Log but continue other officers
                 log.error(
-                        "Bulk notif officer {}: {}",
-                        oid, ex.getMessage());
+                        "Bulk notif user={}: {}",
+                        uid, ex.getMessage());
             }
         });
 
-        log.info("Bulk: {}/{} sent",
-                results.size(),
-                req.getOfficerIds().size());
-
         return results;
     }
-
-    @Override
-    @Async
-    @Transactional(
-            propagation = Propagation.REQUIRES_NEW)
-    public void createByOfficerId(
-            Integer officerId,
-            String title,
-            String message,
-            NotificationType type,
-            Integer referenceId) {
-
-        try {
-            userRepo
-                    .findByOfficer_OfficerId(officerId)
-                    .ifPresentOrElse(
-                            u -> save(u, title,
-                                    message, type,
-                                    referenceId),
-                            // Fix — log warn not silent
-                            () -> log.warn(
-                                    "createByOfficerId:"
-                                            + " No user for"
-                                            + " officer={}",
-                                    officerId));
-        } catch (Exception ex) {
-            log.error(
-                    "createByOfficerId failed"
-                            + " officer={}: {}",
-                    officerId, ex.getMessage());
+    private Integer resolveUserDeptId(
+            User u) {
+        if (u.getOfficer() != null
+                && u.getOfficer()
+                .getDepartment() != null) {
+            return u.getOfficer()
+                    .getDepartment()
+                    .getDepartmentId();
         }
+        if (u.getContractOfficer() != null
+                && u.getContractOfficer()
+                .getDepartment()
+                != null) {
+            return u.getContractOfficer()
+                    .getDepartment()
+                    .getDepartmentId();
+        }
+        return null;
     }
 
     @Override
     @Async
     @Transactional(
-            propagation = Propagation.REQUIRES_NEW)
+            propagation =
+                    Propagation.REQUIRES_NEW)
     public void createByUserId(
             Integer userId,
             String title,
@@ -145,57 +273,47 @@ public class NotificationServiceImpl
                                     message, type,
                                     referenceId),
                             () -> log.warn(
-                                    "createByUserId:"
-                                            + " No user={}",
+                                    "No user={}",
                                     userId));
         } catch (Exception ex) {
             log.error(
-                    "createByUserId failed"
-                            + " user={}: {}",
+                    "createByUserId user={}: {}",
                     userId, ex.getMessage());
         }
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public PageResponse<NotificationResponse>
-    getMyNotifications(
-            Integer currentUserId,
-            Boolean isRead,
-            int page, int size) {
+    @Async
+    @Transactional(
+            propagation =
+                    Propagation.REQUIRES_NEW)
+    public void createBulkByUserIds(
+            List<Integer> userIds,
+            String title,
+            String message,
+            NotificationType type,
+            Integer referenceId) {
 
-        Pageable pageable = PageRequest.of(
-                page, size,
-                Sort.by("createdAt").descending());
+        if (userIds == null
+                || userIds.isEmpty())
+            return;
 
-        Page<Notification> result =
-                isRead != null
-                        ? notifRepo
-                          .findByUser_UserIdAndIsRead(
-                                  currentUserId,
-                                  isRead, pageable)
-                        : notifRepo.findByUser_UserId(
-                        currentUserId, pageable);
-
-        return PageResponse.of(
-                result.map(notifMapper::toResponse));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public NotificationResponse getById(
-            Integer notificationId,
-            Integer currentUserId) {
-
-        Notification n = notifRepo
-                .findByNotificationIdAndUser_UserId(
-                        notificationId, currentUserId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "មិនមានទិន្នន័យសេចក្តីជូនដំណឹងដែលមានលេខសម្គាល់ ",
-                                notificationId));
-
-        return notifMapper.toResponse(n);
+        for (Integer uid : userIds) {
+            try {
+                userRepo.findById(uid)
+                        .ifPresentOrElse(
+                                u -> save(u, title,
+                                        message, type,
+                                        referenceId),
+                                () -> log.warn(
+                                        "No user: {}",
+                                        uid));
+            } catch (Exception ex) {
+                log.error(
+                        "Bulk userId={}: {}",
+                        uid, ex.getMessage());
+            }
+        }
     }
 
     @Override
@@ -214,13 +332,15 @@ public class NotificationServiceImpl
 
         Notification n = notifRepo
                 .findByNotificationIdAndUser_UserId(
-                        notificationId, currentUserId)
+                        notificationId,
+                        currentUserId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "មិនមានទិន្នន័យសេចក្តីជូនដំណឹងដែលមានលេខសម្គាល់ ",
+                                "ការជូនដំណឹង",
                                 notificationId));
 
-        if (Boolean.TRUE.equals(n.getIsRead())) {
+        if (Boolean.TRUE.equals(
+                n.getIsRead())) {
             return;
         }
 
@@ -241,19 +361,20 @@ public class NotificationServiceImpl
             NotificationCreateRequest req) {
 
         int count =
-                (req.getOfficerId() != null ? 1 : 0)
-                        + (req.getUserId()    != null ? 1 : 0)
-                        + (req.getOfficerIds() != null
-                        && !req.getOfficerIds().isEmpty()
+                (req.getUserId() != null
+                        ? 1 : 0)
+                        + (req.getUserIds() != null
+                        && !req.getUserIds()
+                        .isEmpty()
                         ? 1 : 0);
 
         if (count == 0) {
             throw new BusinessException(
-                    "សូមកំណត់គោលដៅទទួលសេចក្តីជូនដំណឹងណាមួយដូចជា៖ បើផ្ញើឱ្យមន្ត្រីម្នាក់, បើផ្ញើឱ្យគណនីអ្នកប្រើប្រាស់ម្នាក់ ឬ បើផ្ញើឱ្យមន្ត្រីច្រើននាក់ជាក្រុម។");
+                    "សូមជ្រើសរើសគោលដៅអ្នកទទួលការជូនដំណឹង (ជ្រើសរើសជា មន្ត្រីម្នាក់ ឬជាកញ្ចប់មន្ត្រី)។");
         }
         if (count > 1) {
             throw new BusinessException(
-                    "មិនអាចកំណត់គោលដៅទទួលច្រើនទម្រង់ក្នុងពេលតែមួយបានឡើយ។ សូមជ្រើសរើសយកតែជម្រើសមួយគត់ (តែ ១)។");
+                    "លោកអ្នកអាចជ្រើសរើសទម្រង់គោលដៅអ្នកទទួល បានតែមួយប្រភេទប៉ុណ្ណោះ មិនអាចប្រើប្រាស់លាយឡំគ្នាបានឡើយ។");
         }
     }
 
@@ -265,19 +386,11 @@ public class NotificationServiceImpl
                     .findById(req.getUserId())
                     .orElseThrow(() ->
                             new ResourceNotFoundException(
-                                    "មិនមានទិន្នន័យអ្នកប្រើប្រាស់ដែលមានលេខសម្គាល់៖ ", req.getUserId()));
-        }
-        if (req.getOfficerId() != null) {
-            return userRepo
-                    .findByOfficer_OfficerId(
-                            req.getOfficerId())
-                    .orElseThrow(() ->
-                            new ResourceNotFoundException(
-                                    "មិនមានគណនីអ្នកប្រើប្រាស់ដែលភ្ជាប់ជាមួយលេខសម្គាល់មន្ត្រី៖ ",
-                                    req.getOfficerId()));
+                                    "User",
+                                    req.getUserId()));
         }
         throw new BusinessException(
-                "មិនអាចកំណត់អត្តសញ្ញាណអ្នកប្រើប្រាស់បានឡើយ ដោយសារខ្វះព័ត៌មានគោលដៅទទួល។");
+                "ព័ត៌មានអត្តសញ្ញាណអ្នកប្រើប្រាស់ (userId) គឺចាំបាច់ត្រូវតែមាន មិនអាចទទេបានឡើយ។");
     }
 
     private Notification build(
@@ -288,7 +401,8 @@ public class NotificationServiceImpl
                 .title(req.getTitle())
                 .message(req.getMessage())
                 .type(req.getType())
-                .referenceId(req.getReferenceId())
+                .referenceId(
+                        req.getReferenceId())
                 .isRead(false)
                 .build();
     }

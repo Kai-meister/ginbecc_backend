@@ -3,6 +3,7 @@ package gov.kh.mcr.inspectorate.controller;
 import gov.kh.mcr.inspectorate.dto.request
         .AnnouncementRequest;
 import gov.kh.mcr.inspectorate.dto.response.*;
+import gov.kh.mcr.inspectorate.exception.BusinessException;
 import gov.kh.mcr.inspectorate.security.SecurityUtils;
 import gov.kh.mcr.inspectorate.service
         .AnnouncementService;
@@ -25,9 +26,7 @@ import org.springframework.web.multipart
 public class AnnouncementController {
 
     private final AnnouncementService service;
-    private final SecurityUtils securityUtils;
 
-    // GET /announcements
     @GetMapping
     @PreAuthorize(
             "hasAuthority('ANNOUNCEMENT_VIEW')")
@@ -41,14 +40,19 @@ public class AnnouncementController {
             @RequestParam(required = false)
             String status,
             @RequestParam(required = false)
-            String priority) {
+            String priority,
+            @RequestParam(
+                    required = false,
+                    defaultValue = "false")
+            Boolean includeExpired) {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
                         service.getAll(
                                 page, size,
-                                status, priority),
-                        "ទទួលបានបញ្ជីប្រកាសដោយជោគជ័យ"));
+                                status, priority,
+                                includeExpired),
+                        "ទទួលបញ្ជីប្រកាសដោយជោគជ័យ"));
     }
 
     // GET /announcements/{id}
@@ -101,7 +105,6 @@ public class AnnouncementController {
                         "បានបង្កើតការប្រកាសដោយជោគជ័យ"));
     }
 
-    // POST /announcements/{id}/attachment
     @PostMapping(
             value = "/{id}/attachment",
             consumes =
@@ -115,13 +118,18 @@ public class AnnouncementController {
             @Positive Integer id,
             @RequestParam MultipartFile file) {
 
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException(
+                    "សូមជ្រើសរើសឯកសារសម្រាប់បញ្ចូល");
+        }
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
-                        service.uploadAttachment(
-                                id, file),
-                        "បានផ្ទុកឯកសារភ្ជាប់ដោយជោគជ័យ"));
+                        service.uploadAttachment(id, file),
+                        "ឯកសារត្រូវបានបញ្ចូលដោយជោគជ័យ"));
     }
+
 
     // PUT /announcements/{id}
     @PutMapping("/{id}")
@@ -141,7 +149,6 @@ public class AnnouncementController {
                         "បានកែប្រែព័ត៌មានប្រកាសដោយជោគជ័យ"));
     }
 
-    // POST /announcements/{id}/mark-read
     @PostMapping("/{id}/mark-read")
     @PreAuthorize(
             "hasAuthority('ANNOUNCEMENT_VIEW')")
@@ -150,14 +157,11 @@ public class AnnouncementController {
             @PathVariable
             @Positive Integer id) {
 
-        Integer officerId =
-                resolveCurrentOfficerId();
-
-        service.markAsRead(id, officerId);
+        service.markAsRead(id);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "បានកំណត់ថាបានអានដោយជោគជ័យ"));
+                        null, "ស្ថានភាពប្រកាសត្រូវបានកំណត់ថា 'បានអាន' ដោយជោគជ័យ"));
     }
 
     // DELETE /announcements/{id}
@@ -175,23 +179,21 @@ public class AnnouncementController {
                         null, "បានលុបដោយជោគជ័យ"));
     }
 
-    private Integer resolveCurrentOfficerId() {
-        return securityUtils.getCurrentUser()
-                .map(user -> {
-                    // Fix — must have officer
-                    if (user.getOfficer() == null) {
-                        throw new
-                                gov.kh.mcr.inspectorate
-                                        .exception
-                                        .BusinessException(
-                                "សកម្មភាពនេះអនុញ្ញាតសម្រាប់តែគណនីមន្ត្រីប៉ុណ្ណោះ");
-                    }
-                    return user.getOfficer()
-                            .getOfficerId();
-                })
-                .orElseThrow(() ->
-                        new gov.kh.mcr.inspectorate
-                                .exception.UnauthorizedException(
-                                "ត្រូសូមចូលប្រព័ន្ធជាមុនសិន"));
-    }
+@GetMapping("/{id}/attachment/download")
+@PreAuthorize(
+        "hasAuthority('ANNOUNCEMENT_VIEW')")
+public ResponseEntity<Void> download(
+        @PathVariable
+        @Positive Integer id) {
+
+    String url =
+            service.getAttachmentUrl(id);
+
+    return ResponseEntity
+            .status(HttpStatus.FOUND)
+            .header(
+                    HttpHeaders.LOCATION, url)
+            .build();
+}
+
 }

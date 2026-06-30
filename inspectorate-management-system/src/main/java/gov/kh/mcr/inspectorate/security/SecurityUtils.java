@@ -4,6 +4,7 @@ import gov.kh.mcr.inspectorate.dto.request
         .ActivityLogContext;
 import gov.kh.mcr.inspectorate.entity.*;
 import gov.kh.mcr.inspectorate.exception.*;
+import gov.kh.mcr.inspectorate.repository.DepartmentRepository;
 import gov.kh.mcr.inspectorate.repository
         .UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,8 +21,7 @@ import java.util.Optional;
 public class SecurityUtils {
 
     private final UserRepository userRepository;
-
-    // ── Get current User ──────────────────────────
+    private final DepartmentRepository departmentRepository;
     public Optional<User> getCurrentUser() {
         Authentication auth = getAuth();
         if (!isAuthenticated(auth)) {
@@ -31,7 +31,6 @@ public class SecurityUtils {
                 .findByEmail(auth.getName());
     }
 
-    // ── Get current User ID ───────────────────────
     public Integer getCurrentUserId() {
         return getCurrentUser()
                 .map(User::getUserId)
@@ -47,51 +46,8 @@ public class SecurityUtils {
                 : null;
     }
 
-    // ── Get permanent Officer ─────────────────────
-    // Throw if no officer
-    public Officer getCurrentOfficer() {
-        User user = getCurrentUser()
-                .orElseThrow(() ->
-                        new UnauthorizedException(
-                                "ត្រូវ Login"));
 
-        if (user.getOfficer() == null) {
-            throw new BusinessException(
-                    "Account មិនភ្ជាប់ Officer");
-        }
 
-        return user.getOfficer();
-    }
-
-    // ── Get permanent Officer or null ─────────────
-    // null = Admin / ContractOfficer
-    public Officer getCurrentOfficerOrNull() {
-        return getCurrentUser()
-                .map(User::getOfficer)
-                .orElse(null);
-    }
-
-    // Fix ── Get Contract Officer ──────────────────
-    // Throw if no contract officer
-    public ContractOfficer
-    getCurrentContractOfficer() {
-
-        User user = getCurrentUser()
-                .orElseThrow(() ->
-                        new UnauthorizedException(
-                                "ត្រូវ Login"));
-
-        if (user.getContractOfficer() == null) {
-            throw new BusinessException(
-                    "Account មិនភ្ជាប់"
-                            + " Contract Officer");
-        }
-
-        return user.getContractOfficer();
-    }
-
-    // Fix ── Get Contract Officer or null ──────────
-    // null = Admin / permanent Officer
     public ContractOfficer
     getCurrentContractOfficerOrNull() {
         return getCurrentUser()
@@ -99,17 +55,6 @@ public class SecurityUtils {
                 .orElse(null);
     }
 
-    // Fix ── Check is any Officer type ────────────
-    // true = Officer OR ContractOfficer
-    public boolean isOfficerType() {
-        return getCurrentUser()
-                .map(u ->
-                        u.getOfficer() != null
-                                || u.getContractOfficer() != null)
-                .orElse(false);
-    }
-
-    // Fix ── Check is Contract Officer ────────────
     public boolean isContractOfficer() {
         return getCurrentUser()
                 .map(u ->
@@ -117,19 +62,16 @@ public class SecurityUtils {
                 .orElse(false);
     }
 
-    // ── Check has permission ──────────────────────
     public boolean hasPermission(
             String permission) {
         Authentication auth = getAuth();
         if (auth == null) return false;
-        return auth.getAuthorities()
-                .stream()
+        return auth.getAuthorities().stream()
                 .anyMatch(a ->
                         a.getAuthority()
                                 .equals(permission));
     }
 
-    // ── Check is Admin ────────────────────────────
     public boolean isAdmin() {
         return getCurrentUser()
                 .map(u -> {
@@ -138,60 +80,52 @@ public class SecurityUtils {
                                     ? u.getRole().getRoleName()
                                     : "";
                     return "ADMIN".equals(role)
-                            || "SUPER_ADMIN".equals(role);
+                            || "SUPER_ADMIN"
+                            .equals(role);
                 })
                 .orElse(false);
     }
 
-    // ── Check is SuperAdmin ───────────────────────
-    public boolean isSuperAdmin() {
+
+    public boolean isManager() {
         return getCurrentUser()
                 .map(u ->
                         u.getRole() != null
-                                && "SUPER_ADMIN".equals(
+                                && "MANAGER".equals(
                                 u.getRole().getRoleName()))
                 .orElse(false);
     }
 
-    // ── Build ActivityLogContext ───────────────────
-    public ActivityLogContext buildLogContext(
-            HttpServletRequest request) {
-
-        ActivityLogContext
-                .ActivityLogContextBuilder builder =
-                ActivityLogContext.builder();
-
-        getCurrentUser().ifPresent(user -> {
-            builder.userId(user.getUserId());
-            builder.userEmail(user.getEmail());
-        });
-
-        if (request != null) {
-            builder.ipAddress(
-                    extractIp(request));
-            builder.userAgent(
-                    request.getHeader(
-                            "User-Agent"));
-        }
-
-        return builder.build();
+    public Integer getCurrentDepartmentId() {
+        return getCurrentUser()
+                .map(u -> {
+                    if (u.getOfficer() != null
+                            && u.getOfficer()
+                            .getDepartment()
+                            != null) {
+                        return u.getOfficer()
+                                .getDepartment()
+                                .getDepartmentId();
+                    }
+                    if (u.getContractOfficer()
+                            != null
+                            && u.getContractOfficer()
+                            .getDepartment()
+                            != null) {
+                        return u.getContractOfficer()
+                                .getDepartment()
+                                .getDepartmentId();
+                    }
+                    return null;
+                })
+                .orElse(null);
     }
 
-    // ── Extract IP ────────────────────────────────
-    public String extractIp(
-            HttpServletRequest request) {
-
-        String ip = request.getHeader(
-                "X-Forwarded-For");
-        if (hasText(ip)) {
-            return ip.split(",")[0].trim();
-        }
-        ip = request.getHeader("X-Real-IP");
-        if (hasText(ip)) return ip;
-        return request.getRemoteAddr();
+    public boolean canBypassDepartmentScope() {
+        return isAdmin();
     }
 
-    // ── Private ───────────────────────────────────
+
     private Authentication getAuth() {
         try {
             return SecurityContextHolder
@@ -210,10 +144,87 @@ public class SecurityUtils {
                 auth.getPrincipal());
     }
 
+    public ActivityLogContext buildLogContext(
+            HttpServletRequest request) {
+        ActivityLogContext
+                .ActivityLogContextBuilder
+                builder = ActivityLogContext
+                .builder();
+
+        getCurrentUser().ifPresent(user -> {
+            builder.userId(user.getUserId());
+            builder.userEmail(
+                    user.getEmail());
+        });
+
+        if (request != null) {
+            builder.ipAddress(
+                    extractIp(request));
+            builder.userAgent(
+                    request.getHeader(
+                            "User-Agent"));
+        }
+        return builder.build();
+    }
+
+    public String extractIp(
+            HttpServletRequest request) {
+        String ip = request.getHeader(
+                "X-Forwarded-For");
+        if (hasText(ip)) {
+            return ip.split(",")[0].trim();
+        }
+        ip = request.getHeader("X-Real-IP");
+        if (hasText(ip)) return ip;
+        return request.getRemoteAddr();
+    }
+
     private boolean hasText(String s) {
-        return s != null
-                && !s.isBlank()
+        return s != null && !s.isBlank()
                 && !"unknown"
                 .equalsIgnoreCase(s);
+    }
+    public void validateDepartmentScope(
+            Integer targetDepartmentId) {
+
+        if (canBypassDepartmentScope()) {
+            return;
+
+        }
+
+        Integer currentDeptId =
+                getCurrentDepartmentId();
+
+
+        if (currentDeptId == null) {
+            return;
+        }
+
+        if (targetDepartmentId == null
+                || !currentDeptId.equals(
+                targetDepartmentId)) {
+
+            String ownDeptName =
+                    resolveDepartmentName(
+                            currentDeptId);
+            String targetDeptName =
+                    targetDepartmentId != null
+                            ? resolveDepartmentName(
+                            targetDepartmentId)
+                            : "មិនស្គាល់";
+
+            throw new
+                    DepartmentScopeException(
+                    ownDeptName,
+                    targetDeptName);
+        }
+    }
+    private String resolveDepartmentName(
+            Integer departmentId) {
+        return departmentRepository
+                .findById(departmentId)
+                .map(Department
+                        ::getDepartmentName)
+                .orElse("ID:" + departmentId);
     }
 }

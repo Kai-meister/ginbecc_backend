@@ -1,4 +1,3 @@
-
 package gov.kh.mcr.inspectorate.dto.response.report;
 
 import lombok.*;
@@ -13,19 +12,22 @@ public class MeetingReportResponse {
     private Integer   no;
     private String    title;
     @Builder.Default
-    private String  meetingType    = "";
+    private String    meetingType    = "";
     private LocalDate meetingDate;
     private LocalTime startTime;
     private LocalTime endTime;
-    private String    roomCode;
-    private String    organizerName;
     @Builder.Default
-    private Integer totalAttendees = 0;
+    private String    roomCode       = "Online";
     @Builder.Default
-    private Integer attendedCount  = 0;
+    private String    organizerName  = "";
     @Builder.Default
-    private Integer absentCount    = 0;
-    private String    statusCode;
+    private Integer   totalAttendees = 0;
     @Builder.Default
-    private String  statusLabel    = "";
+    private Integer   attendedCount  = 0;
+    @Builder.Default
+    private Integer   absentCount    = 0;
+    @Builder.Default
+    private String    statusCode     = "";
+    @Builder.Default
+    private String    statusLabel    = "";
 }

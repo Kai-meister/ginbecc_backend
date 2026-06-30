@@ -1,28 +1,27 @@
 package gov.kh.mcr.inspectorate.dto.request;
 
-import gov.kh.mcr.inspectorate.enums
-        .NotificationType;
+import gov.kh.mcr.inspectorate.enums.NotificationType;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import java.util.List;
 
 @Data
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class NotificationCreateRequest {
 
-    private Integer       officerId;
-    private Integer       userId;
-    private List<Integer> officerIds;
+    private Integer userId;
+    private List<Integer> userIds;
 
-    @NotBlank(message = "សូមបញ្ចូលកម្មវត្ថុ ឬចំណងជើងនៃសារដំណឹង")
-    @Size(max = 255, message = "ចំណងជើងនៃសារដំណឹងមិនអាចលើសពី ២៥៥ តួអក្សរឡើយ")
+    @NotBlank(message = "សូមបញ្ចូលចំណងជើងនៃសេចក្តីជូនដំណឹង")
+    @Size(max = 255, message = "ចំណងជើងមិនអាចលើសពី ២៥៥ តួអក្សរឡើយ")
     private String title;
 
-    @NotBlank(message = "សូមបញ្ចូលខ្លឹមសារ ឬអត្ថបទនៃសារដំណឹង")
+    @NotBlank(message = "សូមបញ្ចូលខ្លឹមសារនៃសេចក្តីជូនដំណឹង")
     private String message;
 
-    @NotNull(message = "សូមជ្រើសរើសប្រភេទសារដំណឹង")
+    @NotNull(message = "សូមជ្រើសរើសប្រភេទនៃសេចក្តីជូនដំណឹង")
     private NotificationType type;
 
     private Integer referenceId;

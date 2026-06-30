@@ -49,7 +49,7 @@ public class RoleServiceImpl implements RoleService {
             throw new DuplicateResourceException(
                     "មិនអាចបង្កើតបានទេ ដោយសារឈ្មោះតួនាទី ["
                             + request.getRoleName()
-                            + "] នេះមានក្នុងប្រព័ន្ធរួចហើយ (ស្ទួន)។");
+                            + "] នេះមានក្នុងប្រព័ន្ធរួចហើយ។");
         }
 
         Role saved = roleRepository.save(

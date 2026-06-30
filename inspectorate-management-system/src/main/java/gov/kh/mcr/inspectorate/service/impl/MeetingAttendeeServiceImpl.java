@@ -1,22 +1,30 @@
 package gov.kh.mcr.inspectorate.service.impl;
 
 import gov.kh.mcr.inspectorate.dto.request.*;
-import gov.kh.mcr.inspectorate.dto.response.AttendeeResponse;
+import gov.kh.mcr.inspectorate.dto.response
+        .AttendeeResponse;
 import gov.kh.mcr.inspectorate.entity.*;
-import gov.kh.mcr.inspectorate.enums.AttendanceStatus;
-import gov.kh.mcr.inspectorate.enums.MeetingStatusCode;
-import gov.kh.mcr.inspectorate.enums.NotificationType;
+import gov.kh.mcr.inspectorate.enums
+        .AttendanceStatus;
+import gov.kh.mcr.inspectorate.enums
+        .MeetingStatusCode;
+import gov.kh.mcr.inspectorate.enums
+        .NotificationType;
 import gov.kh.mcr.inspectorate.exception.*;
 import gov.kh.mcr.inspectorate.mapper.AttendeeMapper;
 import gov.kh.mcr.inspectorate.repository.*;
-import gov.kh.mcr.inspectorate.security.SecurityUtils;
+import gov.kh.mcr.inspectorate.security
+        .SecurityUtils;
 import gov.kh.mcr.inspectorate.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.transaction.annotation
+        .Transactional;
+import org.springframework.web.context.request
+        .RequestContextHolder;
+import org.springframework.web.context.request
+        .ServletRequestAttributes;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,13 +36,20 @@ import java.util.List;
 public class MeetingAttendeeServiceImpl
         implements MeetingAttendeeService {
 
-    private final MeetingAttendeeRepository attendeeRepo;
-    private final MeetingRepository         meetingRepo;
-    private final OfficerRepository         officerRepo;
-    private final AttendeeMapper            attendeeMapper;
-    private final SecurityUtils             securityUtils;
-    private final NotificationService       notificationService;
-    private final ActivityLogService        activityLogService;
+    private final MeetingAttendeeRepository
+            attendeeRepo;
+    private final MeetingRepository
+            meetingRepo;
+    private final UserRepository
+            userRepo;
+    private final AttendeeMapper
+            attendeeMapper;
+    private final SecurityUtils
+            securityUtils;
+    private final NotificationService
+            notificationService;
+    private final ActivityLogService
+            activityLogService;
 
     @Override
     @Transactional(readOnly = true)
@@ -66,8 +81,10 @@ public class MeetingAttendeeServiceImpl
                     "Attendee", attendeeId);
         }
 
-        return attendeeMapper.toResponse(attendee);
+        return attendeeMapper.toResponse(
+                attendee);
     }
+
 
     @Override
     public AttendeeResponse addAttendee(
@@ -77,21 +94,22 @@ public class MeetingAttendeeServiceImpl
         Meeting meeting = findMeeting(meetingId);
 
         validateMeetingActive(meeting);
+
         if (attendeeRepo
-                .existsByMeeting_MeetingIdAndOfficer_OfficerId(
+                .existsByMeeting_MeetingIdAndUser_UserId(
                         meetingId,
-                        request.getOfficerId())) {
+                        request.getUserId())) {
             throw new DuplicateResourceException(
-                   "មន្ត្រីនេះមានឈ្មោះក្នុងបញ្ជីសមាសភាពចូលរួមប្រជុំរួចរាល់ហើយ។");
+                    "អ្នកប្រើប្រាស់ ឬមន្ត្រីរូបនេះ មានឈ្មោះក្នុងបញ្ជីសមាសភាពចូលរួមនៃកិច្ចប្រជុំនេះរួចរាល់ហើយ។");
         }
 
-        Officer officer =
-                findOfficer(request.getOfficerId());
+        User user = findActiveUser(
+                request.getUserId());
 
         MeetingAttendee attendee =
                 MeetingAttendee.builder()
                         .meeting(meeting)
-                        .officer(officer)
+                        .user(user)
                         .role(request.getRole())
                         .attendanceStatus(
                                 AttendanceStatus.INVITED)
@@ -100,22 +118,23 @@ public class MeetingAttendeeServiceImpl
         MeetingAttendee saved =
                 attendeeRepo.save(attendee);
 
-        notificationService.createByOfficerId(
-                officer.getOfficerId(),
-                "សេចក្តីអញ្ជើញចូលរួមប្រជុំ",
-                "សូមគោរពអញ្ជើញចូលរួមអង្គប្រជុំស្តីពី៖ «"
+        notificationService.createByUserId(
+                user.getUserId(),
+                "ការអញ្ជើញប្រជុំ",
+                "អញ្ជើញ: "
                         + meeting.getTitle()
-                        + "» នៅថ្ងៃទី "
-                        + meeting.getMeetingDate(),
+                        + " ("
+                        + meeting.getMeetingDate()
+                        + ")",
                 NotificationType.MEETING,
                 meetingId);
 
         activityLogService.log(
                 "CREATE", "MeetingAttendee",
                 saved.getAttendeeId(),
-                "បន្ថែមសមាសភាពចូលរួមប្រជុំ "
-                        + officer.getFullNameKh()
-                        + " ទៅក្នុងកិច្ចប្រជុំ «" + meeting.getTitle() + "»",
+                "Add: "
+                        + user.getUserNameKh()
+                        + " → " + meeting.getTitle(),
                 buildContext());
 
         return attendeeMapper.toResponse(saved);
@@ -132,57 +151,63 @@ public class MeetingAttendeeServiceImpl
         List<AttendeeResponse> results =
                 new ArrayList<>();
 
-        request.getOfficerIds()
-                .forEach(officerId -> {
+        request.getUserIds().forEach(
+                userId -> {
 
                     if (attendeeRepo
-                            .existsByMeeting_MeetingIdAndOfficer_OfficerId(
-                                    meetingId, officerId)) {
+                            .existsByMeeting_MeetingIdAndUser_UserId(
+                                    meetingId, userId)) {
                         log.warn(
-                                "Duplicate officer {}"
+                                "Duplicate user {}"
                                         + " in meeting {}",
-                                officerId, meetingId);
+                                userId, meetingId);
                         return;
                     }
 
-                    officerRepo.findById(officerId)
+                    userRepo.findById(userId)
                             .ifPresentOrElse(
-                                    officer -> {
+                                    user -> {
                                         MeetingAttendee a =
-                                                MeetingAttendee.builder()
+                                                MeetingAttendee
+                                                        .builder()
                                                         .meeting(meeting)
-                                                        .officer(officer)
-                                                        .role(request.getRole())
+                                                        .user(user)
+                                                        .role(
+                                                                request
+                                                                        .getRole())
                                                         .attendanceStatus(
                                                                 AttendanceStatus
                                                                         .INVITED)
                                                         .build();
 
                                         results.add(
-                                                attendeeMapper.toResponse(
-                                                        attendeeRepo.save(a)));
+                                                attendeeMapper
+                                                        .toResponse(
+                                                                attendeeRepo
+                                                                        .save(a)));
 
-                                        // Notify
                                         notificationService
-                                                .createByOfficerId(
-                                                        officerId,
-                                                        "សេចក្តីអញ្ជើញចូលរួមប្រជុំ",
-                                                        "សូមគោរពអញ្ជើញចូលរួមអង្គប្រជុំស្តីពី៖ «"
-                                                                + meeting.getTitle() + "»",
-                                                        NotificationType.MEETING,
+                                                .createByUserId(
+                                                        userId,
+                                                        "ការអញ្ជើញប្រជុំ",
+                                                        "អញ្ជើញ: "
+                                                                + meeting
+                                                                .getTitle(),
+                                                        NotificationType
+                                                                .MEETING,
                                                         meetingId);
                                     },
                                     () -> log.warn(
-                                            "Officer {} not found",
-                                            officerId));
+                                            "User {} not found",
+                                            userId));
                 });
 
         activityLogService.log(
                 "CREATE", "MeetingAttendee",
                 meetingId,
-                "បន្ថែមសមាសភាពចូលរួមប្រជុំជាចង្កោមចំនួន "
+                "Bulk add "
                         + results.size()
-                        + " រូប ទៅក្នុងកិច្ចប្រជុំ «" + meeting.getTitle() + "»",
+                        + " attendees",
                 buildContext());
 
         return results;
@@ -201,19 +226,21 @@ public class MeetingAttendeeServiceImpl
                 .getMeetingId()
                 .equals(meetingId)) {
             throw new ResourceNotFoundException(
-                    "មិនមានឈ្មោះមន្ត្រីរូបនេះ នៅក្នុងកិច្ចប្រជុំដែលបានបញ្ជាក់ឡើយ សម្រាប់លេខសម្គាល់សមាសភាព", attendeeId);
+                    "Attendee", attendeeId);
         }
 
         attendee.setAttendanceStatus(
                 request.getAttendanceStatus());
 
         if (request.getNote() != null) {
-            attendee.setNote(request.getNote());
+            attendee.setNote(
+                    request.getNote());
         }
 
         if (request.getAttendanceStatus()
                 == AttendanceStatus.ATTENDED
-                && attendee.getCheckInTime() == null) {
+                && attendee.getCheckInTime()
+                == null) {
             attendee.setCheckInTime(
                     LocalDateTime.now());
         }
@@ -224,12 +251,13 @@ public class MeetingAttendeeServiceImpl
         activityLogService.log(
                 "UPDATE", "MeetingAttendee",
                 attendeeId,
-                "បច្ចុប្បន្នភាពស្ថានភាពវត្តមាន "
+                "Attendance: "
                         + request.getAttendanceStatus()
                         .getLabelKh(),
                 buildContext());
 
-        return attendeeMapper.toResponse(saved);
+        return attendeeMapper.toResponse(
+                saved);
     }
 
     @Override
@@ -244,7 +272,7 @@ public class MeetingAttendeeServiceImpl
                 .getMeetingId()
                 .equals(meetingId)) {
             throw new ResourceNotFoundException(
-                   "មិនមានឈ្មោះមន្ត្រីរូបនេះ នៅក្នុងកិច្ចប្រជុំដែលបានបញ្ជាក់ឡើយ សម្រាប់លេខសម្គាល់សមាសភាព ", attendeeId);
+                    "Attendee", attendeeId);
         }
 
         validateMeetingActive(
@@ -255,33 +283,50 @@ public class MeetingAttendeeServiceImpl
         activityLogService.log(
                 "DELETE", "MeetingAttendee",
                 attendeeId,
-                "លុបសមាសភាពចូលរួមប្រជុំ "
-                        + attendee.getOfficer()
-                        .getFullNameKh()
-                        + " ចេញពីកិច្ចប្រជុំ «" + attendee.getMeeting().getTitle() + "»",
+                "Remove: "
+                        + attendee.getUser()
+                        .getUserNameKh(),
                 buildContext());
     }
+
+
 
     private MeetingAttendee findById(
             Integer id) {
         return attendeeRepo.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "មិនមានទិន្នន័យសមាសភាពចូលរួមប្រជុំដែលមានលេខសម្គាល់ ", id));
+                                "Attendee", id));
     }
 
     private Meeting findMeeting(Integer id) {
         return meetingRepo.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "មិនមានទិន្នន័យកិច្ចប្រជុំដែលមានលេខសម្គាល់ ", id));
+                                "ការប្រជុំ", id));
     }
 
-    private Officer findOfficer(Integer id) {
-        return officerRepo.findById(id)
+
+    private User findActiveUser(Integer id) {
+
+        User user = userRepo.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "មិនមានទិន្នន័យមន្ត្រីដែលមានលេខសម្គាល់ ", id));
+                                "User", id));
+
+        String status =
+                user.getStatusCode() != null
+                        ? user.getStatusCode()
+                        .getStatusCode()
+                        : "";
+
+        if (!"ACTIVE".equals(status)) {
+            throw new BusinessException(
+                    "មិនអាចជ្រើសរើស ឬបន្ថែមបានឡើយ ព្រោះគណនីរបស់មន្ត្រី «" + user.getUserNameKh() + "» "
+                            + "មិនស្ថិតក្នុងស្ថានភាព «សកម្ម» ឡើយ (ស្ថានភាពបច្ចុប្បន្ន: " + status + ")");
+        }
+
+        return user;
     }
 
     private void validateMeetingActive(
@@ -289,14 +334,15 @@ public class MeetingAttendeeServiceImpl
 
         String code =
                 meeting.getStatusCode() != null
-                        ? meeting.getStatusCode().getStatusCode()
+                        ? meeting.getStatusCode()
+                        .getStatusCode()
                         : "";
 
-        if (!MeetingStatusCode.canEditAttendees(code)) {
+        if (!MeetingStatusCode
+                .canEditAttendees(code)) {
             throw new BusinessException(
-                    "មិនអាចកែប្រែសមាសភាពចូលរួមបានឡើយ ដោយសារកិច្ចប្រជុំ «"
-                            + meeting.getTitle()
-                            + "» នេះស្ថិតក្នុងស្ថានភាព «" + code + "»។");
+                    "មិនអាចកែប្រែ ឬបន្ថែមសមាសភាពចូលរួមបានឡើយ ព្រោះកិច្ចប្រជុំ «" + meeting.getTitle() + "» "
+                            + "ស្ថិតក្នុងស្ថានភាពដែលមិនអាចកែប្រែបានទៀតទេ (ស្ថានភាពបច្ចុប្បន្ន: " + code + ")");
         }
     }
 
@@ -314,26 +360,4 @@ public class MeetingAttendeeServiceImpl
                     .build();
         }
     }
-//    private Officer findActiveOfficer(Integer id) {
-//        Officer officer =
-//                officerRepo.findById(id)
-//                        .orElseThrow(() ->
-//                                new ResourceNotFoundException(
-//                                        "មន្ត្រី", id));
-//
-//        String status =
-//                officer.getStatusCode() != null
-//                        ? officer.getStatusCode().getStatusCode()
-//                        : "";
-//
-//        if (!"ACTIVE".equals(status)) {
-//            throw new BusinessException(
-//                    "មន្ត្រី \""
-//                            + officer.getFullNameKh()
-//                            + "\" ស្ថានភាព: " + status
-//                            + " — មិនអាចបន្ថែម");
-//        }
-//
-//        return officer;
-//    }
 }

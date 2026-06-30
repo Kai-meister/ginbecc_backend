@@ -34,4 +34,5 @@ public interface DepartmentRepository
     Optional<Department>
     findByDepartmentIdAndStatus(
             Integer id, ActiveStatus status);
+
 }

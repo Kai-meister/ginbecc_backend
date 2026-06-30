@@ -1,16 +1,17 @@
 package gov.kh.mcr.inspectorate.controller;
-import gov.kh.mcr.inspectorate.dto.request.ApprovalRequest;
-import gov.kh.mcr.inspectorate.dto.request.DecideRequest;
-import gov.kh.mcr.inspectorate.dto.response.ApiResponse;
-import gov.kh.mcr.inspectorate.dto.response.ApprovalResponse;
-import gov.kh.mcr.inspectorate.dto.response.PageResponse;
-import gov.kh.mcr.inspectorate.service.ApprovalService;
+
+import gov.kh.mcr.inspectorate.dto.request.*;
+import gov.kh.mcr.inspectorate.dto.response.*;
+import gov.kh.mcr.inspectorate.service
+        .ApprovalService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.security.access.prepost
+        .PreAuthorize;
+import org.springframework.validation.annotation
+        .Validated;
 import org.springframework.web.bind.annotation.*;
 
 @Validated
@@ -19,67 +20,8 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ApprovalController {
 
-    private final ApprovalService approvalService;
-
-    // GET /approvals
-    @GetMapping
-    @PreAuthorize(
-            "hasAnyAuthority('APPROVAL_VIEW'," + "'APPROVAL_REVIEW')")
-    public ResponseEntity<ApiResponse<
-                PageResponse<ApprovalResponse>>>
-    getAll(
-            @RequestParam(defaultValue = "0")
-            int page,
-            @RequestParam(defaultValue = "20")
-            int size,
-            @RequestParam(required = false)
-            String status,
-            @RequestParam(required = false)
-            Integer officerId,
-            @RequestParam(required = false)
-            Integer documentId) {
-
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        approvalService.getAll(
-                                page, size,
-                                status, officerId,
-                                documentId),
-                        "ទទួលបានបញ្ជីការអនុម័ត"));
-    }
-
-    // GET /approvals/my-pending
-    @GetMapping("/my-pending")
-    @PreAuthorize("hasAuthority('APPROVAL_REVIEW')")
-    public ResponseEntity<ApiResponse<
-    PageResponse<ApprovalResponse>>>
-    getMyPending(
-            @RequestParam(defaultValue = "0")
-            int page,
-            @RequestParam(defaultValue = "20")
-            int size) {
-
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        approvalService.getMyPending(
-                                page, size),
-                        "ទទួលបានបញ្ជីរង់ចាំការអនុម័ត"));
-    }
-    // GET /approvals/{id}
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('APPROVAL_VIEW',"
-                    + "'APPROVAL_REVIEW')")
-    public ResponseEntity<ApiResponse<
-    ApprovalResponse>>
-    getById(@PathVariable @Positive Integer id) {
-
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        approvalService.getById(id),
-                        "ទទួលបានព័ត៌មានការអនុម័ត"));
-    }
-
-    // POST /approvals - Officer submit
+    private final ApprovalService
+            approvalService;
     @PostMapping
     @PreAuthorize(
             "hasAuthority('APPROVAL_REQUEST')")
@@ -93,13 +35,131 @@ public class ApprovalController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         approvalService
-                                .requestApproval(request),
-                        "បានស្នើសុំការអនុម័តដោយជោគជ័យ"));
+                                .requestApproval(
+                                        request),
+                        "សសំណើអនុម័តត្រូវបានដាក់ជូនដោយជោគជ័យ"));
     }
 
-    // PUT /approvals/{id}/decide - Admin decide
+    @GetMapping
+    @PreAuthorize(
+            "hasAnyAuthority('APPROVAL_VIEW',"
+                    + "'APPROVAL_REVIEW')")
+    public ResponseEntity<ApiResponse<
+    PageResponse<ApprovalResponse>>>
+    getAll(
+            @RequestParam(
+                    defaultValue = "0")
+            int page,
+            @RequestParam(
+                    defaultValue = "20")
+            int size,
+            @RequestParam(
+                    required = false)
+            String status,
+            @RequestParam(
+                    required = false)
+            Integer officerId,
+            @RequestParam(
+                    required = false)
+            Integer documentId) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        approvalService.getAll(
+                                page, size, status,
+                                officerId,
+                                documentId),
+                        "ទាញយកបញ្ជីសំណើអនុម័តដោយជោគជ័យ"));
+    }
+
+    @GetMapping("/my-pending")
+    @PreAuthorize(
+            "hasAuthority('APPROVAL_REVIEW')")
+    public ResponseEntity<ApiResponse<
+    PageResponse<ApprovalResponse>>>
+    getMyPending(
+            @RequestParam(
+                    defaultValue = "0")
+            int page,
+            @RequestParam(
+                    defaultValue = "20")
+            int size) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        approvalService
+                                .getMyPending(
+                                        page, size),
+                        "ទាញយកបញ្ជីសំណើដែលកំពុងរង់ចាំការពិនិត្យដោយជោគជ័យ"));
+    }
+
+    @GetMapping("/my-requests")
+    @PreAuthorize(
+            "hasAuthority('APPROVAL_REQUEST')")
+    public ResponseEntity<ApiResponse<
+    PageResponse<ApprovalResponse>>>
+    getMyRequests(
+            @RequestParam(
+                    defaultValue = "0")
+            int page,
+            @RequestParam(
+                    defaultValue = "20")
+            int size,
+            @RequestParam(
+                    required = false)
+            String status) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        approvalService
+                                .getMyRequests(
+                                        page, size,
+                                        status),
+                        "ទាញយកប្រវត្តិសំណើរបស់អ្នកប្រើប្រាស់ដោយជោគជ័យ"));
+    }
+
+    @GetMapping("/my-decided")
+    @PreAuthorize(
+            "hasAuthority('APPROVAL_REVIEW')")
+    public ResponseEntity<ApiResponse<
+    PageResponse<ApprovalResponse>>>
+    getMyDecided(
+            @RequestParam(
+                    defaultValue = "0")
+            int page,
+            @RequestParam(
+                    defaultValue = "20")
+            int size) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        approvalService
+                                .getMyDecided(
+                                        page, size),
+                        "ទាញយកបញ្ជីការសម្រេចចិត្តបានដោយជោគជ័យ"));
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize(
+            "hasAnyAuthority('APPROVAL_VIEW',"
+                    + "'APPROVAL_REVIEW',"
+                    + "'APPROVAL_REQUEST')")
+    public ResponseEntity<ApiResponse<
+    ApprovalResponse>>
+    getById(
+            @PathVariable
+            @Positive Integer id) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        approvalService.getById(
+                                id),
+                        "ទាញយកព័ត៌មានសំណើអនុម័តដោយជោគជ័យ"));
+    }
+
     @PutMapping("/{id}/decide")
-    @PreAuthorize("hasAuthority('APPROVAL_REVIEW')")
+    @PreAuthorize(
+            "hasAuthority('APPROVAL_REVIEW')")
     public ResponseEntity<ApiResponse<
     ApprovalResponse>>
     decide(
@@ -112,8 +172,6 @@ public class ApprovalController {
                 ApiResponse.success(
                         approvalService.decide(
                                 id, request),
-                        "បានសម្រេចចិត្តការអនុម័ត "
-                                + request.getStatusCode()));
+                        "សំណើលេខ " + id + " ត្រូវបានកំណត់ស្ថានភាពជា '" + request.getStatusCode() + "' ដោយជោគជ័យ"));
     }
-
 }

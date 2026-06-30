@@ -5,6 +5,7 @@ import gov.kh.mcr.inspectorate.dto.response.*;
 import gov.kh.mcr.inspectorate.entity.*;
 import gov.kh.mcr.inspectorate.enums.AttendanceStatus;
 import gov.kh.mcr.inspectorate.enums.MeetingStatusCode;
+import gov.kh.mcr.inspectorate.enums.RoomStatus;
 import gov.kh.mcr.inspectorate.exception.*;
 import gov.kh.mcr.inspectorate.mapper.AttendeeMapper;
 import gov.kh.mcr.inspectorate.mapper.MeetingMapper;
@@ -36,7 +37,6 @@ public class MeetingServiceImpl
     private final SecurityUtils                  securityUtils;
     private final ActivityLogService             activityLogService;
     private final AttendeeMapper attendeeMapper;
-
     @Override
     @Transactional(readOnly = true)
     public PageResponse<MeetingResponse> getAll(
@@ -49,12 +49,20 @@ public class MeetingServiceImpl
                         .and(Sort.by("startTime")
                                 .descending()));
 
+        Integer deptScope =
+                securityUtils
+                        .canBypassDepartmentScope()
+                        ? null
+                        : securityUtils
+                        .getCurrentDepartmentId();
+
         Page<Meeting> result;
 
-        if (status != null && roomId != null) {
+        if (deptScope != null) {
+
             result = meetingRepo
-                    .findByStatusCode_StatusCode(
-                            status, pageable);
+                    .findByOrganizer_Officer_Department_DepartmentId(
+                            deptScope, pageable);
         } else if (status != null) {
             result = meetingRepo
                     .findByStatusCode_StatusCode(
@@ -64,18 +72,37 @@ public class MeetingServiceImpl
                     .findByRoom_RoomId(
                             roomId, pageable);
         } else {
-            result = meetingRepo.findAll(pageable);
+            result = meetingRepo
+                    .findAll(pageable);
         }
 
         return PageResponse.of(
-                result.map(this::toResponseWithSummary));
+                result.map(
+                        this::toResponseWithSummary));
     }
-
     @Override
     @Transactional(readOnly = true)
     public MeetingResponse getById(Integer id) {
-        return toResponseWithSummary(
-                findById(id));
+
+        Meeting meeting = findById(id);
+
+        Integer organizerDeptId =
+                meeting.getOrganizer() != null
+                        && meeting.getOrganizer()
+                        .getOfficer() != null
+                        && meeting.getOrganizer()
+                        .getOfficer()
+                        .getDepartment() != null
+                        ? meeting.getOrganizer()
+                        .getOfficer()
+                        .getDepartment()
+                        .getDepartmentId()
+                        : null;
+
+        securityUtils.validateDepartmentScope(
+                organizerDeptId);
+
+        return toResponseWithSummary(meeting);
     }
     @Override
     @Transactional(readOnly = true)
@@ -104,6 +131,7 @@ public class MeetingServiceImpl
                 .toList();
     }
 
+
     @Override
     public MeetingResponse create(
             MeetingRequest request) {
@@ -113,8 +141,7 @@ public class MeetingServiceImpl
         if (request.getRoomId() != null) {
             checkConflict(
                     request.getRoomId(),
-                    request,
-                    null);
+                    request, null);
         }
 
         Meeting meeting =
@@ -131,23 +158,42 @@ public class MeetingServiceImpl
         securityUtils.getCurrentUser()
                 .ifPresent(meeting::setOrganizer);
 
-        Meeting saved = meetingRepo.save(meeting);
+        Meeting saved =
+                meetingRepo.save(meeting);
 
         activityLogService.log(
                 "CREATE", "Meeting",
                 saved.getMeetingId(),
-                "បង្កើតកិច្ចប្រជុំថ្មី " + saved.getTitle(),
+                "បង្កើត: " + saved.getTitle(),
                 buildContext());
 
         return toResponseWithSummary(saved);
     }
-
     @Override
     public MeetingResponse update(
             Integer id,
             MeetingRequest request) {
 
         Meeting meeting = findById(id);
+        Integer organizerDeptId =
+                meeting.getOrganizer() != null
+                        && meeting.getOrganizer()
+                        .getOfficer() != null
+                        && meeting.getOrganizer()
+                        .getOfficer()
+                        .getDepartment() != null
+                        ? meeting.getOrganizer()
+                        .getOfficer()
+                        .getDepartment()
+                        .getDepartmentId()
+                        : null;
+
+        securityUtils.validateDepartmentScope(
+                organizerDeptId);
+
+        validateCanUpdate(meeting);
+        validateTime(request);
+
         validateCanUpdate(meeting);
 
         validateTime(request);
@@ -209,25 +255,41 @@ public class MeetingServiceImpl
     public void delete(Integer id) {
 
         Meeting meeting = findById(id);
+
+        Integer organizerDeptId =
+                meeting.getOrganizer() != null
+                        && meeting.getOrganizer()
+                        .getOfficer() != null
+                        && meeting.getOrganizer()
+                        .getOfficer()
+                        .getDepartment() != null
+                        ? meeting.getOrganizer()
+                        .getOfficer()
+                        .getDepartment()
+                        .getDepartmentId()
+                        : null;
+
+        securityUtils.validateDepartmentScope(
+                organizerDeptId);
+
         String code =
                 meeting.getStatusCode() != null
                         ? meeting.getStatusCode()
-                          .getStatusCode()
+                        .getStatusCode()
                         : "";
 
         if (!MeetingStatusCode.DRAFT
                 .getCode().equals(code)) {
             throw new BusinessException(
-                    "មិនអាចលុបកិច្ចប្រជុំបានឡើយ ដោយសារកិច្ចប្រជុំនេះស្ថិតក្នុងស្ថានភាព «"
-                            + code
-                            + "» (ប្រព័ន្ធអនុញ្ញាតឱ្យលុបតែគម្រោងព្រាង ប៉ុណ្ណោះ)។");
+                    "មិនអាចលុបកិច្ចប្រជុំនេះបានឡើយ ព្រោះកិច្ចប្រជុំដែលអាចលុបបាន លុះត្រាតែស្ថិតក្នុងស្ថានភាព «ឯកសារព្រាង/រក្សាទុកបណ្តោះអាសន្ន» ប៉ុណ្ណោះ "
+                            + "(ស្ថានភាពបច្ចុប្បន្ន: " + code + ")");
         }
 
         meetingRepo.deleteById(id);
 
         activityLogService.log(
-                "DELETE", "Meeting",
-                id, "លុបទិន្នន័យកិច្ចប្រជុំ " + meeting.getTitle(),
+                "DELETE", "Meeting", id,
+                "លុប: " + meeting.getTitle(),
                 buildContext());
     }
 
@@ -239,7 +301,7 @@ public class MeetingServiceImpl
                 || request.getEndTime()
                 .equals(request.getStartTime())) {
             throw new BusinessException(
-                    "មកាលបរិច្ឆេទ ឬម៉ោងបញ្ចប់ត្រូវតែនៅក្រោយកាលបរិច្ឆេទ ឬម៉ោងចាប់ផ្ដើម។");
+                    "កាលបរិច្ឆេទ ឬម៉ោងបញ្ចប់ត្រូវតែនៅក្រោយកាលបរិច្ឆេទ ឬម៉ោងចាប់ផ្ដើម។");
         }
     }
 
@@ -323,10 +385,23 @@ public class MeetingServiceImpl
     }
 
     private MeetingRoom findRoom(Integer id) {
-        return roomRepo.findById(id)
+        MeetingRoom room = roomRepo.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "មិនមានទិន្នន័យបន្ទប់ប្រជុំដែលមានលេខសម្គាល់ ", id));
+
+        if (RoomStatus.MAINTENANCE.equals(room.getStatus())
+                || RoomStatus.OCCUPIED.equals(room.getStatus())) {
+            throw new BusinessException(
+                    "មិនអាចកក់បន្ទប់ «"
+                            + room.getRoomCode()
+                            + "» បានឡើយ ដោយសារបន្ទប់នេះ"
+                            + "ស្ថិតក្នុងស្ថានភាព «"
+                            + room.getStatus().getLabelKh()
+                            + "»។");
+        }
+
+        return room;
     }
 
     private LookupMeetingStatus findStatus(
@@ -401,5 +476,8 @@ public class MeetingServiceImpl
             return ActivityLogContext.builder()
                     .build();
         }
+
+
     }
+
 }

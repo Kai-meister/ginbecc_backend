@@ -1,4 +1,5 @@
 package gov.kh.mcr.inspectorate.dto.request;
+
 import gov.kh.mcr.inspectorate.enums.ActiveStatus;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -17,6 +18,9 @@ public class DocumentTypeRequest {
     @Size(max = 255, message = "ឈ្មោះប្រភេទឯកសារមិនអាចលើសពី ២៥៥ តួអក្សរឡើយ")
     private String documentTypeName;
 
+    @Size(max = 500, message = "ការពិពណ៌នាអំពីប្រភេទឯកសារមិនអាចលើសពី ៥០០ តួអក្សរឡើយ")
     private String description;
+
+    @NotNull(message = "សូមជ្រើសរើសស្ថានភាពនៃប្រភេទឯកសារ")
     private ActiveStatus status;
 }
