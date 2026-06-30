@@ -22,8 +22,10 @@ public interface MeetingRepository
     Page<Meeting> findByRoom_RoomId(
             Integer roomId, Pageable pageable);
 
-
-    // Calendar — month/year
+    Page<Meeting>
+    findByOrganizer_Officer_Department_DepartmentId(
+            Integer departmentId,
+            Pageable pageable);
     @Query("""
         SELECT m FROM Meeting m
         LEFT JOIN FETCH m.room        r
@@ -38,7 +40,6 @@ public interface MeetingRepository
             @Param("month") int month,
             @Param("year")  int year);
 
-    //  Conflict check
     @Query("""
         SELECT m FROM Meeting m
         WHERE m.room.roomId = :roomId
@@ -60,7 +61,6 @@ public interface MeetingRepository
             @Param("ignoredStatuses")
             List<String> ignoredStatuses);
 
-    // Conflict check (exclude self)
     @Query("""
         SELECT m FROM Meeting m
         WHERE m.room.roomId  = :roomId
@@ -85,8 +85,6 @@ public interface MeetingRepository
             @Param("ignoredStatuses")
             List<String> ignoredStatuses);
 
-
-    // Report query
     @Query("""
         SELECT m FROM Meeting m
         WHERE m.room.roomId = :roomId

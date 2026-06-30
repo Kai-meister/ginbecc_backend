@@ -12,22 +12,20 @@ import java.util.Optional;
 public interface MeetingAttendeeRepository
         extends JpaRepository<MeetingAttendee, Integer> {
 
-    List<MeetingAttendee> findByMeeting_MeetingId(
+    List<MeetingAttendee>
+    findByMeeting_MeetingId(
             Integer meetingId);
 
-
+    // Fix — Officer_OfficerId → User_UserId
     boolean
-    existsByMeeting_MeetingIdAndOfficer_OfficerId(
+    existsByMeeting_MeetingIdAndUser_UserId(
             Integer meetingId,
-            Integer officerId);
-
-    long countByMeeting_MeetingId(
-            Integer meetingId);
+            Integer userId);
 
     Optional<MeetingAttendee>
-    findByMeeting_MeetingIdAndOfficer_OfficerId(
+    findByMeeting_MeetingIdAndUser_UserId(
             Integer meetingId,
-            Integer officerId);
+            Integer userId);
 
     List<MeetingAttendee>
     findByMeeting_MeetingIdAndAttendanceStatus(
@@ -38,9 +36,14 @@ public interface MeetingAttendeeRepository
             Integer meetingId,
             AttendanceStatus status);
 
+    long countByMeeting_MeetingId(
+            Integer meetingId);
+
+    // Fix — find meetings of specific user
     List<MeetingAttendee>
-    findByOfficer_OfficerId(
-            Integer officerId);
+    findByUser_UserId(
+            Integer userId);
+
     void deleteByMeeting_MeetingId(
             Integer meetingId);
 }

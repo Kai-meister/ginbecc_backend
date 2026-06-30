@@ -126,7 +126,6 @@ public class UserServiceImpl
                 findStatus(request.getStatusCode()));
         user.setPasswordHash(
                 passwordEncoder.encode(request.getPassword()));
-        user.setMustChangePassword(true);
         user.setFailedLoginCount(0);
 
         setOfficerByType(user, request);

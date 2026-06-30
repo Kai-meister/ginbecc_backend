@@ -86,11 +86,6 @@ public class User {
     private String passwordHash;
 
     @Builder.Default
-    @Column(name = "must_change_password",
-            nullable = false)
-    private Boolean mustChangePassword = false;
-
-    @Builder.Default
     @Column(name = "failed_login_count",
             nullable = false)
     private Integer failedLoginCount = 0;

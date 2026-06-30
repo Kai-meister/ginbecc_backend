@@ -1,4 +1,5 @@
 package gov.kh.mcr.inspectorate.entity;
+
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -9,8 +10,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "documents",
         indexes = {
-                @Index(name = "idx_doc_officer",
-                        columnList = "officer_id"),
+                @Index(name = "idx_doc_user",
+                        columnList = "user_id"),
                 @Index(name = "idx_doc_status",
                         columnList = "status_code"),
                 @Index(name = "idx_doc_expiry",
@@ -28,9 +29,9 @@ public class Document {
     private Integer documentId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "officer_id",
+    @JoinColumn(name = "user_id",
             nullable = false)
-    private Officer officer;
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_type_id",
@@ -61,8 +62,10 @@ public class Document {
     private String note;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "status_code",
-            referencedColumnName = "status_code")
+    @JoinColumn(
+            name = "status_code",
+            referencedColumnName = "status_code",
+            nullable = false)
     private LookupDocumentStatus statusCode;
 
     @Column(name = "expiry_date")

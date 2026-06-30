@@ -66,18 +66,18 @@ public class NotificationServiceImpl
         public List<NotificationResponse> createBulk(
                         NotificationCreateRequest req) {
 
-                if (req.getOfficerIds() == null
-                                || req.getOfficerIds().isEmpty()) {
+                if (req.getUserIds() == null
+                                || req.getUserIds().isEmpty()) {
                         throw new BusinessException(
-                                        "officerIds ចាំបាច់");
+                                        "userIds ចាំបាច់");
                 }
 
                 List<NotificationResponse> results = new ArrayList<>();
 
-                req.getOfficerIds().forEach(oid -> {
+                req.getUserIds().forEach(oid -> {
                         try {
                                 userRepo
-                                                .findByOfficer_OfficerId(oid)
+                                                .findById(oid)
                                                 .ifPresentOrElse(
                                                                 u -> { // phireak
                                                                         Notification saved = notifRepo
@@ -103,7 +103,7 @@ public class NotificationServiceImpl
 
                 log.info("Bulk: {}/{} sent",
                                 results.size(),
-                                req.getOfficerIds().size());
+                                req.getUserIds().size());
 
                 return results;
         }
@@ -236,6 +236,28 @@ public class NotificationServiceImpl
                                 result.map(notifMapper::toResponse));
         }
 
+        @Override
+        public PageResponse<NotificationResponse> getMyNotificationsByType(
+                        Integer currentUserId,
+                        NotificationType type,
+                        Boolean isRead,
+                        int page, int size) {
+
+                Pageable pageable = PageRequest.of(
+                                page, size,
+                                Sort.by("createdAt").descending());
+
+                Page<Notification> result = isRead != null
+                                ? notifRepo.findByUser_UserIdAndTypeAndIsRead(
+                                                currentUserId, type,
+                                                isRead, pageable)
+                                : notifRepo.findByUser_UserIdAndType(
+                                                currentUserId, type, pageable);
+
+                return PageResponse.of(
+                                result.map(notifMapper::toResponse));
+        }
+
         // ─────────────────────────────────────────────
         // GET BY ID
         // Fix — owner check
@@ -313,10 +335,9 @@ public class NotificationServiceImpl
         private void validateTarget(
                         NotificationCreateRequest req) {
 
-                int count = (req.getOfficerId() != null ? 1 : 0)
-                                + (req.getUserId() != null ? 1 : 0)
-                                + (req.getOfficerIds() != null
-                                                && !req.getOfficerIds().isEmpty()
+                int count = (req.getUserId() != null ? 1 : 0)
+                                + (req.getUserIds() != null
+                                                && !req.getUserIds().isEmpty()
                                                                 ? 1
                                                                 : 0);
 
@@ -340,14 +361,6 @@ public class NotificationServiceImpl
                                         .findById(req.getUserId())
                                         .orElseThrow(() -> new ResourceNotFoundException(
                                                         "User", req.getUserId()));
-                }
-                if (req.getOfficerId() != null) {
-                        return userRepo
-                                        .findByOfficer_OfficerId(
-                                                        req.getOfficerId())
-                                        .orElseThrow(() -> new ResourceNotFoundException(
-                                                        "User for Officer",
-                                                        req.getOfficerId()));
                 }
                 throw new BusinessException(
                                 "មិនអាច resolve User");

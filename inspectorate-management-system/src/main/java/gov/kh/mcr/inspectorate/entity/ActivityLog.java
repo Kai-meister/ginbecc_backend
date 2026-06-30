@@ -20,7 +20,8 @@ import java.time.LocalDateTime;
                         columnList =
                                 "user_id,created_at")
         })
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
 public class ActivityLog {
@@ -31,13 +32,10 @@ public class ActivityLog {
     @Column(name = "log_id")
     private Integer logId;
 
-    // nullable = true (System action)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
-    // Store email directly
-    // ជៀសវាង null ពេល user deleted
     @Column(name = "user_email", length = 150)
     private String userEmail;
 

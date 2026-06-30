@@ -1,7 +1,9 @@
 package gov.kh.mcr.inspectorate.entity;
 
-import gov.kh.mcr.inspectorate.enums.AttendanceStatus;
-import gov.kh.mcr.inspectorate.enums.AttendeeRole;
+import gov.kh.mcr.inspectorate.enums
+        .AttendanceStatus;
+import gov.kh.mcr.inspectorate.enums
+        .AttendeeRole;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -12,15 +14,14 @@ import java.time.LocalDateTime;
 @Table(name = "meeting_attendees",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_meeting_officer",
-                        columnNames = {
-                                "meeting_id", "officer_id"})
+                        name = "uk_meeting_user",
+                        columnNames = {"meeting_id", "user_id"})
         },
         indexes = {
                 @Index(name = "idx_attendee_meeting",
                         columnList = "meeting_id"),
-                @Index(name = "idx_attendee_officer",
-                        columnList = "officer_id"),
+                @Index(name = "idx_attendee_user",
+                        columnList = "user_id"),
                 @Index(name = "idx_attendee_status",
                         columnList = "attendance_status")
         })
@@ -39,15 +40,19 @@ public class MeetingAttendee {
     @JoinColumn(name = "meeting_id",
             nullable = false)
     private Meeting meeting;
+
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "officer_id",
+    @JoinColumn(name = "user_id",
             nullable = false)
-    private Officer officer;
+    private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
+    @Column(name = "role",
+            nullable = false)
     @Builder.Default
-    private AttendeeRole role = AttendeeRole.ATTENDEE;
+    private AttendeeRole role =
+            AttendeeRole.ATTENDEE;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "attendance_status",

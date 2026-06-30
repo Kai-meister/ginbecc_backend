@@ -220,7 +220,7 @@ public final class ExcelUtils {
                 c(row, 1, nv(d2.getDocumentNumber()), cs);
                 c(row, 2, nv(d2.getDocumentName()),   cs);
                 c(row, 3, nv(d2.getDocumentTypeName()),cs);
-                c(row, 4, nv(d2.getOfficerName()),    cs);
+                c(row, 4, nv(d2.getUserName()),       cs);
                 c(row, 5, nv(d2.getDepartmentName()), cs);
                 c(row, 6, d(d2.getExpiryDate()),      cs);
                 c(row, 7, nv(d2.getStatusLabel()),    cs);
@@ -285,8 +285,8 @@ public final class ExcelUtils {
 
                 c(row, 0, a.getNo()+"",             cs);
                 c(row, 1, nv(a.getDocumentName()),  cs);
-                c(row, 2, nv(a.getRequestedBy()),   cs);
-                c(row, 3, nv(a.getRequestedByDept()),cs);
+                c(row, 2, nv(a.getRequesterName()), cs);
+                c(row, 3, nv(a.getRequesterDept()), cs);
                 c(row, 4, nv(a.getApprovedBy()),    cs);
                 c(row, 5, nv(a.getStatusLabel()),   cs);
                 c(row, 6, nv(a.getComment()),       cs);
@@ -304,6 +304,63 @@ public final class ExcelUtils {
         } catch (Exception e) {
             throw new RuntimeException(
                     "Approval report: "
+                            + e.getMessage());
+        }
+    }
+
+    public static byte[] announcementRecipients(
+            List<AnnouncementRecipientReportResponse> list) {
+
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+
+            XSSFSheet sh =
+                    wb.createSheet("Recipients");
+            Styles s = new Styles(wb);
+            int cols = 8;
+            int r = 0;
+
+            r = orgHeader(sh, wb, r, cols);
+            r = reportTitle(sh, wb, r, cols,
+                    "របាយការណ៍អ្នកទទួលប្រកាស");
+            r = filterBar(sh, wb, r, cols,
+                    null, null, null, null);
+
+            r = colHeaders(sh, s, r, new String[]{
+                    "ល.រ", "ប្រកាស",
+                    "អ្នកទទួល", "អ៊ីមែល",
+                    "នាយកដ្ឋាន", "ស្ថានភាពអាន",
+                    "ថ្ងៃអាន", "ថ្ងៃបង្កើត"
+            });
+
+            long readCount = 0;
+            for (var ar : list) {
+                if (Boolean.TRUE.equals(ar.getIsRead())) {
+                    readCount++;
+                }
+                Row row = sh.createRow(r++);
+                row.setHeightInPoints(22);
+                CellStyle cs = alt(s, ar.getNo());
+
+                c(row, 0, ar.getNo()+"",                 cs);
+                c(row, 1, nv(ar.getAnnouncementTitle()), cs);
+                c(row, 2, nv(ar.getReceiverName()),      cs);
+                c(row, 3, nv(ar.getReceiverEmail()),     cs);
+                c(row, 4, nv(ar.getDepartmentName()),    cs);
+                c(row, 5, nv(ar.getReadStatus()),        cs);
+                c(row, 6, dt(ar.getReadAt()),            cs);
+                c(row, 7, dt(ar.getCreatedAt()),         cs);
+            }
+
+            summaryBar(sh, wb, r, cols,
+                    "សរុប: " + list.size()
+                            + "  |  អានរួច: " + readCount);
+            autoWidth(sh, cols);
+            freezeHeader(sh, 4);
+            return bytes(wb);
+
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Recipient report: "
                             + e.getMessage());
         }
     }

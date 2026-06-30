@@ -118,8 +118,6 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .roleName(user.getRole().getRoleName())
                 .permissions(permissions)
-                .mustChangePassword(
-                        user.getMustChangePassword())
                 .build();
     }
 
@@ -204,8 +202,6 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .roleName(user.getRole().getRoleName())
                 .permissions(permissions)
-                .mustChangePassword(
-                        user.getMustChangePassword())
                 .build();
     }
 
@@ -238,7 +234,6 @@ public class AuthServiceImpl implements AuthService {
         user.setPasswordHash(
                 passwordEncoder.encode(
                         req.getNewPassword()));
-        user.setMustChangePassword(false);
         userRepository.save(user);
 
         activityLogService.log(
@@ -260,8 +255,6 @@ public class AuthServiceImpl implements AuthService {
 
         user.setPasswordHash(
                 passwordEncoder.encode(plainPassword));
-
-        user.setMustChangePassword(true);
 
         user.setFailedLoginCount(0);
         user.setLockedUntil(null);
@@ -289,7 +282,6 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .userNameKh(user.getUserNameKh())
                 .temporaryPassword(plainPassword)
-                .mustChangePassword(true)
                 .message(
                         "ពាក្យសម្ងាត់នេះអាចប្រើប្រាស់បានតែម្តងគត់ (One-time Password) "
                                 + "សូមធ្វើការផ្លាស់ប្តូរពាក្យសម្ងាត់ថ្មីជាបន្ទាន់")

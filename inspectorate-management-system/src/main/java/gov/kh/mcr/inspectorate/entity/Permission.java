@@ -30,6 +30,10 @@ public class Permission {
             length = 100, nullable = false)
     private String module;
 
+    @Column(name = "display_name_kh",
+            length = 255)
+    private String displayNameKh;
+
     @Column(name = "description",
             columnDefinition = "TEXT")
     private String description;

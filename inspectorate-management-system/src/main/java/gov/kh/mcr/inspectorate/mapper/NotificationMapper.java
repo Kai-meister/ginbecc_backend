@@ -1,8 +1,13 @@
+// NotificationMapper.java — រក្សាដូចដើម
+// ព្រោះ Notification.user already correct
+// (មិនមាន officer field ត្រូវកែទេ)
+
 package gov.kh.mcr.inspectorate.mapper;
 
 import gov.kh.mcr.inspectorate.dto.response
         .NotificationResponse;
-import gov.kh.mcr.inspectorate.entity.Notification;
+import gov.kh.mcr.inspectorate.entity
+        .Notification;
 import gov.kh.mcr.inspectorate.enums
         .NotificationType;
 import org.mapstruct.*;
@@ -24,7 +29,8 @@ public interface NotificationMapper {
     NotificationResponse toResponse(
             Notification entity);
 
-    default String label(NotificationType t) {
+    default String label(
+            NotificationType t) {
         return t != null
                 ? t.getLabelKh() : "";
     }

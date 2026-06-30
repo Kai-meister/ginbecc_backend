@@ -27,7 +27,6 @@ public interface OfficerService {
 
     List<OfficerResponse> getNearRetirement();
 
-    // Upload + Auto-link profile image
     OfficerResponse uploadProfileImage(
             Integer officerId,
             MultipartFile file);

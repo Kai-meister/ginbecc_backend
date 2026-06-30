@@ -1,6 +1,5 @@
 package gov.kh.mcr.inspectorate.dto.request;
 
-
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -10,12 +9,12 @@ import lombok.*;
 @Builder
 public class LoginRequest {
 
-    @NotBlank(message = "សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែល")
+    @NotBlank(message = "សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែលរបស់អ្នក")
     @Email(message = "ទម្រង់អាសយដ្ឋានអ៊ីមែលមិនត្រឹមត្រូវឡើយ")
     @Size(max = 150, message = "អាសយដ្ឋានអ៊ីមែលមិនអាចលើសពី ១៥០ តួអក្សរឡើយ")
     private String email;
 
-    @NotBlank(message = "សូមបញ្ចូលពាក្យសម្ងាត់")
-    @Size(min = 1, max = 100, message = "ពាក្យសម្ងាត់មិនអាចលើសពី ១០០ តួអក្សរឡើយ")
+    @NotBlank(message = "សូមបញ្ចូលពាក្យសម្ងាត់របស់អ្នក")
+    @Size(min = 8, max = 100, message = "ពាក្យសម្ងាត់ត្រូវមានប្រវែងពី ៨ ដល់ ១០០ តួអក្សរ")
     private String password;
 }

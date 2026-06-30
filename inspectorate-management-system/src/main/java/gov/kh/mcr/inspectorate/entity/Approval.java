@@ -1,4 +1,5 @@
 package gov.kh.mcr.inspectorate.entity;
+
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -12,10 +13,13 @@ import java.time.LocalDateTime;
                         columnList = "document_id"),
                 @Index(name = "idx_approval_status",
                         columnList = "status_code"),
-                @Index(name = "idx_approval_officer",
-                        columnList = "requested_by_officer_id"),
                 @Index(name = "idx_approval_approver",
-                        columnList = "approved_by_user_id")
+                        columnList = "approved_by_user_id"),
+                // Fix — index department (not
+                // single manager, since multiple
+                // managers can decide)
+                @Index(name = "idx_approval_dept",
+                        columnList = "department_id")
         })
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
@@ -33,11 +37,16 @@ public class Approval {
             nullable = false)
     private Document document;
 
+    // Fix — field name "department"
+    // (NOT "assignedManager")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "requested_by_officer_id",
-            nullable = false)
-    private Officer requestedBy;
+    @JoinColumn(name = "department_id",
+            nullable = true)
+    private Department department;
+    //              ↑
+    //  ត្រូវឲ្យត្រូវនឹង
+    //  source = "department.departmentId"
+    //  ក្នុង ApprovalMapper
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approved_by_user_id")
@@ -46,7 +55,8 @@ public class Approval {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "status_code",
-            referencedColumnName = "status_code")
+            referencedColumnName = "status_code",
+            nullable = false)
     private LookupDocumentStatus statusCode;
 
     @Column(name = "comment",

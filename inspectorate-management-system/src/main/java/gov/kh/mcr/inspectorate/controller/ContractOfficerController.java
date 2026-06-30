@@ -58,7 +58,7 @@ public class ContractOfficerController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         service.getById(id),
-                        "ទទួលបានព័ត៌មានមន្ត្រីកិច្ចសន្យាា"));
+                        "ទទួលបានព័ត៌មានមន្ត្រីកិច្ចសន្យា"));
     }
 
     // POST /contract-officers

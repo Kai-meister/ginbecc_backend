@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -15,7 +16,9 @@ import java.time.LocalDateTime;
                 @Index(name = "idx_ann_priority",
                         columnList = "priority"),
                 @Index(name = "idx_ann_publish",
-                        columnList = "publish_at")
+                        columnList = "publish_at"),
+                @Index(name = "idx_ann_expire",
+                        columnList = "expire_at")
         })
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
@@ -41,7 +44,8 @@ public class Announcement {
     private User createdBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "meeting_id")
+    @JoinColumn(name = "meeting_id",
+            nullable = true)
     private Meeting meeting;
 
     @Column(name = "title",
@@ -56,16 +60,22 @@ public class Announcement {
     @Column(name = "publish_at")
     private LocalDateTime publishAt;
 
+    @Column(name = "expire_at")
+    private LocalDate expireAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "status_code",
-            referencedColumnName = "status_code")
+    @JoinColumn(
+            name = "status_code",
+            referencedColumnName = "status_code",
+            nullable = false)
     private LookupAnnouncementStatus statusCode;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "priority",
             nullable = false)
     @Builder.Default
-    private Priority priority = Priority.MEDIUM;
+    private Priority priority =
+            Priority.MEDIUM;
 
     @CreationTimestamp
     @Column(name = "created_at",

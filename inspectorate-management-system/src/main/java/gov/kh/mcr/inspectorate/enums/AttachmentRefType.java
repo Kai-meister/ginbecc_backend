@@ -39,7 +39,7 @@ public enum AttachmentRefType {
             String code) {
         if (code == null) {
             throw new IllegalArgumentException(
-                    "AttachmentRefType code null");
+                    "កូដនៃប្រភេទឯកសារភ្ជាប់ មិនអាចទទេបានឡើយ");
         }
         for (AttachmentRefType t : values()) {
             if (t.code.equalsIgnoreCase(code)) {
@@ -47,18 +47,15 @@ public enum AttachmentRefType {
             }
         }
         throw new IllegalArgumentException(
-                "AttachmentRefType មិនស្គាល់: " + code);
+                "ប្រភេទឯកសារភ្ជាប់មិនត្រឹមត្រូវ: " + code);
     }
 
-    //  MinIO path prefix
-    // MEETING_ROOM to "meeting-room"
     public String toPathPrefix() {
         return this.code
                 .toLowerCase()
                 .replace("_", "-");
     }
 
-    // All valid codes
     public static String[] allCodes() {
         AttachmentRefType[] types = values();
         String[] codes = new String[types.length];
@@ -68,7 +65,6 @@ public enum AttachmentRefType {
         return codes;
     }
 
-    // Regex pattern សម្រាប់ @Pattern
     public static final String VALIDATION_PATTERN =
             "^(OFFICER|CONTRACT_OFFICER|USER"
                     + "|DOCUMENT|MEETING_ROOM"

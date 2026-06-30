@@ -9,13 +9,22 @@ import java.time.LocalDateTime;
 public class ApprovalReportResponse {
 
     private Integer       no;
-    private String        documentName;
+    @Builder.Default
+    private String        documentName    = "";
     private String        documentNumber;
-    private String        requestedBy;
-    private String        requestedByDept;
-    private String        approvedBy;
-    private String        statusCode;
-    private String        statusLabel;
+    @Builder.Default
+    private String        requesterName   = "";
+    @Builder.Default
+    private String        requesterDept   = "";
+    @Builder.Default
+    private String        departmentName  = "";
+
+    @Builder.Default
+    private String        approvedBy      = "";
+    @Builder.Default
+    private String        statusCode      = "";
+    @Builder.Default
+    private String        statusLabel     = "";
     private String        comment;
     private LocalDateTime requestedAt;
     private LocalDateTime decidedAt;

@@ -14,15 +14,15 @@ public class UserReportResponse {
     private String        email;
     private String        phone;
     @Builder.Default
-    private String  roleName       = "";
+    private String        roleName     = "";
     @Builder.Default
-    private String  roleDisplay    = "";
+    private String        roleDisplay  = "";
     private String        officerName;
     private String        departmentName;
     @Builder.Default
-    private String  statusCode     = "";
+    private String        statusCode   = "";
     @Builder.Default
-    private String  statusLabel    = "";
+    private String        statusLabel  = "";
     private LocalDateTime lastLoginAt;
     private LocalDateTime createdAt;
 }

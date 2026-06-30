@@ -18,7 +18,6 @@ public interface UserService {
 
     UserResponse create(UserRequest request);
 
-    // update with officer link
     UserResponse update(
             Integer id, UserRequest request);
 
