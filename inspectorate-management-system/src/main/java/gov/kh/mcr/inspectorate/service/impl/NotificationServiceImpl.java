@@ -74,10 +74,10 @@ public class NotificationServiceImpl
 
                 List<NotificationResponse> results = new ArrayList<>();
 
-                req.getUserIds().forEach(oid -> {
+                req.getUserIds().forEach(uid -> {
                         try {
                                 userRepo
-                                                .findById(oid)
+                                                .findById(uid)
                                                 .ifPresentOrElse(
                                                                 u -> { // phireak
                                                                         Notification saved = notifRepo
@@ -91,13 +91,13 @@ public class NotificationServiceImpl
                                                                                         req.getReferenceId());// phireak
                                                                 }, // phireak
                                                                 () -> log.warn(
-                                                                                "No user officer: {}",
-                                                                                oid));
+                                                                                "No user: {}",
+                                                                                uid));
                         } catch (Exception ex) {
-                                // Log but continue other officers
+                                // Log but continue other users
                                 log.error(
-                                                "Bulk notif officer {}: {}",
-                                                oid, ex.getMessage());
+                                                "Bulk notif user {}: {}",
+                                                uid, ex.getMessage());
                         }
                 });
 

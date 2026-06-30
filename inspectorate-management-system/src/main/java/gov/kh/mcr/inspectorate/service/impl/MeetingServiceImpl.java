@@ -442,6 +442,10 @@ public class MeetingServiceImpl
                 .forEach(att -> {
                     User user = att.getUser();
                     if (user == null) {
+                        log.warn(
+                                "Skipping meeting {} attendee"
+                                        + " with no user account",
+                                meeting.getMeetingId());
                         return;
                     }
                     if (actorUserId != null
