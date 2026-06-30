@@ -431,26 +431,30 @@ public class MeetingServiceImpl
             Meeting meeting,
             String title, String message) {
 
-        Officer actor =
-                securityUtils.getCurrentOfficerOrNull();
-        Integer actorOfficerId =
-                actor != null ? actor.getOfficerId() : null;
+        Integer actorUserId =
+                securityUtils.getCurrentUser()
+                        .map(User::getUserId)
+                        .orElse(null);
 
         attendeeRepo
                 .findByMeeting_MeetingId(
                         meeting.getMeetingId())
                 .forEach(att -> {
-                    Officer officer = att.getOfficer();
-                    if (officer == null) {
+                    User user = att.getUser();
+                    if (user == null) {
+                        log.warn(
+                                "Skipping meeting {} attendee"
+                                        + " with no user account",
+                                meeting.getMeetingId());
                         return;
                     }
-                    if (actorOfficerId != null
-                            && actorOfficerId.equals(
-                                    officer.getOfficerId())) {
+                    if (actorUserId != null
+                            && actorUserId.equals(
+                                    user.getUserId())) {
                         return; // skip the actor
                     }
-                    notificationService.createByOfficerId(
-                            officer.getOfficerId(),
+                    notificationService.createByUserId(
+                            user.getUserId(),
                             title, message,
                             NotificationType.MEETING,
                             meeting.getMeetingId());

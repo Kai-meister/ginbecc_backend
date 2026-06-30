@@ -41,7 +41,7 @@ public class MeetingRoomController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         meetingRoomService.getAll(status),
-                        "ទទួលបានបញ្ជីបន្ទប់ប្រជុំ"));
+                        "ទាញយកបញ្ជីបន្ទប់ប្រជុំបានដោយជោគជ័យ"));
     }
 
     // GET /meeting-rooms/{id}
@@ -56,7 +56,7 @@ public class MeetingRoomController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         meetingRoomService.getById(id),
-                        "ព័ត៌មានបន្ទប់ប្រជុំ"));
+                        "ទាញយកព័ត៌មានបន្ទប់ប្រជុំបានដោយជោគជ័យ"));
     }
 
     // POST /meeting-rooms
@@ -72,7 +72,7 @@ public class MeetingRoomController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         meetingRoomService.create(request),
-                        "ការបង្កើតបន្ទប់ប្រជុំបានជោគជ័យ"));
+                        "បន្ទប់ប្រជុំត្រូវបានបង្កើតដោយជោគជ័យ"));
     }
 
     // PUT /meeting-rooms/{id}
@@ -90,7 +90,7 @@ public class MeetingRoomController {
                 ApiResponse.success(
                         meetingRoomService.update(
                                 id, request),
-                        "ការកែប្រែបានជោគជ័យ"));
+                        "ព័ត៌មានបន្ទប់ប្រជុំត្រូវបានកែប្រែដោយជោគជ័យ"));
     }
 
     // DELETE /meeting-rooms/{id}
@@ -104,7 +104,7 @@ public class MeetingRoomController {
         meetingRoomService.delete(id);
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "ការលុបបានជោគជ័យ"));
+                        null, "បន្ទប់ប្រជុំត្រូវបានលុបចេញពីប្រព័ន្ធដោយជោគជ័យ"));
     }
 
     // POST /meeting-rooms/{id}/image
@@ -125,7 +125,7 @@ public class MeetingRoomController {
                 .body(ApiResponse.success(
                         meetingRoomService
                                 .uploadImage(id, file),
-                        "ការផ្ទុករូបភាពបន្ទប់បានជោគជ័យ"));
+                        "រូបភាពបន្ទប់ប្រជុំត្រូវបានផ្ទុកឡើងដោយជោគជ័យ"));
     }
 
     // DELETE /meeting-rooms/{id}/image
@@ -139,7 +139,7 @@ public class MeetingRoomController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         meetingRoomService.removeImage(id),
-                        "លុបរូបបន្ទប់ជោគជ័យ"));
+                        "រូបភាពបន្ទប់ប្រជុំត្រូវបានដកចេញដោយជោគជ័យ"));
     }
 
     // GET /image-URL
@@ -151,6 +151,6 @@ public class MeetingRoomController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         meetingRoomService.getImageUrl(id),
-                        "URL រូបបន្ទប់"));
+                        "ទាញយកតំណភ្ជាប់រូបភាពបានដោយជោគជ័យ"));
     }
 }

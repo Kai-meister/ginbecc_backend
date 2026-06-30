@@ -37,7 +37,7 @@ public class PositionController {
                 ApiResponse.success(
                         positionService.getAll(
                                 departmentId, keyword),
-                        "ទទួលបានបញ្ជីតំណែង"));
+                        "ទាញយកបញ្ជីតំណែងមន្ត្រីបានដោយជោគជ័យ"));
     }
 
     @GetMapping("/{id}")
@@ -51,10 +51,9 @@ public class PositionController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         positionService.getById(id),
-                        "ទទួលបានព័ត៌មានតំណែង"));
+                        "ទាញយកព័ត៌មានតំណែងមន្ត្រីបានដោយជោគជ័យ"));
     }
 
-    // POST /positions
     @PostMapping
     @PreAuthorize(
             "hasAuthority('POSITION_MANAGE')")
@@ -68,10 +67,9 @@ public class PositionController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         positionService.create(request),
-                        "បង្កើតតំណែងបានជោគជ័យ"));
+                        "តំណែងមន្ត្រីត្រូវបានបង្កើតដោយជោគជ័យ"));
     }
 
-    // PUT /positions/{id}
     @PutMapping("/{id}")
     @PreAuthorize(
             "hasAuthority('POSITION_MANAGE')")
@@ -87,10 +85,9 @@ public class PositionController {
                 ApiResponse.success(
                         positionService.update(
                                 id, request),
-                        "កែប្រែតំណែងបានជោគជ័យ"));
+                        "ព័ត៌មានតំណែងមន្ត្រីត្រូវបានកែប្រែដោយជោគជ័យ"));
     }
 
-    // DELETE /positions/{id}
     @DeleteMapping("/{id}")
     @PreAuthorize(
             "hasAuthority('POSITION_MANAGE')")
@@ -102,6 +99,6 @@ public class PositionController {
         positionService.delete(id);
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "លុបតំណែងបានជោគជ័យ"));
+                        null, "តំណែងមន្ត្រីត្រូវបានលុបចេញពីប្រព័ន្ធដោយជោគជ័យ"));
     }
 }

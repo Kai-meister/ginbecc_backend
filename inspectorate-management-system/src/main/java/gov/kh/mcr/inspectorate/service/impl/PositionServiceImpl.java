@@ -91,7 +91,7 @@ public class PositionServiceImpl
             throw new DuplicateResourceException(
                     "មិនអាចបង្កើតបានទេ ដោយសារលេខកូដតំណែង ["
                             + request.getPositionCode()
-                            + "] នេះមានក្នុងប្រព័ន្ធរួចហើយ (ស្ទួន)។");
+                            + "] នេះមានក្នុងប្រព័ន្ធរួចហើយ។");
         }
 
         Position position =
@@ -128,7 +128,7 @@ public class PositionServiceImpl
             throw new DuplicateResourceException(
                     "មិនអាចធ្វើបច្ចុប្បន្នភាពបានទេ ដោយសារលេខកូដតំណែង ["
                             + request.getPositionCode()
-                            + "] នេះមានក្នុងប្រព័ន្ធរួចហើយ (ស្ទួន)។");
+                            + "] នេះមានក្នុងប្រព័ន្ធរួចហើយ។");
         }
 
         if (!position.getDepartment()

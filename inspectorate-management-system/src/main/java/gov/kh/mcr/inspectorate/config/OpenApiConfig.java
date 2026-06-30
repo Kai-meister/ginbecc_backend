@@ -21,13 +21,11 @@ public class OpenApiConfig {
                         .title("ប្រព័ន្ធគ្រប់គ្រងអគ្គាធិការដ្ឋាន")
                         .description(
                                 "REST API Inspectorate Management System\n\n"
-                                        + "**Default Credentials:**\n"
-                                        + "- Email: `admin@system.kh`\n"
-                                        + "- Password: `Admin@1234`")
+                                        + "**Default Credentials:**\n")
                         .version("v1.0.0")
                         .contact(new Contact()
                                 .name("System Administrator")
-                                .email("admin@system.kh")))
+                                .email("system.supperadmin@inspectorate.gov.kh")))
                 .servers(List.of(
                         new Server()
                                 .url(publicUrl)

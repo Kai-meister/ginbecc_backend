@@ -29,14 +29,15 @@ public class OfficerController {
     private final OfficerService officerService;
     // GET /officers
     @GetMapping
-    @PreAuthorize("hasAuthority('OFFICER_VIEW')")    public ResponseEntity<ApiResponse<PageResponse<OfficerResponse>>> getAll(
+    @PreAuthorize("hasAuthority('OFFICER_VIEW')")
+    public ResponseEntity<ApiResponse<PageResponse<OfficerResponse>>> getAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Integer dept,
             @RequestParam(required = false) String status) {
         return ResponseEntity.ok(ApiResponse.success(
                 officerService.getAll(page, size, dept, status),
-                "ទទួលបានបញ្ជីមន្ត្រី"));
+                "ទាញយកបញ្ជីឈ្មោះមន្ត្រីបានដោយជោគជ័យ"));
     }
 
     // GET /officers/{id}
@@ -45,7 +46,7 @@ public class OfficerController {
     public ResponseEntity<ApiResponse<OfficerResponse>> getById(
             @PathVariable Integer id) {
         return ResponseEntity.ok(ApiResponse.success(
-                officerService.getById(id), "ទទួលបានព័ត៌មានមន្ត្រី"));
+                officerService.getById(id), "ទាញយកព័ត៌មានមន្ត្រីបានដោយជោគជ័យ"));
     }
 
     // POST /officers
@@ -56,7 +57,7 @@ public class OfficerController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         officerService.create(request),
-                        "បង្កើតមន្ត្រីបានជោគជ័យ"));
+                        "បង្កើតព័ត៌មានមន្ត្រីថ្មីបានដោយជោគជ័យ"));
     }
 
     // PUT /officers/{id}
@@ -66,7 +67,7 @@ public class OfficerController {
             @PathVariable Integer id,
             @Valid @RequestBody OfficerRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
-                officerService.update(id, request), "កែប្រែបានជោគជ័យ"));
+                officerService.update(id, request), "ព័ត៌មានមន្ត្រីត្រូវបានកែប្រែដោយជោគជ័យ"));
     }
 
     // PATCH /officers/{id}/status
@@ -77,7 +78,7 @@ public class OfficerController {
             @Valid @RequestBody StatusRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
                 officerService.updateStatus(id, request),
-                "ផ្លាស់ប្ដូរស្ថានភាពបានជោគជ័យ"));
+                "ស្ថានភាពមន្ត្រីត្រូវបានផ្លាស់ប្តូរដោយជោគជ័យ"));
     }
 
     // DELETE /officers/{id}
@@ -87,7 +88,7 @@ public class OfficerController {
             @PathVariable Integer id) {
         officerService.delete(id);
         return ResponseEntity.ok(
-                ApiResponse.success(null, "លុបបានជោគជ័យ"));
+                ApiResponse.success(null, "ព័ត៌មានមន្ត្រីត្រូវបានលុបចេញពីប្រព័ន្ធដោយជោគជ័យ"));
     }
 
     // GET /officers/near-retirement
@@ -97,7 +98,7 @@ public class OfficerController {
     getNearRetirement() {
         return ResponseEntity.ok(ApiResponse.success(
                 officerService.getNearRetirement(),
-                "ទទួលបានបញ្ជីជិតនិវត្តន៍"));
+                "ទាញយកបញ្ជីមន្ត្រីជិតដល់អាយុនិវត្តន៍បានដោយជោគជ័យ"));
     }
 
     // POST /officers/{id}/profile-image
@@ -117,7 +118,7 @@ public class OfficerController {
                 .body(ApiResponse.success(
                         officerService
                                 .uploadProfileImage(id, file),
-                        "ផ្ទុករូបភាពប្រវត្តិរូបបានជោគជ័យ"));
+                        "រូបភាពប្រវត្តិរូបមន្ត្រីត្រូវបានផ្ទុកឡើងដោយជោគជ័យ"));
     }
 
     @GetMapping("/{id}/profile-image")

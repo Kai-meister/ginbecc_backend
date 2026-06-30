@@ -6,14 +6,12 @@ import java.util.List;
 
 public interface AttachmentService {
 
-    // Upload — Enum refType
-    AttachmentResponse upload(
+     AttachmentResponse upload(
             MultipartFile file,
             AttachmentRefType refType,
             Integer refId);
 
-    // Get all (active + archived)
-    List<AttachmentResponse> getByReference(
+     List<AttachmentResponse> getByReference(
             Integer refId,
             AttachmentRefType refType);
 

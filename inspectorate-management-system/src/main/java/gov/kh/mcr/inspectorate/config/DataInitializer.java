@@ -558,7 +558,6 @@ public class DataInitializer
                                                     "Admin@1234"))
                                     .role(role)
                                     .statusCode(active)
-                                    .mustChangePassword(false)
                                     .failedLoginCount(0)
                                     .build());
 

@@ -3,6 +3,7 @@ package gov.kh.mcr.inspectorate.service;
 import gov.kh.mcr.inspectorate.dto.request.DocumentRequest;
 import gov.kh.mcr.inspectorate.dto.response.DocumentResponse;
 import gov.kh.mcr.inspectorate.dto.response.PageResponse;
+import gov.kh.mcr.inspectorate.entity.Document;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
@@ -27,11 +28,9 @@ public interface DocumentService {
 
     void delete(Integer id);
 
-    // Fix — Upload + Auto-link document file
     DocumentResponse uploadAttachment(
             Integer documentId,
             MultipartFile file);
-
-    // Fix — Get download URL
+    DocumentResponse submitForApproval(Integer documentId);
     String getDownloadUrl(Integer documentId);
 }

@@ -19,8 +19,10 @@ import java.time.LocalDateTime;
                         columnList = "status_code"),
 
         })
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Officer {
 
@@ -35,7 +37,8 @@ public class Officer {
     private Position position;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "department_id")
+    @JoinColumn(name = "department_id",
+            nullable = false)
     private Department department;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -100,7 +103,7 @@ public class Officer {
     private String email;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "status_code", referencedColumnName = "status_code")
+    @JoinColumn(name = "status_code", referencedColumnName = "status_code", nullable = false)
     private LookupOfficerStatus statusCode;
 
     @CreationTimestamp

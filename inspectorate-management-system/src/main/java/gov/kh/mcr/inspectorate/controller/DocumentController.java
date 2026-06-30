@@ -21,46 +21,6 @@ import java.util.List;
 public class DocumentController {
 
     private final DocumentService documentService;
-
-//    // GET /documents — own
-//    @GetMapping
-//    @PreAuthorize("hasAnyAuthority('DOCUMENT_VIEW'," + "'DOCUMENT_VIEW_ALL')")
-//    public ResponseEntity<ApiResponse<PageResponse<DocumentResponse>>>
-//    getAll(
-//            @RequestParam(defaultValue = "0")  int page,
-//            @RequestParam(defaultValue = "20") int size,
-//            @RequestParam(required = false) Integer officer_id,
-//            @RequestParam(required = false) Integer type,
-//            @RequestParam(required = false) String status,
-//            @RequestParam(required = false) Integer expiring_within) {
-//
-//        if (expiring_within != null) {
-//            List<DocumentResponse> list =
-//                    documentService.getExpiring(expiring_within);
-//            return ResponseEntity.ok(ApiResponse.success(
-//                    PageResponse.<DocumentResponse>builder()
-//                            .content(list)
-//                            .pageNumber(0).pageSize(list.size())
-//                            .totalElements(list.size())
-//                            .totalPages(1).last(true).first(true).build(),
-//                    "ឯកសារជិតផុតកំណត់"));
-//        }
-//
-//        return ResponseEntity.ok(ApiResponse.success(
-//                documentService.getAll(
-//                        page, size, officer_id, type, status),
-//                "ទទួលបន្ជីឯកសារ"));
-//    }
-//
-//    // GET /documents/{id}
-//    @GetMapping("/{id}")
-//    @PreAuthorize("hasAnyAuthority('DOCUMENT_VIEW'," + "'DOCUMENT_VIEW_ALL')")
-//    public ResponseEntity<ApiResponse<DocumentResponse>> getById(
-//            @PathVariable Integer id) {
-//        return ResponseEntity.ok(ApiResponse.success(
-//                documentService.getById(id), "ទទួលបានឯកសារ"));
-//    }
-
     // GET /documents
     @GetMapping
     @PreAuthorize(
@@ -69,12 +29,13 @@ public class DocumentController {
     public ResponseEntity<ApiResponse<
     PageResponse<DocumentResponse>>>
     getAll(
-            @RequestParam(defaultValue = "0")
-            int page,
-            @RequestParam(defaultValue = "20")
-            int size,
+            @RequestParam(
+                    defaultValue = "0") int page,
+            @RequestParam(
+                    defaultValue = "20") int size,
+
             @RequestParam(required = false)
-            Integer officerId,
+            Integer userId,
             @RequestParam(required = false)
             Integer typeId,
             @RequestParam(required = false)
@@ -84,8 +45,8 @@ public class DocumentController {
                 ApiResponse.success(
                         documentService.getAll(
                                 page, size,
-                                officerId, typeId, status),
-                        "ទទួលបានបញ្ជីឯកសារ"));
+                                userId, typeId, status),
+                        "ទទួលបន្ជីឯកសារ"));
     }
 
 // GET /documents/{id}
@@ -105,17 +66,22 @@ public class DocumentController {
                         documentService.getById(id),
                         "ទទួលបានព័ត៌មានឯកសារ"));
     }
-    // POST /documents
     @PostMapping
-    @PreAuthorize("hasAuthority('DOCUMENT_CREATE')")
-    public ResponseEntity<ApiResponse<DocumentResponse>> create(
-            @Valid @RequestBody DocumentRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(
-                        documentService.create(request),
-                        "បានបង្កើតឯកសារដោយជោគជ័យ"));
-    }
+    @PreAuthorize(
+            "hasAuthority('DOCUMENT_CREATE')")
+    public ResponseEntity<ApiResponse<
+    DocumentResponse>>
+    create(
+            @Valid @RequestBody
+            DocumentRequest request) {
 
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        documentService.create(
+                                request),
+                        "ឯកសារត្រូវបានបង្កើតដោយជោគជ័យ"));
+    }
     // PUT /documents/{id}
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('DOCUMENT_UPDATE')")
@@ -134,7 +100,7 @@ public class DocumentController {
             @PathVariable Integer id) {
         documentService.delete(id);
         return ResponseEntity.ok(
-                ApiResponse.success(null, "លុបជោគជ័យ"));
+                ApiResponse.success(null, "ឯកសារត្រូវបានលុបចេញពីប្រព័ន្ធដោយជោគជ័យ"));
     }
 
     @PostMapping(value = "/{id}/attachment",

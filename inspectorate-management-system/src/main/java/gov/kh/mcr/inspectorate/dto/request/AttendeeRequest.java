@@ -5,14 +5,15 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 @Data
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class AttendeeRequest {
 
-    @NotNull(message = "សូមជ្រើសរើសមន្ត្រីអញ្ជើញចូលរួម")
-    @Positive
-    private Integer officerId;
+    @NotNull(message = "លេខសម្គាល់មន្ត្រីចាំបាច់ត្រូវតែមាន")
+    @Positive(message = "លេខសម្គាល់មន្ត្រីត្រូវតែជាលេខវិជ្ជមាន")
+    private Integer userId;
 
-    @NotNull(message = "សូមបញ្ជាក់តួនាទីរបស់មន្ត្រីចូលរួម")
+    @NotNull(message = "តួនាទីរបស់អ្នកចូលរួមចាំបាច់ត្រូវតែជ្រើសរើស")
     private AttendeeRole role;
 }

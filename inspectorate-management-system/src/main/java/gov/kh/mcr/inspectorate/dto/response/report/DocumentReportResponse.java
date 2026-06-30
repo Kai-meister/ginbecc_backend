@@ -13,16 +13,18 @@ public class DocumentReportResponse {
     private String        documentNumber;
     private String        documentName;
     @Builder.Default
-    private String  documentTypeName = "";
+    private String        documentTypeName = "";
     @Builder.Default
-    private String  officerName    = "";
-    private String        departmentName;
-    private LocalDate     expiryDate;
+    private String        userName         = "";
     @Builder.Default
-    private Boolean isExpired      = false;
-    private String        statusCode;
+    private String        departmentName   = "";
+    private LocalDate       expiryDate;
     @Builder.Default
-    private String  statusLabel    = "";
-    private String        uploadedBy;
-    private LocalDateTime createdAt;
+    private Boolean         isExpired       = false;
+    @Builder.Default
+    private String          statusCode      = "";
+    @Builder.Default
+    private String          statusLabel     = "";
+    private String           uploadedBy;
+    private LocalDateTime    createdAt;
 }

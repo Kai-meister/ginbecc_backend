@@ -7,8 +7,7 @@ import gov.kh.mcr.inspectorate.enums.UserType;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring",
-        unmappedTargetPolicy =
-                ReportingPolicy.IGNORE)
+        unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface UserMapper {
 
     @Mapping(target = "userId",          ignore = true)
@@ -17,7 +16,6 @@ public interface UserMapper {
     @Mapping(target = "role",            ignore = true)
     @Mapping(target = "statusCode",      ignore = true)
     @Mapping(target = "passwordHash",    ignore = true)
-    @Mapping(target = "mustChangePassword", ignore = true)
     @Mapping(target = "failedLoginCount",   ignore = true)
     @Mapping(target = "lockedUntil",     ignore = true)
     @Mapping(target = "lastLoginAt",     ignore = true)
@@ -33,7 +31,6 @@ public interface UserMapper {
     @Mapping(target = "role",            ignore = true)
     @Mapping(target = "statusCode",      ignore = true)
     @Mapping(target = "passwordHash",    ignore = true)
-    @Mapping(target = "mustChangePassword", ignore = true)
     @Mapping(target = "failedLoginCount",   ignore = true)
     @Mapping(target = "lockedUntil",     ignore = true)
     @Mapping(target = "lastLoginAt",     ignore = true)
@@ -51,8 +48,6 @@ public interface UserMapper {
                 .userNameEn(user.getUserNameEn())
                 .email(user.getEmail())
                 .phone(user.getPhone())
-                .mustChangePassword(
-                        user.getMustChangePassword())
                 .lastLoginAt(user.getLastLoginAt())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
@@ -87,7 +82,6 @@ public interface UserMapper {
                                     : null)
                     .phone(o.getPhone())
                     .email(o.getEmail())
-                    .jobLevel(null)
                     .type(UserType.OFFICER)
                     .build();
         }
@@ -107,7 +101,6 @@ public interface UserMapper {
                                     : null)
                     .phone(null)
                     .email(null)
-                    .jobLevel(co.getJobLevel())
                     .type(UserType.CONTRACT_OFFICER)
                     .build();
         }

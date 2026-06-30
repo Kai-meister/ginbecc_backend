@@ -1,7 +1,10 @@
+// AttendeeResponse.java — Fix
 package gov.kh.mcr.inspectorate.dto.response;
 
-import gov.kh.mcr.inspectorate.enums.AttendanceStatus;
-import gov.kh.mcr.inspectorate.enums.AttendeeRole;
+import gov.kh.mcr.inspectorate.enums
+        .AttendanceStatus;
+import gov.kh.mcr.inspectorate.enums
+        .AttendeeRole;
 import lombok.*;
 import java.time.LocalDateTime;
 
@@ -13,10 +16,10 @@ public class AttendeeResponse {
     private Integer          attendeeId;
     private Integer          meetingId;
     private String           meetingTitle;
-    private Integer          officerId;
-    private String officerCode;
-    private String           officerName;
+    private Integer          userId;
+    private String           userName;
     private String           departmentName;
+
     private AttendeeRole     role;
     private String           roleLabel;
     private AttendanceStatus attendanceStatus;

@@ -1,6 +1,7 @@
 package gov.kh.mcr.inspectorate.dto.response.report;
 
 import lombok.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -10,20 +11,32 @@ public class AnnouncementReportResponse {
 
     private Integer       no;
     private String        title;
-    private String        createdBy;
+    private String         content;
     @Builder.Default
-    private String  priority       = "";
+    private String         createdBy      = "";
     @Builder.Default
-    private String  priorityLabel  = "";
-    private String        statusCode;
+    private String         createdByDept  = "";
     @Builder.Default
-    private String  statusLabel    = "";
+    private String         priority       = "MEDIUM";
     @Builder.Default
-    private Long    totalRecipients = 0L;
+    private String         priorityLabel  = "មធ្យម";
     @Builder.Default
-    private Long    readCount       = 0L;
+    private String         statusCode     = "";
     @Builder.Default
-    private Long    unreadCount     = 0L;
-    private LocalDateTime publishAt;
-    private LocalDateTime createdAt;
+    private String         statusLabel    = "";
+    private LocalDateTime   publishAt;
+    private LocalDate       expireAt;
+    @Builder.Default
+    private Boolean         isExpired     = false;
+
+    @Builder.Default
+    private Long            totalRecipients = 0L;
+    @Builder.Default
+    private Long            readCount       = 0L;
+    @Builder.Default
+    private Long            unreadCount     = 0L;
+    @Builder.Default
+    private String          readRate        = "0%";
+
+    private LocalDateTime    createdAt;
 }

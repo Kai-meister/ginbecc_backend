@@ -19,12 +19,11 @@ public enum MeetingStatusCode {
     private final String code;
     private final String labelKh;
 
-    // Ignore on conflict check
-    public static boolean isIgnoredForConflict(
-            String code) {
-        return CANCELLED.code.equals(code)
-                || COMPLETED.code.equals(code);
-    }
+//    public static boolean isIgnoredForConflict(
+//            String code) {
+//        return CANCELLED.code.equals(code)
+//                || COMPLETED.code.equals(code);
+//    }
 
     // Can add/remove attendees
     public static boolean canEditAttendees(
@@ -45,13 +44,13 @@ public enum MeetingStatusCode {
                 || RESCHEDULED.code.equals(code);
     }
 
-    //  Can cancel
-    public static boolean canCancel(String code) {
-        return DRAFT.code.equals(code)
-                || SCHEDULED.code.equals(code)
-                || CONFIRMED.code.equals(code)
-                || POSTPONED.code.equals(code);
-    }
+//    //  Can cancel
+//    public static boolean canCancel(String code) {
+//        return DRAFT.code.equals(code)
+//                || SCHEDULED.code.equals(code)
+//                || CONFIRMED.code.equals(code)
+//                || POSTPONED.code.equals(code);
+//    }
 
     // Is final state
     public static boolean isFinal(String code) {

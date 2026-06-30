@@ -27,8 +27,8 @@ public class DocumentExpiryScheduler {
         expiring.forEach(d ->
                 log.debug("Expiring: {} | Officer: {} | Date: {}",
                         d.getDocumentName(),
-                        d.getOfficer() != null
-                                ? d.getOfficer().getFullNameKh() : "N/A",
+                        d.getUser() != null
+                                ? d.getUser().getUserNameKh() : "N/A",
                         d.getExpiryDate()));
     }
 }

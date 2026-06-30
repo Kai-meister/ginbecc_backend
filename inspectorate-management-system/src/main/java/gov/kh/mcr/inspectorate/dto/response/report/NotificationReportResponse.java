@@ -10,17 +10,19 @@ public class NotificationReportResponse {
 
     private Integer       no;
     @Builder.Default
-    private String  receiverName   = "";
+    private String        receiverName  = "";
     @Builder.Default
-    private String  receiverEmail  = "";
+    private String        receiverEmail = "";
     private String        title;
+    private String        message;
     @Builder.Default
-    private String  type           = "";
+    private String         type        = "";
     @Builder.Default
-    private String  typeLabel      = "";
-    private Boolean       isRead;
+    private String         typeLabel   = "";
     @Builder.Default
-    private String  readStatus     = "មិនទាន់អាន";
-    private LocalDateTime createdAt;
-    private LocalDateTime readAt;
+    private Boolean         isRead     = false;
+    @Builder.Default
+    private String          readStatus = "មិនទាន់អាន";
+    private LocalDateTime    createdAt;
+    private LocalDateTime    readAt;
 }

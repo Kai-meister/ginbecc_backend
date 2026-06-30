@@ -49,6 +49,13 @@ public interface NotificationService {
             Boolean isRead,
             int page, int size);
 
+    PageResponse<NotificationResponse>
+    getMyNotificationsByType(
+            Integer currentUserId,
+            NotificationType type,
+            Boolean isRead,
+            int page, int size);
+
     // Fix — currentUserId for owner check
     NotificationResponse getById(
             Integer notificationId,

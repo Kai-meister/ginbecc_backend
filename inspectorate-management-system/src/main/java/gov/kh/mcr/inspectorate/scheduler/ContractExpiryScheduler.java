@@ -16,7 +16,6 @@ import java.util.List;
 public class ContractExpiryScheduler {
 
     private final ContractOfficerRepository contractRepo;
-//    private final NotificationService notificationService;
 
     @Scheduled(cron = "0 0 8 * * *")
     public void notifyExpiringContracts() {

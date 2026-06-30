@@ -2,19 +2,25 @@ package gov.kh.mcr.inspectorate.service;
 
 import gov.kh.mcr.inspectorate.dto.request
         .AnnouncementRequest;
-import gov.kh.mcr.inspectorate.dto.response.*;
-import org.springframework.web.multipart.MultipartFile;
+import gov.kh.mcr.inspectorate.dto.response
+        .AnnouncementReadStatusResponse;
+import gov.kh.mcr.inspectorate.dto.response
+        .AnnouncementResponse;
+import gov.kh.mcr.inspectorate.dto.response
+        .PageResponse;
+import org.springframework.web.multipart
+        .MultipartFile;
 
 public interface AnnouncementService {
 
     PageResponse<AnnouncementResponse> getAll(
             int page, int size,
-            String status, String priority);
+            String status, String priority,Boolean includeExpired);
 
     AnnouncementResponse getById(Integer id);
 
-    AnnouncementReadStatusResponse getReadStatus(
-            Integer id);
+    AnnouncementReadStatusResponse
+    getReadStatus(Integer id);
 
     AnnouncementResponse create(
             AnnouncementRequest request);
@@ -23,17 +29,14 @@ public interface AnnouncementService {
             Integer id,
             AnnouncementRequest request);
 
-    // currentOfficerId for owner check
-    void markAsRead(
-            Integer announcementId,
-            Integer currentOfficerId);
-
-    void delete(Integer id);
-
     AnnouncementResponse uploadAttachment(
             Integer announcementId,
             MultipartFile file);
 
     String getAttachmentUrl(
             Integer announcementId);
+
+    void markAsRead(Integer announcementId);
+
+    void delete(Integer id);
 }

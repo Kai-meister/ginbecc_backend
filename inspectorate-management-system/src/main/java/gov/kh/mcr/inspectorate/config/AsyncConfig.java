@@ -43,9 +43,6 @@ public class AsyncConfig implements AsyncConfigurer {
                         ex.getMessage(), ex);
     }
 
-    // MODE_INHERITABLETHREADLOCAL
-    //  child threads inherit SecurityContext
-    //  @Async threads ទទួល context ពី parent
     @PostConstruct
     public static void configureSecurityContext() {
         SecurityContextHolder.setStrategyName(

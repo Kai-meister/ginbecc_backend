@@ -4,6 +4,7 @@ import gov.kh.mcr.inspectorate.enums
         .NotificationType;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor @AllArgsConstructor
@@ -20,4 +21,5 @@ public class NotificationResponse {
     private Boolean          isRead;
     private LocalDateTime    createdAt;
     private LocalDateTime    readAt;
+    private Map<String, Object> referenceData;
 }

@@ -4,10 +4,11 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 @Data
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class RefreshTokenRequest {
 
-    @NotBlank(message = "សូមផ្តល់ជូនថូខិនសារជាថ្មី (Refresh Token)")
+    @NotBlank(message = "សម័យប្រជុំរបស់អ្នកបានផុតកំណត់ ឬខ្វះព័ត៌មានផ្ទៀងផ្ទាត់ (Refresh Token)")
     private String refreshToken;
 }

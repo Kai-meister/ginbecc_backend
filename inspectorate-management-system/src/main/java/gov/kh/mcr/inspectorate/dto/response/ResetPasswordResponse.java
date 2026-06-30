@@ -11,6 +11,5 @@ public class ResetPasswordResponse {
     private String  email;
     private String  userNameKh;
     private String  temporaryPassword;
-    private Boolean mustChangePassword;
     private String  message;
 }

@@ -2,6 +2,7 @@ package gov.kh.mcr.inspectorate.controller;
 
 import gov.kh.mcr.inspectorate.dto.request.DepartmentRequest;
 import gov.kh.mcr.inspectorate.dto.response.ApiResponse;
+import gov.kh.mcr.inspectorate.dto.response.DepartmentManagerResponse;
 import gov.kh.mcr.inspectorate.dto.response.DepartmentResponse;
 import gov.kh.mcr.inspectorate.enums.ActiveStatus;
 import gov.kh.mcr.inspectorate.service.DepartmentService;
@@ -99,5 +100,66 @@ public class DepartmentController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         null, "បានលុបនាយកដ្ឋានដោយជោគជ័យ"));
+    }
+
+    @PostMapping("/{id}/managers")
+    @PreAuthorize(
+            "hasAuthority('DEPARTMENT_MANAGE')")
+    public ResponseEntity<ApiResponse<
+            DepartmentManagerResponse>>
+    addManager(
+            @PathVariable
+            @Positive Integer id,
+            @RequestParam
+            @Positive
+            Integer managerUserId,
+            @RequestParam(
+                    required = false,
+                    defaultValue = "false")
+            Boolean isPrimary) {
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        departmentService.addManager(
+                                id, managerUserId,
+                                isPrimary),
+                        "ការចាត់តាំងមន្ត្រីជាអ្នកគ្រប់គ្រងត្រូវបានអនុវត្តដោយជោគជ័យ"));
+    }
+
+    @DeleteMapping("/{id}/managers/{userId}")
+    @PreAuthorize(
+            "hasAuthority('DEPARTMENT_MANAGE')")
+    public ResponseEntity<ApiResponse<Void>>
+    removeManager(
+            @PathVariable
+            @Positive Integer id,
+            @PathVariable
+            @Positive Integer userId) {
+
+        departmentService.removeManager(
+                id, userId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        null, "ការដកតួនាទីអ្នកគ្រប់គ្រងចេញពីនាយកដ្ឋានត្រូវបានអនុវត្តដោយជោគជ័យ"));
+    }
+
+
+
+    @GetMapping("/{id}/managers")
+    @PreAuthorize(
+            "hasAuthority('DEPARTMENT_VIEW')")
+    public ResponseEntity<ApiResponse<
+    List<DepartmentManagerResponse>>>
+    getManagers(
+            @PathVariable
+            @Positive Integer id) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        departmentService.getManagers(
+                                id),
+                        "ទាញយកបញ្ជីអ្នកគ្រប់គ្រងបានដោយជោគជ័យ"));
     }
 }

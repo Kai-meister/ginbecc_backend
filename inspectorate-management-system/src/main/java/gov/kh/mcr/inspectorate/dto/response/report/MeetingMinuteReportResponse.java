@@ -5,19 +5,22 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class MeetingMinuteReportResponse {
 
     private Integer       no;
     @Builder.Default
-    private String  meetingTitle   = "";
-    private LocalDate     meetingDate;
-    private String        recordedBy;
-    private String        summary;
-    private String        decisions;
-    private String        actionItems;
+    private String        meetingTitle  = "";
+    private Long meetingId;
+    private LocalDate      meetingDate;
     @Builder.Default
-    private Boolean hasAttachment  = false;
-    private LocalDateTime createdAt;
+    private String         recordedBy   = "";
+    private String          summary;
+    private String          decisions;
+    private String          actionItems;
+    @Builder.Default
+    private Boolean         hasAttachment = false;
+    private LocalDateTime   createdAt;
 }

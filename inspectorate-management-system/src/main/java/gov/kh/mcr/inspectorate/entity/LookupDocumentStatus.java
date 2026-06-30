@@ -7,7 +7,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "lookup_document_status")
 @Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class LookupDocumentStatus {
 
@@ -23,7 +24,6 @@ public class LookupDocumentStatus {
             length = 100, nullable = false)
     private String labelEn;
 
-    // ── applies_to: DOCUMENT / APPROVAL / BOTH ──
     @Column(name = "applies_to",
             length = 50, nullable = false)
     @Builder.Default
