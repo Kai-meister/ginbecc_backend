@@ -34,7 +34,7 @@ docker-compose up -d postgres redis minio
 **Health**: http://localhost:8080/actuator/health  
 **MinIO console**: http://localhost:9001 (admin / password123)
 
-**Default admin credentials** (seeded on first startup): `admin@system.kh` / `Admin@1234`
+**Default admin credentials** (seeded on first startup): `system.supperadmin@inspectorate.gov.kh` / `Inspectorate@936396$`
 
 ## Architecture
 
