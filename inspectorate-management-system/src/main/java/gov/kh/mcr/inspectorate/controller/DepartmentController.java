@@ -2,6 +2,7 @@ package gov.kh.mcr.inspectorate.controller;
 
 import gov.kh.mcr.inspectorate.dto.request.DepartmentRequest;
 import gov.kh.mcr.inspectorate.dto.response.ApiResponse;
+import gov.kh.mcr.inspectorate.dto.response.DepartmentManagerResponse;
 import gov.kh.mcr.inspectorate.dto.response.DepartmentResponse;
 import gov.kh.mcr.inspectorate.enums.ActiveStatus;
 import gov.kh.mcr.inspectorate.service.DepartmentService;
@@ -22,7 +23,9 @@ public class DepartmentController {
 
     private final DepartmentService departmentService;
 
+    // GET /departments
     @GetMapping
+    @PreAuthorize("hasAuthority('DEPARTMENT_VIEW')")
     public ResponseEntity<ApiResponse<
             List<DepartmentResponse>>>
     getAll(
@@ -34,9 +37,11 @@ public class DepartmentController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         departmentService.getAll(status, keyword),
-                        "ទទួលបន្ជីនាយកដ្ឋាន"));
+                        "ទទួលបានបញ្ជីទិន្នន័យនាយកដ្ឋាន"));
     }
+    // GET /departments/{id}
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('DEPARTMENT_VIEW')")
     public ResponseEntity<ApiResponse<
             DepartmentResponse>>
     getById(
@@ -46,11 +51,12 @@ public class DepartmentController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         departmentService.getById(id),
-                        "ទទួលបាននាយកដ្ឋាន"));
+                        "ទទួលបានព័ត៌មានលម្អិតនាយកដ្ឋាន"));
     }
 
+    // POST /departments
     @PostMapping
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('DEPARTMENT_MANAGE')")
     public ResponseEntity<ApiResponse<
             DepartmentResponse>>
     create(
@@ -61,11 +67,12 @@ public class DepartmentController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         departmentService.create(request),
-                        "បង្កើតនាយកដ្ឋានជោគជ័យ"));
+                        "បានបង្កើតនាយកដ្ឋានដោយជោគជ័យ"));
     }
 
+    // PUT /departments/{id}
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('DEPARTMENT_MANAGE')")
     public ResponseEntity<ApiResponse<
     DepartmentResponse>>
     update(
@@ -78,11 +85,12 @@ public class DepartmentController {
                 ApiResponse.success(
                         departmentService.update(
                                 id, request),
-                        "កែប្រែជោគជ័យ"));
+                        "បានកែប្រែនាយកដ្ឋានដោយជោគជ័យ"));
     }
 
+    // DELETE /departments/{id}
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('DEPARTMENT_MANAGE')")
     public ResponseEntity<ApiResponse<Void>>
     delete(
             @PathVariable
@@ -91,6 +99,67 @@ public class DepartmentController {
         departmentService.delete(id);
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "លុបជោគជ័យ"));
+                        null, "បានលុបនាយកដ្ឋានដោយជោគជ័យ"));
+    }
+
+    @PostMapping("/{id}/managers")
+    @PreAuthorize(
+            "hasAuthority('DEPARTMENT_MANAGE')")
+    public ResponseEntity<ApiResponse<
+            DepartmentManagerResponse>>
+    addManager(
+            @PathVariable
+            @Positive Integer id,
+            @RequestParam
+            @Positive
+            Integer managerUserId,
+            @RequestParam(
+                    required = false,
+                    defaultValue = "false")
+            Boolean isPrimary) {
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        departmentService.addManager(
+                                id, managerUserId,
+                                isPrimary),
+                        "ការចាត់តាំងមន្ត្រីជាអ្នកគ្រប់គ្រងត្រូវបានអនុវត្តដោយជោគជ័យ"));
+    }
+
+    @DeleteMapping("/{id}/managers/{userId}")
+    @PreAuthorize(
+            "hasAuthority('DEPARTMENT_MANAGE')")
+    public ResponseEntity<ApiResponse<Void>>
+    removeManager(
+            @PathVariable
+            @Positive Integer id,
+            @PathVariable
+            @Positive Integer userId) {
+
+        departmentService.removeManager(
+                id, userId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        null, "ការដកតួនាទីអ្នកគ្រប់គ្រងចេញពីនាយកដ្ឋានត្រូវបានអនុវត្តដោយជោគជ័យ"));
+    }
+
+
+
+    @GetMapping("/{id}/managers")
+    @PreAuthorize(
+            "hasAuthority('DEPARTMENT_VIEW')")
+    public ResponseEntity<ApiResponse<
+    List<DepartmentManagerResponse>>>
+    getManagers(
+            @PathVariable
+            @Positive Integer id) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        departmentService.getManagers(
+                                id),
+                        "ទាញយកបញ្ជីអ្នកគ្រប់គ្រងបានដោយជោគជ័យ"));
     }
 }

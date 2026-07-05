@@ -1,5 +1,6 @@
 package gov.kh.mcr.inspectorate.dto.response;
 
+import gov.kh.mcr.inspectorate.enums.UserType;
 import lombok.*;
 import java.time.LocalDateTime;
 
@@ -9,21 +10,40 @@ import java.time.LocalDateTime;
 @Builder
 public class UserResponse {
 
-    private Integer       userId;
-    private String        uuid;
-    private String        userNameKh;
-    private String        userNameEn;
-    private String        email;
-    private String        phone;
-    private Integer       roleId;
-    private String        roleName;
-    private String        roleDisplayName;
-    private Integer       officerId;
-    private String        officerName;
-    private String        officerCode;
-    private String        statusCode;
-    private String        statusLabel;
+    private Integer userId;
+    private OfficerInfo officerInfo;
+
+    private Integer roleId;
+    private String  roleName;
+    private String  roleDisplay;
+
+    private String   profileImageUrl;
+    private UserType userType;
+    private String   userNameKh;
+    private String   userNameEn;
+    private String   email;
+    private String   phone;
+
+    private String  statusCode;
+    private String  statusLabel;
+
     private LocalDateTime lastLoginAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OfficerInfo {
+        private Integer  id;
+        private String   code;
+        private String   fullNameKh;
+        private String   fullNameEn;
+        private String   departmentName;
+        private String   phone;
+        private String   email;
+        private UserType type;
+    }
 }

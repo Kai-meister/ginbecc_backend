@@ -5,17 +5,13 @@ import gov.kh.mcr.inspectorate.dto.response.LookupResponse;
 import gov.kh.mcr.inspectorate.service.LookupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
-/**
- * ពន្យល់:
- *  - Public endpoints (no auth required)
- *  - Frontend ហៅ onLoad ដើម្បី populate Dropdowns
- *  - Cached ក្នុង Redis — Response លឿន
- */
 @RestController
 @RequestMapping("/api/v1/lookups")
+@PreAuthorize("hasAuthority('LOOKUP_MANAGE')")
 @RequiredArgsConstructor
 public class LookupController {
 
@@ -112,6 +108,6 @@ public class LookupController {
                                         lookupService
                                                 .getUserStatuses())
                                 .build(),
-                        "Lookups ទាំងអស់"));
+                        "ទទួលបានទិន្នន័យ Lookup ទាំងអស់ជោគជ័យ"));
     }
 }

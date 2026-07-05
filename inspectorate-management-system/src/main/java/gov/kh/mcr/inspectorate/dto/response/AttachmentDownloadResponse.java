@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor @AllArgsConstructor
 @Builder
 public class AttachmentDownloadResponse {
-
     private Integer attachmentId;
     private String downloadUrl;
     private String originalName;

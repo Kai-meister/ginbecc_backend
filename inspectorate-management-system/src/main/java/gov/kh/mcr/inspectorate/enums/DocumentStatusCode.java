@@ -30,13 +30,13 @@ public enum DocumentStatusCode {
         return APPROVED.code.equals(code);
     }
 
-    public static boolean isRejected(String code) {
-        return REJECTED.code.equals(code);
-    }
-
-    public static boolean isFinal(String code) {
-        return APPROVED.code.equals(code)
-                || REJECTED.code.equals(code)
-                || EXPIRED.code.equals(code);
-    }
+//    public static boolean isRejected(String code) {
+//        return REJECTED.code.equals(code);
+//    }
+//
+//    public static boolean isFinal(String code) {
+//        return APPROVED.code.equals(code)
+//                || REJECTED.code.equals(code)
+//                || EXPIRED.code.equals(code);
+//    }
 }

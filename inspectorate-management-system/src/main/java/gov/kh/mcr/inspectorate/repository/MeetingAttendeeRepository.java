@@ -12,30 +12,38 @@ import java.util.Optional;
 public interface MeetingAttendeeRepository
         extends JpaRepository<MeetingAttendee, Integer> {
 
-    List<MeetingAttendee> findByMeeting_MeetingId(
+    List<MeetingAttendee>
+    findByMeeting_MeetingId(
             Integer meetingId);
 
+    // Fix — Officer_OfficerId → User_UserId
+    boolean
+    existsByMeeting_MeetingIdAndUser_UserId(
+            Integer meetingId,
+            Integer userId);
+
     Optional<MeetingAttendee>
-    findByMeeting_MeetingIdAndOfficer_OfficerId(
-            Integer meetingId, Integer officerId);
+    findByMeeting_MeetingIdAndUser_UserId(
+            Integer meetingId,
+            Integer userId);
 
-    boolean existsByMeeting_MeetingIdAndOfficer_OfficerId(
-            Integer meetingId, Integer officerId);
+    List<MeetingAttendee>
+    findByMeeting_MeetingIdAndAttendanceStatus(
+            Integer meetingId,
+            AttendanceStatus status);
 
-    @Query("""
-        SELECT a.officer.officerId,
-               a.officer.fullNameKh,
-               COUNT(a)
-        FROM MeetingAttendee a
-        WHERE a.attendanceStatus = :status
-        GROUP BY a.officer.officerId,
-                 a.officer.fullNameKh
-        HAVING COUNT(a) >= :threshold
-        ORDER BY COUNT(a) DESC
-        """)
-    List<Object[]> findFrequentAbsentees(
-            @Param("status") AttendanceStatus status,
-            @Param("threshold") long threshold);
+    long countByMeeting_MeetingIdAndAttendanceStatus(
+            Integer meetingId,
+            AttendanceStatus status);
 
-    long countByMeeting_MeetingId(Integer meetingId);
+    long countByMeeting_MeetingId(
+            Integer meetingId);
+
+    // Fix — find meetings of specific user
+    List<MeetingAttendee>
+    findByUser_UserId(
+            Integer userId);
+
+    void deleteByMeeting_MeetingId(
+            Integer meetingId);
 }

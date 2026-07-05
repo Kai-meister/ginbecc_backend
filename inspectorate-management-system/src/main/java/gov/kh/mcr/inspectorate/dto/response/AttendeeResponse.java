@@ -1,8 +1,9 @@
 package gov.kh.mcr.inspectorate.dto.response;
 
-
-import gov.kh.mcr.inspectorate.enums.AttendanceStatus;
-import gov.kh.mcr.inspectorate.enums.AttendeeRole;
+import gov.kh.mcr.inspectorate.enums
+        .AttendanceStatus;
+import gov.kh.mcr.inspectorate.enums
+        .AttendeeRole;
 import lombok.*;
 import java.time.LocalDateTime;
 
@@ -11,13 +12,18 @@ import java.time.LocalDateTime;
 @Builder
 public class AttendeeResponse {
 
-    private Integer attendeeId;
-    private Integer officerId;
-    private String officerCode;
-    private String officerName;
-    private String departmentName;
-    private AttendeeRole role;
+    private Integer          attendeeId;
+    private Integer          meetingId;
+    private String           meetingTitle;
+    private Integer          userId;
+    private String           userName;
+    private String           departmentName;
+
+    private AttendeeRole     role;
+    private String           roleLabel;
     private AttendanceStatus attendanceStatus;
-    private LocalDateTime checkInTime;
-    private String note;
+    private String           attendanceLabel;
+    private LocalDateTime    checkInTime;
+    private String           note;
+    private LocalDateTime    createdAt;
 }

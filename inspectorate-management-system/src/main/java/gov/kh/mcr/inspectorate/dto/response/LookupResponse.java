@@ -1,11 +1,14 @@
 package gov.kh.mcr.inspectorate.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
 
 @Data
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class LookupResponse {
 
     private String  statusCode;
@@ -13,10 +16,6 @@ public class LookupResponse {
     private String  labelEn;
     private Integer sortOrder;
     private Boolean isActive;
-
-    // ── Fields ជាក់លាក់ LookupDocumentStatus ──
     private String  appliesTo;
-
-    // ── Fields ជាក់លាក់ LookupUserStatus ──────
     private String  blockReason;
 }

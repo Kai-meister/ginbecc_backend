@@ -1,133 +1,480 @@
 package gov.kh.mcr.inspectorate.service.impl;
 
+import gov.kh.mcr.inspectorate.dto.request.ActivityLogContext;
 import gov.kh.mcr.inspectorate.dto.request.MeetingRoomRequest;
-import gov.kh.mcr.inspectorate.dto.response.AttachmentResponse;
 import gov.kh.mcr.inspectorate.dto.response.MeetingRoomResponse;
-import gov.kh.mcr.inspectorate.entity.MeetingRoom;
-import gov.kh.mcr.inspectorate.enums.AttachmentRefType;
-import gov.kh.mcr.inspectorate.enums.RoomStatus;
-import gov.kh.mcr.inspectorate.exception.DuplicateResourceException;
-import gov.kh.mcr.inspectorate.exception.ResourceNotFoundException;
+import gov.kh.mcr.inspectorate.dto.response.RoomScheduleResponse;
+import gov.kh.mcr.inspectorate.dto.response.RoomScheduleResponse.*;
+import gov.kh.mcr.inspectorate.entity.*;
+import gov.kh.mcr.inspectorate.enums.MeetingRoomStatus;
+import gov.kh.mcr.inspectorate.exception.*;
 import gov.kh.mcr.inspectorate.mapper.MeetingRoomMapper;
-import gov.kh.mcr.inspectorate.repository.AttachmentRepository;
-import gov.kh.mcr.inspectorate.repository.MeetingRoomRepository;
+import gov.kh.mcr.inspectorate.repository.*;
+import gov.kh.mcr.inspectorate.security.SecurityUtils;
 import gov.kh.mcr.inspectorate.service.ActivityLogService;
 import gov.kh.mcr.inspectorate.service.AttachmentService;
 import gov.kh.mcr.inspectorate.service.MeetingRoomService;
+import gov.kh.mcr.inspectorate.service.MinioService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
+import java.time.*;
+import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class MeetingRoomServiceImpl implements MeetingRoomService {
 
-    private final MeetingRoomRepository meetingRoomRepository;
-    private final AttachmentRepository attachmentRepository;
-    private final MeetingRoomMapper meetingRoomMapper;
+    private final MeetingRoomRepository roomRepo;
+    private final MeetingRepository meetingRepo;
+    private final AttachmentRepository attachmentRepo;
+    private final AttachmentService attachmentService;
+    private final MinioService minioService;
+    private final MeetingRoomMapper roomMapper;
+    private final SecurityUtils securityUtils;
     private final ActivityLogService activityLogService;
-    private final AttachmentService  attachmentService;
+
+    // Fix — Image validation constraints
+    private static final List<String> ALLOWED_IMAGE_TYPES =
+            List.of("image/jpeg", "image/png", "image/webp");
+    private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
     @Override
     @Transactional(readOnly = true)
-    public List<MeetingRoomResponse> getAll(RoomStatus status) {
+    public List<MeetingRoomResponse> getAll(MeetingRoomStatus status) {
 
-        List<MeetingRoom> list = status != null
-                ? meetingRoomRepository.findByStatus(status)
-                : meetingRoomRepository
-                  .findAllByOrderByRoomCodeAsc();
+        List<MeetingRoom> rooms = status != null
+                ? roomRepo.findByStatus(status)
+                : roomRepo.findAllByOrderByRoomCodeAsc();
 
-        return list.stream()
-                .map(meetingRoomMapper::toResponse)
+        return rooms.stream()
+                .map(this::toResponseWithImage)
                 .toList();
-    }
-
-    @Override
-    public AttachmentResponse uploadImage(
-            Integer roomId, MultipartFile file) {
-
-        findById(roomId); // validate exists
-
-        AttachmentResponse response =
-                attachmentService.upload(
-                        file, AttachmentRefType.MEETING_ROOM.getCode(), roomId);
-
-        // Update room.imagePath
-        MeetingRoom room = findById(roomId);
-        attachmentRepository
-                .findById(response.getAttachmentId())
-                .ifPresent(room::setImagePath);
-        meetingRoomRepository.save(room);
-
-        return response;
     }
 
     @Override
     @Transactional(readOnly = true)
     public MeetingRoomResponse getById(Integer id) {
-        return meetingRoomMapper.toResponse(findById(id));
+        return toResponseWithImage(findById(id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RoomScheduleResponse getSchedule(
+            Integer roomId, LocalDate from, LocalDate to) {
+
+        MeetingRoom room = findById(roomId);
+
+        LocalDate effectiveFrom = from != null ? from : LocalDate.now();
+        LocalDate effectiveTo = to != null ? to : effectiveFrom.plusDays(30);
+
+        List<Meeting> meetings = meetingRepo.findByRoomSchedule(
+                roomId, effectiveFrom, effectiveTo);
+
+        LocalDate today = LocalDate.now();
+        LocalTime nowTime = LocalTime.now();
+
+        List<RoomBookingSlot> bookings = meetings.stream()
+                .map(m -> {
+                    boolean isNow =
+                            m.getMeetingDate().equals(today)
+                                    && m.getStartTime() != null
+                                    && m.getEndTime() != null
+                                    && !nowTime.isBefore(m.getStartTime())
+                                    && nowTime.isBefore(m.getEndTime());
+
+                    boolean isPast =
+                            m.getMeetingDate().isBefore(today)
+                                    || (m.getMeetingDate().equals(today)
+                                    && m.getEndTime() != null
+                                    && nowTime.isAfter(m.getEndTime()));
+
+                    boolean isCancelled =
+                            "CANCELLED".equals(m.getStatusCode().getStatusCode());
+
+                    return RoomBookingSlot.builder()
+                            .meetingId(m.getMeetingId())
+                            .meetingTitle(m.getTitle())
+                            .organizerName(
+                                    m.getOrganizer() != null
+                                            ? m.getOrganizer().getUserNameKh() : "")
+                            .date(m.getMeetingDate())
+                            .startTime(m.getStartTime())
+                            .endTime(m.getEndTime())
+                            .statusCode(m.getStatusCode().getStatusCode())
+                            .statusLabel(m.getStatusCode().getLabelKh())
+                            .isNow(isNow)
+                            .isPast(isPast)
+                            .isCancelled(isCancelled)
+                            .build();
+                })
+                .toList();
+
+        List<RoomTimeSlot> todaySlots = buildTimeSlots(roomId, today, nowTime);
+
+        return RoomScheduleResponse.builder()
+                .roomId(roomId)
+                .roomCode(room.getRoomCode())
+                .status(room.getStatus())
+                .statusLabel(room.getStatus().getLabelKh())
+                .bookings(bookings)
+                .todaySlots(todaySlots)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RoomScheduleResponse getAvailability(Integer roomId, LocalDate date) {
+
+        MeetingRoom room = findById(roomId);
+
+        LocalDate targetDate = date != null ? date : LocalDate.now();
+        LocalTime nowTime = LocalTime.now();
+
+        List<RoomTimeSlot> slots = buildTimeSlots(roomId, targetDate, nowTime);
+
+        List<Meeting> dayMeetings = meetingRepo.findByRoomAndDate(roomId, targetDate);
+
+        List<RoomBookingSlot> bookings = dayMeetings.stream()
+                .map(m -> {
+                    boolean isNow =
+                            targetDate.equals(LocalDate.now())
+                                    && m.getStartTime() != null
+                                    && m.getEndTime() != null
+                                    && !nowTime.isBefore(m.getStartTime())
+                                    && nowTime.isBefore(m.getEndTime());
+
+                    return RoomBookingSlot.builder()
+                            .meetingId(m.getMeetingId())
+                            .meetingTitle(m.getTitle())
+                            .organizerName(
+                                    m.getOrganizer() != null
+                                            ? m.getOrganizer().getUserNameKh() : "")
+                            .date(targetDate)
+                            .startTime(m.getStartTime())
+                            .endTime(m.getEndTime())
+                            .statusCode(m.getStatusCode().getStatusCode())
+                            .statusLabel(m.getStatusCode().getLabelKh())
+                            .isNow(isNow)
+                            .isPast(false)
+                            .isCancelled(
+                                    "CANCELLED".equals(m.getStatusCode().getStatusCode()))
+                            .build();
+                })
+                .toList();
+
+        return RoomScheduleResponse.builder()
+                .roomId(roomId)
+                .roomCode(room.getRoomCode())
+                .status(room.getStatus())
+                .statusLabel(room.getStatus().getLabelKh())
+                .bookings(bookings)
+                .todaySlots(slots)
+                .build();
     }
 
     @Override
     public MeetingRoomResponse create(MeetingRoomRequest request) {
-        if (meetingRoomRepository.existsByRoomCode(
-                request.getRoomCode())) {
+
+        if (roomRepo.existsByRoomCode(request.getRoomCode())) {
             throw new DuplicateResourceException(
-                    "កូដបន្ទប់ [" + request.getRoomCode()
-                            + "] មានស្ទួន");
+                    "Code [" + request.getRoomCode() + "] មានស្ទួន");
         }
 
-        MeetingRoom room = meetingRoomMapper.toEntity(request);
+        MeetingRoom room = roomMapper.toEntity(request);
+        room.setStatus(MeetingRoomStatus.AVAILABLE);
 
-        if (request.getImageAttachmentId() != null) {
-            attachmentRepository
-                    .findById(request.getImageAttachmentId())
-                    .ifPresent(room::setImagePath);
-        }
+        MeetingRoom saved = roomRepo.save(room);
 
-        MeetingRoom saved = meetingRoomRepository.save(room);
+        activityLogService.log(
+                "CREATE", "MeetingRoom", saved.getRoomId(),
+                "បង្កើត: " + saved.getRoomCode(), buildContext());
 
-        activityLogService.log("CREATE", "MeetingRoom",
-                saved.getRoomId(),
-                "បង្កើតបន្ទប់: " + saved.getRoomCode());
-
-        return meetingRoomMapper.toResponse(saved);
+        return roomMapper.toResponse(saved);
     }
 
     @Override
-    public MeetingRoomResponse update(
-            Integer id, MeetingRoomRequest request) {
-        MeetingRoom room = findById(id);
-        meetingRoomMapper.updateEntity(request, room);
+    public MeetingRoomResponse update(Integer id, MeetingRoomRequest request) {
 
-        if (request.getImageAttachmentId() != null) {
-            attachmentRepository
-                    .findById(request.getImageAttachmentId())
-                    .ifPresent(room::setImagePath);
+        MeetingRoom room = findById(id);
+
+        if (request.getStatus() == MeetingRoomStatus.IN_USE) {
+            throw new BusinessException(
+                    "ស្ថានភាព IN_USE ត្រូវបានកំណត់ Auto ពេល Meeting ចាប់ផ្ដើម"
+                            + " — មិនអាចកំណត់ដោយដៃ បានទេ");
         }
 
-        activityLogService.log("UPDATE", "MeetingRoom",
-                id, "កែប្រែ: " + room.getRoomCode());
+        if (request.getStatus() == MeetingRoomStatus.MAINTENANCE
+                || request.getStatus() == MeetingRoomStatus.CLOSED) {
+            validateNoActiveMeetings(id);
+        }
 
-        return meetingRoomMapper.toResponse(
-                meetingRoomRepository.save(room));
+        roomMapper.updateEntity(request, room);
+
+        activityLogService.log(
+                "UPDATE", "MeetingRoom", id,
+                "កែប្រែ: " + room.getRoomCode(), buildContext());
+
+        return toResponseWithImage(roomRepo.save(room));
+    }
+
+    @Override
+    public MeetingRoomResponse updateStatus(Integer id, MeetingRoomStatus newStatus) {
+
+        MeetingRoom room = findById(id);
+
+        if (newStatus == MeetingRoomStatus.IN_USE) {
+            throw new BusinessException(
+                    "ស្ថានភាព IN_USE ត្រូវបានកំណត់ Auto ដោយប្រព័ន្ធ"
+                            + " — Admin មិនអាច Set ដោយដៃ បានទេ");
+        }
+
+        if (newStatus == MeetingRoomStatus.MAINTENANCE
+                || newStatus == MeetingRoomStatus.CLOSED) {
+            validateNoActiveMeetings(id);
+        }
+
+        MeetingRoomStatus oldStatus = room.getStatus();
+        room.setStatus(newStatus);
+
+        if (newStatus == MeetingRoomStatus.AVAILABLE) {
+            room.setCurrentMeeting(null);
+        }
+
+        roomRepo.save(room);
+
+        activityLogService.log(
+                "UPDATE", "MeetingRoom", id,
+                "ស្ថានភាព: " + oldStatus.getLabelKh() + " → " + newStatus.getLabelKh(),
+                buildContext());
+
+        return toResponseWithImage(room);
     }
 
     @Override
     public void delete(Integer id) {
-        findById(id);
-        meetingRoomRepository.deleteById(id);
-        activityLogService.log("DELETE", "MeetingRoom",
-                id, "លុបបន្ទប់ប្រជុំ");
+
+        MeetingRoom room = findById(id);
+
+        validateNoActiveMeetings(id);
+
+        if (room.getStatus() == MeetingRoomStatus.IN_USE) {
+            throw new BusinessException(
+                    "មិនអាចលុប Room ដែល IN_USE — ត្រូវរងចាំ Meeting បញ្ចប់");
+        }
+
+        // Fix — Clean up attachment before deleting room (avoid orphaned MinIO object)
+        if (room.getAttachment() != null) {
+            Integer attachmentId = room.getAttachment().getAttachmentId();
+            room.setAttachment(null);
+            roomRepo.save(room);
+            attachmentService.delete(attachmentId);
+        }
+
+        roomRepo.deleteById(id);
+
+        activityLogService.log(
+                "DELETE", "MeetingRoom", id,
+                "លុប: " + room.getRoomCode(), buildContext());
+    }
+
+
+    //Me-cl
+    @Override
+    public MeetingRoomResponse uploadRoomImage(Integer id, MultipartFile file) {
+
+        validateImageFile(file);
+
+        MeetingRoom room = findById(id);
+
+        if (room.getAttachment() != null) {
+            Integer oldAttachmentId = room.getAttachment().getAttachmentId();
+            room.setAttachment(null);
+            roomRepo.save(room);
+            attachmentService.delete(oldAttachmentId);
+        }
+
+        var uploaded = attachmentService.upload(
+                file,
+                gov.kh.mcr.inspectorate.enums.AttachmentRefType.MEETING_ROOM,
+                id);
+
+        MeetingRoom updatedRoom = attachmentRepo.findById(uploaded.getAttachmentId())
+                .map(att -> {
+                    room.setAttachment(att);
+                    return roomRepo.save(room);
+                })
+                .orElse(room);
+
+        activityLogService.log(
+                "UPDATE", "MeetingRoom", id,
+                "Upload រូបភាព: " + room.getRoomCode(), buildContext());
+
+        return toResponseWithImage(updatedRoom);
+    }
+
+
+    //Me-cl
+    @Override
+    public MeetingRoomResponse removeImage(Integer id) {
+
+        MeetingRoom room = findById(id);
+
+        if (room.getAttachment() == null) {
+            throw new BusinessException("បន្ទប់នេះមិនមានរូបភាពទេ");
+        }
+
+        Integer attachmentId = room.getAttachment().getAttachmentId();
+
+        // Fix — Clear FK reference first,
+        // then delete attachment record + MinIO object
+        // (avoid FK constraint violation)
+        room.setAttachment(null);
+        MeetingRoom saved = roomRepo.save(room);
+
+        attachmentService.delete(attachmentId);
+
+        activityLogService.log(
+                "UPDATE", "MeetingRoom", id,
+                "លុបរូបភាព: " + room.getRoomCode(), buildContext());
+
+        return roomMapper.toResponse(saved);
+    }
+
+    // ── Private Helpers ───────────────────────────
+
+    // Fix — Resolve attachment filePath → presigned URL
+    // (resolve-on-read pattern, consistent with User profile image)
+    private MeetingRoomResponse toResponseWithImage(MeetingRoom room) {
+        MeetingRoomResponse resp = roomMapper.toResponse(room);
+        if (room.getAttachment() != null) {
+            resp.setImageUrl(
+                    minioService.getPresignedUrl(
+                            room.getAttachment().getFilePath()));
+        }
+        return resp;
+    }
+
+    // Fix — Validate image file before upload
+    // (type + size check; content-type header can be
+    //  spoofed by client, consider magic-byte check
+    //  via Apache Tika for stronger guarantee)
+    private void validateImageFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException("សូមជ្រើសរើសរូបភាពសម្រាប់ Upload");
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType)) {
+            throw new BusinessException(
+                    "ប្រភេទឯកសារមិនត្រូវបានអនុញ្ញាត — សូមប្រើ JPG, PNG ឬ WEBP ប៉ុណ្ណោះ");
+        }
+
+        if (file.getSize() > MAX_IMAGE_SIZE) {
+            throw new BusinessException("ទំហំរូបភាពមិនអាចលើសពី 5MB");
+        }
+    }
+
+    private List<RoomTimeSlot> buildTimeSlots(
+            Integer roomId, LocalDate date, LocalTime nowTime) {
+
+        List<Meeting> dayMeetings = meetingRepo.findByRoomAndDate(roomId, date);
+
+        boolean isToday = date.equals(LocalDate.now());
+
+        List<RoomTimeSlot> slots = new ArrayList<>();
+
+        LocalTime slot = LocalTime.of(8, 0);
+        LocalTime end = LocalTime.of(18, 0);
+
+        while (slot.isBefore(end)) {
+            LocalTime slotEnd = slot.plusMinutes(30);
+
+            LocalTime finalSlot = slot;
+
+            Meeting bookedMeeting = dayMeetings.stream()
+                    .filter(m ->
+                            !m.getStartTime().isAfter(finalSlot)
+                                    && m.getEndTime().isAfter(finalSlot))
+                    .findFirst()
+                    .orElse(null);
+
+            String slotStatus;
+            String slotLabel;
+            Integer meetingId = null;
+            String meetingTitle = null;
+
+            if (bookedMeeting != null) {
+                boolean isNow =
+                        isToday
+                                && !nowTime.isBefore(bookedMeeting.getStartTime())
+                                && nowTime.isBefore(bookedMeeting.getEndTime());
+
+                slotStatus = isNow ? "IN_USE" : "BOOKED";
+                slotLabel = isNow ? "កំពុងប្រជុំ" : "កក់ហើយ";
+                meetingId = bookedMeeting.getMeetingId();
+                meetingTitle = bookedMeeting.getTitle();
+            } else {
+                slotStatus = "AVAILABLE";
+                slotLabel = "ទំនេរ";
+            }
+
+            slots.add(
+                    RoomTimeSlot.builder()
+                            .date(date)
+                            .startTime(slot)
+                            .endTime(slotEnd)
+                            .slotStatus(slotStatus)
+                            .slotStatusLabel(slotLabel)
+                            .meetingId(meetingId)
+                            .meetingTitle(meetingTitle)
+                            .build());
+
+            slot = slotEnd;
+        }
+
+        return slots;
+    }
+
+    private void validateNoActiveMeetings(Integer roomId) {
+
+        List<Meeting> upcoming = meetingRepo.findByRoomSchedule(
+                roomId, LocalDate.now(), LocalDate.now().plusDays(30));
+
+        long active = upcoming.stream()
+                .filter(m ->
+                        !"CANCELLED".equals(m.getStatusCode().getStatusCode())
+                                && !"COMPLETED".equals(m.getStatusCode().getStatusCode()))
+                .count();
+
+        if (active > 0) {
+            throw new BusinessException(
+                    "Room នេះ មាន Meeting ដែល Scheduled " + active + " ខ្នង"
+                            + " — Cancel Meeting ទាំងអស់ជាមុនសិន");
+        }
     }
 
     private MeetingRoom findById(Integer id) {
-        return meetingRoomRepository.findById(id)
+        return roomRepo.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("បន្ទប់ប្រជុំ", id));
+    }
+
+    private ActivityLogContext buildContext() {
+        try {
+            var req = ((ServletRequestAttributes)
+                    RequestContextHolder.currentRequestAttributes())
+                    .getRequest();
+            return securityUtils.buildLogContext(req);
+        } catch (Exception e) {
+            return ActivityLogContext.builder().build();
+        }
     }
 }

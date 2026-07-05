@@ -1,4 +1,5 @@
 package gov.kh.mcr.inspectorate.entity;
+
 import gov.kh.mcr.inspectorate.enums.Gender;
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,7 +16,8 @@ import java.time.LocalDateTime;
                 @Index(name = "idx_officer_dept",
                         columnList = "department_id"),
                 @Index(name = "idx_officer_status",
-                        columnList = "status_code")
+                        columnList = "status_code"),
+
         })
 @Getter
 @Setter
@@ -25,7 +27,8 @@ import java.time.LocalDateTime;
 public class Officer {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(
+            strategy = GenerationType.IDENTITY)
     @Column(name = "officer_id")
     private Integer officerId;
 
@@ -34,26 +37,30 @@ public class Officer {
     private Position position;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "department_id")
+    @JoinColumn(name = "department_id",
+            nullable = false)
     private Department department;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "profile_attachment_id")
+    @JoinColumn(name = "profile_attachment_id",
+            nullable = true)
     private Attachment profileAttachment;
 
     @Column(name = "officer_code",
-            length = 50, unique = true, nullable = false)
+            length = 50,
+            unique = true, nullable = false)
     private String officerCode;
 
     @Column(name = "full_name_kh",
             length = 255, nullable = false)
     private String fullNameKh;
 
-    @Column(name = "full_name_en", length = 255)
+    @Column(name = "full_name_en",
+            length = 255)
     private String fullNameEn;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "gender", length = 1)
+    @Column(name = "gender", length = 10)
     private Gender gender;
 
     @Column(name = "dob")
@@ -66,13 +73,16 @@ public class Officer {
             columnDefinition = "TEXT")
     private String jobDescription;
 
-    @Column(name = "education_level", length = 255)
+    @Column(name = "education_level",
+            length = 255)
     private String educationLevel;
 
-    @Column(name = "specialization", length = 100)
+    @Column(name = "specialization",
+            length = 100)
     private String specialization;
 
-    @Column(name = "salary_grade", length = 50)
+    @Column(name = "salary_grade",
+            length = 50)
     private String salaryGrade;
 
     @Column(name = "current_address",
@@ -82,7 +92,8 @@ public class Officer {
     @Column(name = "birthplace", length = 255)
     private String birthplace;
 
-    @Column(name = "living_status", length = 100)
+    @Column(name = "living_status",
+            length = 100)
     private String livingStatus;
 
     @Column(name = "phone", length = 20)
@@ -92,12 +103,12 @@ public class Officer {
     private String email;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "status_code",
-            referencedColumnName = "status_code")
+    @JoinColumn(name = "status_code", referencedColumnName = "status_code", nullable = false)
     private LookupOfficerStatus statusCode;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at",
+            updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp

@@ -22,63 +22,79 @@ import org.springframework.web.multipart.MultipartFile;
 public class MeetingMinuteController {
 
     private final MeetingMinuteService meetingMinuteService;
-    private final AttachmentService attachmentService;
+    // GET /meeting-minutes
     @GetMapping
+    @PreAuthorize("hasAuthority('MEETING_MINUTE_VIEW')")
     public ResponseEntity<ApiResponse<PageResponse<
-        MeetingMinuteResponse>>> getAll(
-            @RequestParam(defaultValue = "0")  int page,
+            MeetingMinuteResponse>>> getAll(
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Integer meeting_id) {
         return ResponseEntity.ok(ApiResponse.success(
                 meetingMinuteService.getAll(page, size, meeting_id),
-                "ទទួលបន្ជីកំណត់ហេតុ"));
+                "ទទួលបានបញ្ជីកំណត់ហេតុ"));
     }
 
+    // GET /meeting-minutes/{id}
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('MEETING_MINUTE_VIEW')")
     public ResponseEntity<ApiResponse<MeetingMinuteResponse>> getById(
             @PathVariable Integer id) {
         return ResponseEntity.ok(ApiResponse.success(
-                meetingMinuteService.getById(id), "ទទួលបានកំណត់ហេតុ"));
+                meetingMinuteService.getById(id), "ការទទួលបានកំណត់ហេតុបានជោគជ័យ"));
     }
 
+    // POST /meeting-minutes
     @PostMapping
-    @PreAuthorize("hasAuthority('MEETING_MANAGE')")
+    @PreAuthorize("hasAuthority('MEETING_MINUTE_CREATE')")
     public ResponseEntity<ApiResponse<MeetingMinuteResponse>> create(
             @Valid @RequestBody MeetingMinuteRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         meetingMinuteService.create(request),
-                        "បង្កើតជោគជ័យ"));
+                        "កំណត់ហេតុកិច្ចប្រជុំត្រូវបានបង្កើតដោយជោគជ័យ"));
     }
 
+    // PUT /meeting-minutes/{id}
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('MEETING_MANAGE')")
+    @PreAuthorize("hasAuthority('MEETING_MINUTE_CREATE')")
     public ResponseEntity<ApiResponse<MeetingMinuteResponse>> update(
             @PathVariable Integer id,
             @Valid @RequestBody MeetingMinuteRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
                 meetingMinuteService.update(id, request),
-                "កែប្រែជោគជ័យ"));
+                "ព័ត៌មានកំណត់ហេតុកិច្ចប្រជុំត្រូវបានកែប្រែដោយជោគជ័យ"));
     }
 
     @PostMapping(
-            value    = "/{id}/attachment",
+            value = "/{id}/attachment",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAuthority('MEETING_MANAGE')")
-    public ResponseEntity<ApiResponse<AttachmentResponse>>
-    uploadMinuteFile(
-            @PathVariable
-            @Positive Integer id,
+    @PreAuthorize("hasAuthority('ATTACHMENT_UPLOAD')")
+    public ResponseEntity<ApiResponse<
+            MeetingMinuteResponse>>
+    uploadAttachment(
+            @PathVariable @Positive Integer id,
             @RequestParam MultipartFile file) {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
-                        attachmentService.upload(
-                                file,
-                                AttachmentRefType
-                                        .MEETING_MINUTE.getCode(),
-                                id),
-                        "Upload ឯកសារកំណត់ហេតុជោគជ័យ"));
+                        meetingMinuteService
+                                .uploadAttachment(id, file),
+                        "ឯកសារភ្ជាប់ត្រូវបានផ្ទុកឡើងដោយជោគជ័យ"));
+    }
+
+    // GET /meeting-minutes/{id}/download
+    @GetMapping("/{id}/download")
+    @PreAuthorize("hasAuthority('MEETING_MINUTE_VIEW')")
+    public ResponseEntity<ApiResponse<String>>
+    getDownloadUrl(
+            @PathVariable @Positive Integer id) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        meetingMinuteService
+                                .getDownloadUrl(id),
+                        "តំណភ្ជាប់សម្រាប់ទាញយកឯកសារត្រូវបានផ្តល់ជូនដោយជោគជ័យ"));
     }
 }

@@ -1,19 +1,31 @@
 package gov.kh.mcr.inspectorate.controller;
 
-import gov.kh.mcr.inspectorate.dto.request.MeetingRoomRequest;
-import gov.kh.mcr.inspectorate.dto.response.ApiResponse;
-import gov.kh.mcr.inspectorate.dto.response.AttachmentResponse;
-import gov.kh.mcr.inspectorate.dto.response.MeetingRoomResponse;
-import gov.kh.mcr.inspectorate.enums.RoomStatus;
-import gov.kh.mcr.inspectorate.service.MeetingRoomService;
-import gov.kh.mcr.inspectorate.util.AttachmentValidator;
+import gov.kh.mcr.inspectorate.dto.request
+        .MeetingRoomRequest;
+import gov.kh.mcr.inspectorate.dto.response
+        .ApiResponse;
+import gov.kh.mcr.inspectorate.dto.response
+        .MeetingRoomResponse;
+import gov.kh.mcr.inspectorate.dto.response
+        .RoomScheduleResponse;
+import gov.kh.mcr.inspectorate.enums
+        .MeetingRoomStatus;
+import gov.kh.mcr.inspectorate.service
+        .MeetingRoomService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation
+        .DateTimeFormat;
 import org.springframework.http.*;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.security.access.prepost
+        .PreAuthorize;
+import org.springframework.validation.annotation
+        .Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart
+        .MultipartFile;
+import java.time.LocalDate;
 import java.util.List;
 
 @Validated
@@ -22,22 +34,25 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MeetingRoomController {
 
-    private final MeetingRoomService meetingRoomService;
+    private final MeetingRoomService
+            roomService;
 
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('MEETING_VIEW', 'ROOM_MANAGE')")
     public ResponseEntity<ApiResponse<
-        List<MeetingRoomResponse>>>
+    List<MeetingRoomResponse>>>
     getAll(
             @RequestParam(required = false)
-            RoomStatus status) {
+            MeetingRoomStatus status) {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        meetingRoomService.getAll(status),
+                        roomService.getAll(status),
                         "ទទួលបន្ជីបន្ទប់ប្រជុំ"));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('MEETING_VIEW', 'ROOM_MANAGE')")
     public ResponseEntity<ApiResponse<
     MeetingRoomResponse>>
     getById(
@@ -46,12 +61,61 @@ public class MeetingRoomController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        meetingRoomService.getById(id),
-                        "ទទួលបានបន្ទប់ប្រជុំ"));
+                        roomService.getById(id),
+                        "ទទួលបន្ទប់ប្រជុំ"));
+    }
+
+    // Fix — NEW: Room booking schedule
+    // (ថ្ងៃ + ម៉ោង ទាំងអស់ ដែលកក់)
+    @GetMapping("/{id}/schedule")
+    @PreAuthorize("hasAnyAuthority('MEETING_VIEW', 'ROOM_MANAGE')")
+    public ResponseEntity<ApiResponse<
+    RoomScheduleResponse>>
+    getSchedule(
+            @PathVariable
+            @Positive Integer id,
+            @RequestParam(required = false)
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE)
+            LocalDate from,
+            @RequestParam(required = false)
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE)
+            LocalDate to) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        roomService.getSchedule(
+                                id, from, to),
+                        "ទទួលតារាងពេលវេលា"
+                                + " បន្ទប់ប្រជុំ"));
+    }
+
+    // Fix — NEW: Availability for date
+    // (Slots ទំនេរ + Slots កក់)
+    @GetMapping("/{id}/availability")
+    @PreAuthorize("hasAnyAuthority('MEETING_VIEW', 'ROOM_MANAGE')")
+    public ResponseEntity<ApiResponse<
+    RoomScheduleResponse>>
+    getAvailability(
+            @PathVariable
+            @Positive Integer id,
+            @RequestParam(required = false)
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE)
+            LocalDate date) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        roomService.getAvailability(
+                                id, date),
+                        "ទទួល Availability"
+                                + " បន្ទប់ប្រជុំ"));
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('MEETING_MANAGE')")
+    @PreAuthorize(
+            "hasAuthority('ROOM_MANAGE')")
     public ResponseEntity<ApiResponse<
     MeetingRoomResponse>>
     create(
@@ -61,12 +125,14 @@ public class MeetingRoomController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
-                        meetingRoomService.create(request),
-                        "បង្កើតបន្ទប់ប្រជុំជោគជ័យ"));
+                        roomService.create(request),
+                        "បង្កើតបន្ទប់ប្រជុំ"
+                                + "ជោគជ័យ"));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('MEETING_MANAGE')")
+    @PreAuthorize(
+            "hasAuthority('ROOM_MANAGE')")
     public ResponseEntity<ApiResponse<
     MeetingRoomResponse>>
     update(
@@ -77,42 +143,76 @@ public class MeetingRoomController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        meetingRoomService.update(
+                        roomService.update(
                                 id, request),
-                        "កែប្រែជោគជ័យ"));
+                        "កែប្រែបន្ទប់ប្រជុំ"
+                                + "ជោគជ័យ"));
+    }
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize(
+            "hasAuthority('ROOM_MANAGE')")
+    public ResponseEntity<ApiResponse<
+    MeetingRoomResponse>>
+    updateStatus(
+            @PathVariable
+            @Positive Integer id,
+            @RequestParam
+            MeetingRoomStatus status) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        roomService.updateStatus(
+                                id, status),
+                        "ស្ថានភាពបន្ទប់"
+                                + " ត្រូវបានកែប្រែ"
+                                + " → "
+                                + status.getLabelKh()));
+    }
+
+    @PostMapping(
+            value = "/{id}/image",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('ROOM_MANAGE')")
+    public ResponseEntity<ApiResponse<MeetingRoomResponse>>
+    uploadImage(
+            @PathVariable @Positive Integer id,
+            @RequestParam("file") MultipartFile file) {
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        roomService.uploadRoomImage(id, file),
+                        "Upload រូបភាព ជោគជ័យ"));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('MEETING_MANAGE')")
+    @PreAuthorize(
+            "hasAuthority('ROOM_MANAGE')")
     public ResponseEntity<ApiResponse<Void>>
     delete(
             @PathVariable
             @Positive Integer id) {
 
-        meetingRoomService.delete(id);
+        roomService.delete(id);
+
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null, "លុបជោគជ័យ"));
+                        null,
+                        "លុបបន្ទប់ប្រជុំ"
+                                + " ជោគជ័យ"));
     }
 
-    @PostMapping(
-            value    = "/{id}/image",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAuthority('MEETING_MANAGE')")
-    public ResponseEntity<ApiResponse<
-            AttachmentResponse>>
-    uploadImage(
-            @PathVariable
-            @Positive Integer id,
-            @RequestParam
-            org.springframework.web.multipart.MultipartFile file) {
-        AttachmentValidator.validateImage(file);
+    //Me-cl
+    @DeleteMapping("/{id}/image")
+    @PreAuthorize("hasAuthority('ROOM_MANAGE')")
+    public ResponseEntity<ApiResponse<MeetingRoomResponse>> removeImage(
+            @PathVariable @Positive Integer id) {
 
         return ResponseEntity
-                .status(HttpStatus.CREATED)
+                .status(HttpStatus.OK)
                 .body(ApiResponse.success(
-                        meetingRoomService
-                                .uploadImage(id, file),
-                        "Upload រូបបន្ទប់ជោគជ័យ"));
+                        roomService.removeImage(id),
+                        "លុបរូបភាព ជោគជ័យ"));
     }
 }
