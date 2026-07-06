@@ -7,21 +7,59 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum AttachmentRefType {
 
-    OFFICER          ("OFFICER",
-            "មន្ត្រីរាជការ"),
-    USER             ("USER",
-            "អ្នកប្រើប្រាស់"),
-    DOCUMENT         ("DOCUMENT",
-            "ឯកសារ"),
-    MEETING_ROOM     ("MEETING_ROOM",
-            "បន្ទប់ប្រជុំ"),
-    MEETING_MINUTE   ("MEETING_MINUTE",
-            "កំណត់ហេតុប្រជុំ"),
-    ANNOUNCEMENT     ("ANNOUNCEMENT",
-            "សេចក្តីប្រកាស");
+    OFFICER(
+            "OFFICER_PROFILE",
+            "មន្ត្រីរាជការ",
+            "officers"
+    ),
 
+    CONTRACT_OFFICER_PROFILE(
+            "CONTRACT_OFFICER_PROFILE",
+            "រូបភាព ContractOfficer",
+            "contract-officer-profiles"
+    ),
+
+    DOCUMENT(
+            "DOCUMENT",
+            "ឯកសារ",
+            "documents"
+    ),
+
+    MEETING_ROOM(
+            "MEETING_ROOM",
+            "បន្ទប់ប្រជុំ",
+            "meeting-rooms"
+    ),
+
+    MEETING_MINUTE(
+            "MEETING_MINUTE",
+            "កំណត់ហេតុប្រជុំ",
+            "meeting-minutes"
+    ),
+
+    ANNOUNCEMENT(
+            "ANNOUNCEMENT",
+            "សេចក្តីប្រកាស",
+            "announcements"
+    );
     private final String code;
     private final String labelKh;
+    private final String folder;
+
+    public String buildPath(
+            Integer refId) {
+        return folder
+                + "/"
+                + refId
+                + "/"
+                + java.util.UUID
+                .randomUUID()
+                .toString()
+                .replace("-", "");
+    }
+
+
+
 
     public static boolean isValid(String value) {
         if (value == null || value.isBlank()) {
@@ -35,20 +73,6 @@ public enum AttachmentRefType {
         return false;
     }
 
-    public static AttachmentRefType fromCode(
-            String code) {
-        if (code == null) {
-            throw new IllegalArgumentException(
-                    "កូដនៃប្រភេទឯកសារភ្ជាប់ មិនអាចទទេបានឡើយ");
-        }
-        for (AttachmentRefType t : values()) {
-            if (t.code.equalsIgnoreCase(code)) {
-                return t;
-            }
-        }
-        throw new IllegalArgumentException(
-                "ប្រភេទឯកសារភ្ជាប់មិនត្រឹមត្រូវ: " + code);
-    }
 
     public String toPathPrefix() {
         return this.code
@@ -64,9 +88,4 @@ public enum AttachmentRefType {
         }
         return codes;
     }
-
-    public static final String VALIDATION_PATTERN =
-            "^(OFFICER|CONTRACT_OFFICER|USER"
-                    + "|DOCUMENT|MEETING_ROOM"
-                    + "|MEETING_MINUTE|ANNOUNCEMENT)$";
 }
