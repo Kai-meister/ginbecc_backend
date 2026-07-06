@@ -24,9 +24,7 @@ public interface MeetingService {
 
     MeetingResponse update(
             Integer id, MeetingRequest request);
-
     MeetingResponse updateStatus(
-            Integer id, String statusCode);
-
+            Integer id, String newStatusCode);
     void delete(Integer id);
 }

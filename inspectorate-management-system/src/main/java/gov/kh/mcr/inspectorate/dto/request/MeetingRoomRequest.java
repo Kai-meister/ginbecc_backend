@@ -1,6 +1,7 @@
 package gov.kh.mcr.inspectorate.dto.request;
 
-import gov.kh.mcr.inspectorate.enums.RoomStatus;
+import gov.kh.mcr.inspectorate.enums.MeetingRoomStatus;
+import gov.kh.mcr.inspectorate.service.MeetingRoomService;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -9,6 +10,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class MeetingRoomRequest {
+
 
     @NotBlank(message = "សូមបញ្ចូលលេខកូដបន្ទប់ប្រជុំ")
     @Size(max = 20, message = "លេខកូដបន្ទប់មិនអាចលើសពី ២០ តួអក្សរឡើយ")
@@ -23,7 +25,7 @@ public class MeetingRoomRequest {
     private Integer capacity;
 
     @NotNull(message = "សូមជ្រើសរើសស្ថានភាពនៃបន្ទប់ប្រជុំ")
-    private RoomStatus status;
+    private MeetingRoomStatus status;
 
     @Size(max = 500, message = "បញ្ជីសម្ភារក្នុងបន្ទប់មិនអាចលើសពី ៥០០ តួអក្សរឡើយ")
     private String facilities;

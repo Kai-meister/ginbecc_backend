@@ -157,8 +157,7 @@ public class ContractOfficerController {
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         url,
-                        "Upload រូបភាព"
-                                + " Profile ជោគជ័យ"));
+                        "បានបង្ហោះរូបភាពប្រវត្តិរូបមន្ត្រីកិច្ចសន្យាដោយជោគជ័យ"));
     }
 
     @GetMapping("/{id}/profile-image")

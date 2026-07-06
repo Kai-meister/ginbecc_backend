@@ -4,8 +4,8 @@ import gov.kh.mcr.inspectorate.dto.request.*;
 import gov.kh.mcr.inspectorate.dto.response.*;
 import gov.kh.mcr.inspectorate.entity.*;
 import gov.kh.mcr.inspectorate.enums.AttendanceStatus;
+import gov.kh.mcr.inspectorate.enums.MeetingRoomStatus;
 import gov.kh.mcr.inspectorate.enums.MeetingStatusCode;
-import gov.kh.mcr.inspectorate.enums.RoomStatus;
 import gov.kh.mcr.inspectorate.exception.*;
 import gov.kh.mcr.inspectorate.mapper.AttendeeMapper;
 import gov.kh.mcr.inspectorate.mapper.MeetingMapper;
@@ -152,6 +152,16 @@ public class MeetingServiceImpl
                     findRoom(request.getRoomId()));
         }
 
+        MeetingRoom room = roomRepo.findById(request.getRoomId())
+                .orElseThrow(() -> new ResourceNotFoundException("បន្ទប់ប្រជុំ", request.getRoomId()));
+
+        if (room.getStatus() == MeetingRoomStatus.MAINTENANCE
+                || room.getStatus() == MeetingRoomStatus.CLOSED) {
+            throw new BusinessException(
+                    "បន្ទប់ [" + room.getRoomCode() + "] មិនអាចកក់បានទេ — "
+                            + "ស្ថានភាពបច្ចុប្បន្ន: " + room.getStatus().getLabelKh());
+        }
+
         meeting.setStatusCode(
                 findStatus(request.getStatusCode()));
 
@@ -224,32 +234,6 @@ public class MeetingServiceImpl
                 meetingRepo.save(meeting));
     }
 
-    @Override
-    public MeetingResponse updateStatus(
-            Integer id, String statusCode) {
-
-        Meeting meeting = findById(id);
-
-        String current =
-                meeting.getStatusCode() != null
-                        ? meeting.getStatusCode()
-                          .getStatusCode()
-                        : "";
-        validateStatusTransition(
-                current, statusCode);
-
-        meeting.setStatusCode(
-                findStatus(statusCode));
-
-        activityLogService.log(
-                "UPDATE", "Meeting",
-                id,
-                "ផ្លាស់ប្តូរស្ថានភាពកិច្ចប្រជុំ «" + meeting.getTitle() + "» ទៅជា៖ " + statusCode,
-                buildContext());
-
-        return toResponseWithSummary(
-                meetingRepo.save(meeting));
-    }
 
     @Override
     public void delete(Integer id) {
@@ -305,41 +289,6 @@ public class MeetingServiceImpl
         }
     }
 
-    private void checkConflict(
-            Integer roomId,
-            MeetingRequest request,
-            Integer excludeId) {
-
-        List<String> ignored = ignoredStatuses();
-
-        List<Meeting> conflicts =
-                excludeId != null
-                        ? meetingRepo.findConflictsExclude(
-                        roomId,
-                        request.getMeetingDate(),
-                        request.getStartTime(),
-                        request.getEndTime(),
-                        excludeId, ignored)
-                        : meetingRepo.findConflicts(
-                        roomId,
-                        request.getMeetingDate(),
-                        request.getStartTime(),
-                        request.getEndTime(),
-                        ignored);
-
-        if (!conflicts.isEmpty()) {
-            Meeting c = conflicts.get(0);
-            throw new BusinessException(
-                    "មិនអាចកក់បានឡើយ ដោយសារបន្ទប់ប្រជុំ «"
-                            + c.getRoom().getRoomCode()
-                            + "» ត្រូវបានកក់រួចហើយ ចាប់ពីម៉ោង "
-                            + c.getStartTime()
-                            + " ដល់ "
-                            + c.getEndTime()
-                            + " សម្រាប់កិច្ចប្រជុំ៖ «"
-                            + c.getTitle() + "»។");
-        }
-    }
 
     private void validateCanUpdate(
             Meeting meeting) {
@@ -358,25 +307,6 @@ public class MeetingServiceImpl
         }
     }
 
-    private void validateStatusTransition(
-            String current, String next) {
-
-        if (MeetingStatusCode.isFinal(current)) {
-            throw new BusinessException(
-                    "មិនអាចផ្លាស់ប្តូរបានឡើយ ដោយសារកិច្ចប្រជុំនេះស្ថិតក្នុងស្ថានភាពចុងក្រោយ «"
-                            + current
-                            + "» រួចរាល់ហើយ។");
-        }
-
-        if (MeetingStatusCode.IN_PROGRESS
-                .getCode().equals(current)
-                && MeetingStatusCode.CANCELLED
-                .getCode().equals(next)) {
-            throw new BusinessException(
-                    "មិនអាចលុបចោលកិច្ចប្រជុំបានឡើយ ដោយសារកិច្ចប្រជុំកំពុងតែប្រព្រឹត្តទៅ");
-        }
-    }
-
     private Meeting findById(Integer id) {
         return meetingRepo.findById(id)
                 .orElseThrow(() ->
@@ -389,17 +319,6 @@ public class MeetingServiceImpl
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "មិនមានទិន្នន័យបន្ទប់ប្រជុំដែលមានលេខសម្គាល់ ", id));
-
-        if (RoomStatus.MAINTENANCE.equals(room.getStatus())
-                || RoomStatus.OCCUPIED.equals(room.getStatus())) {
-            throw new BusinessException(
-                    "មិនអាចកក់បន្ទប់ «"
-                            + room.getRoomCode()
-                            + "» បានឡើយ ដោយសារបន្ទប់នេះ"
-                            + "ស្ថិតក្នុងស្ថានភាព «"
-                            + room.getStatus().getLabelKh()
-                            + "»។");
-        }
 
         return room;
     }
@@ -421,8 +340,7 @@ public class MeetingServiceImpl
     private MeetingResponse toResponseWithSummary(
             Meeting meeting) {
 
-        MeetingResponse dto =
-                meetingMapper.toResponse(meeting);
+        MeetingResponse dto = meetingMapper.toResponse(meeting);
 
         Integer meetingId = meeting.getMeetingId();
         List<AttendeeResponse> attendees =
@@ -479,5 +397,140 @@ public class MeetingServiceImpl
 
 
     }
+
+    private void syncRoomStatusOnDecision(
+            Meeting meeting,
+            String newStatusCode) {
+
+        MeetingRoom room = meeting.getRoom();
+        if (room == null) return;
+
+        if ("CANCELLED".equals(newStatusCode)
+                || "COMPLETED".equals(
+                newStatusCode)) {
+
+            if (room.getStatus()
+                    == MeetingRoomStatus.IN_USE
+                    && room.getCurrentMeeting()
+                    != null
+                    && room.getCurrentMeeting()
+                    .getMeetingId()
+                    .equals(meeting
+                            .getMeetingId())) {
+
+                room.setStatus(
+                        MeetingRoomStatus.AVAILABLE);
+                room.setCurrentMeeting(null);
+                roomRepo.save(room);
+
+                log.info(
+                        "Real-time Room update:"
+                                + " [{}] → AVAILABLE"
+                                + " (Meeting [{}] {})",
+                        room.getRoomCode(),
+                        meeting.getTitle(),
+                        newStatusCode);
+            }
+        }
+    }
+    private void checkConflict(
+            Integer roomId,
+            MeetingRequest request,
+            Integer excludeMeetingId) {
+
+        List<Meeting> conflicts =
+                meetingRepo.findConflicts(
+                        roomId,
+                        request.getMeetingDate(),
+                        request.getStartTime(),
+                        request.getEndTime(),
+                        excludeMeetingId);
+
+        if (!conflicts.isEmpty()) {
+            Meeting c = conflicts.get(0);
+            throw new BusinessException(
+                    "មិនអាចកក់បន្ទប់ប្រជុំបានឡើយ ព្រោះមានការជាន់ពេលវាលាគ្នាជាមួយកិច្ចប្រជុំ៖ «" + c.getTitle() + "» "
+                            + "ដែលបានកក់ចន្លោះម៉ោង " + c.getStartTime() + " ដល់ " + c.getEndTime() + " "
+                            + "នាថ្ងៃទី " + c.getMeetingDate() + "។ សូមមេត្តាជ្រើសរើសម៉ោង ឬបន្ទប់ប្រជុំផ្សេងវិញ។"
+            );
+        }
+    }
+
+    @Override
+    public MeetingResponse updateStatus(
+            Integer id,
+            String newStatusCode) {
+
+        Meeting meeting = findById(id);
+
+        validateStatusTransition(
+                meeting.getStatusCode()
+                        .getStatusCode(),
+                newStatusCode);
+
+        LookupMeetingStatus newStatus =
+                statusRepo.findById(newStatusCode)
+                        .orElseThrow(() ->
+                                new
+                                        ResourceNotFoundException(
+                                        "Meeting Status",
+                                        newStatusCode));
+
+        meeting.setStatusCode(newStatus);
+        Meeting saved =
+                meetingRepo.save(meeting);
+        syncRoomStatusOnDecision(
+                meeting, newStatusCode);
+
+        activityLogService.log(
+                "UPDATE", "Meeting", id,
+                "Status: " + newStatusCode,
+                buildContext());
+
+        return toResponseWithSummary(saved);
+    }
+
+    private void validateStatusTransition(
+            String current,
+            String target) {
+
+        if ("COMPLETED".equals(current)
+                || "CANCELLED".equals(current)) {
+            throw new BusinessException(
+                    "កិច្ចប្រជុំនេះស្ថិតក្នុងស្ថានភាពចុងក្រោយ («" + current + "») រួចរាល់ហើយ មិនអាចធ្វើការផ្លាស់ប្តូរស្ថានភាពបន្តទៀតបានឡើយ។"
+            );
+        }
+
+        boolean valid = switch (current) {
+            case "DRAFT" -> List.of(
+                            "SCHEDULED", "CANCELLED")
+                    .contains(target);
+            case "SCHEDULED" -> List.of(
+                            "CONFIRMED", "POSTPONED",
+                            "CANCELLED", "IN_PROGRESS")
+                    .contains(target);
+            case "CONFIRMED" -> List.of(
+                            "POSTPONED", "CANCELLED",
+                            "IN_PROGRESS")
+                    .contains(target);
+            case "POSTPONED" -> List.of(
+                            "SCHEDULED", "CANCELLED")
+                    .contains(target);
+            case "RESCHEDULED" -> List.of(
+                            "CONFIRMED", "CANCELLED")
+                    .contains(target);
+            case "IN_PROGRESS" -> List.of(
+                            "COMPLETED", "CANCELLED")
+                    .contains(target);
+            default -> false;
+        };
+
+        if (!valid) {
+            throw new BusinessException(
+                    "មិនអាចផ្លាស់ប្តូរស្ថានភាពកិច្ចប្រជុំពី «" + current + "» ទៅជា «" + target + "» បានឡើយ ព្រោះលំហូរនៃការផ្លាស់ប្តូរនេះមិនត្រឹមត្រូវតាមគោលការណ៍ប្រព័ន្ធ។"
+            );
+        }
+    }
+
 
 }

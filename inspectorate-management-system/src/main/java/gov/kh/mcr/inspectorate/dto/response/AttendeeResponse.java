@@ -1,4 +1,3 @@
-// AttendeeResponse.java — Fix
 package gov.kh.mcr.inspectorate.dto.response;
 
 import gov.kh.mcr.inspectorate.enums

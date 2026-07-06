@@ -46,17 +46,17 @@ public enum AttachmentRefType {
     private final String labelKh;
     private final String folder;
 
-    public String buildPath(
-            Integer refId) {
-        return folder
-                + "/"
-                + refId
-                + "/"
-                + java.util.UUID
-                .randomUUID()
-                .toString()
-                .replace("-", "");
-    }
+//    public String buildPath(
+//            Integer refId) {
+//        return folder
+//                + "/"
+//                + refId
+//                + "/"
+//                + java.util.UUID
+//                .randomUUID()
+//                .toString()
+//                .replace("-", "");
+//    }
 
 
 

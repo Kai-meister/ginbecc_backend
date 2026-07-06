@@ -58,8 +58,7 @@ public class MeetingAttendee {
     @Column(name = "attendance_status",
             nullable = false)
     @Builder.Default
-    private AttendanceStatus attendanceStatus =
-            AttendanceStatus.INVITED;
+    private AttendanceStatus attendanceStatus = AttendanceStatus.INVITED;
 
     @Column(name = "check_in_time")
     private LocalDateTime checkInTime;
