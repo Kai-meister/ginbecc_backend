@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "documents",
         indexes = {
-                @Index(name = "idx_doc_officer",
-                        columnList = "officer_id"),
+                @Index(name = "idx_doc_user",
+                        columnList = "user_id"),
                 @Index(name = "idx_doc_status",
                         columnList = "status_code"),
                 @Index(name = "idx_doc_expiry",
@@ -23,13 +23,15 @@ import java.time.LocalDateTime;
 public class Document {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(
+            strategy = GenerationType.IDENTITY)
     @Column(name = "document_id")
     private Integer documentId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "officer_id", nullable = false)
-    private Officer officer;
+    @JoinColumn(name = "user_id",
+            nullable = false)
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_type_id",
@@ -37,7 +39,8 @@ public class Document {
     private DocumentType documentType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "attachment_id")
+    @JoinColumn(name = "attachment_id",
+            nullable = true)
     private Attachment attachment;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -48,22 +51,27 @@ public class Document {
             length = 255, nullable = false)
     private String documentName;
 
-    @Column(name = "document_number", length = 100)
+    @Column(name = "document_number",
+            length = 100)
     private String documentNumber;
 
-    @Column(name = "note", columnDefinition = "TEXT")
+    @Column(name = "note",
+            columnDefinition = "TEXT")
     private String note;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "status_code",
-            referencedColumnName = "status_code")
+    @JoinColumn(
+            name = "status_code",
+            referencedColumnName = "status_code",
+            nullable = false)
     private LookupDocumentStatus statusCode;
 
     @Column(name = "expiry_date")
     private LocalDate expiryDate;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at",
+            updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp

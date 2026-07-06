@@ -7,9 +7,12 @@ import gov.kh.mcr.inspectorate.dto.response.ApiResponse;
 import gov.kh.mcr.inspectorate.dto.response.AttachmentResponse;
 import gov.kh.mcr.inspectorate.dto.response.OfficerResponse;
 import gov.kh.mcr.inspectorate.dto.response.PageResponse;
+import gov.kh.mcr.inspectorate.entity.Officer;
 import gov.kh.mcr.inspectorate.enums.AttachmentRefType;
-import gov.kh.mcr.inspectorate.service.AttachmentService;
-import gov.kh.mcr.inspectorate.service.OfficerService;
+import gov.kh.mcr.inspectorate.exception.ResourceNotFoundException;
+import gov.kh.mcr.inspectorate.repository.OfficerRepository;
+import gov.kh.mcr.inspectorate.repository.UserRepository;
+import gov.kh.mcr.inspectorate.service.*;
 import gov.kh.mcr.inspectorate.util.AttachmentValidator;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -26,113 +29,162 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OfficerController {
 
+    private final UserProfileImageService profileImageService;
     private final OfficerService officerService;
-    private final AttachmentService attachmentService;
+    private final UserRepository userRepository;
+    private final OfficerRepository officerRepository;
+    private final MinioService minioService;
 
+    // GET /officers
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('OFFICER_MANAGE','SELF_PROFILE_VIEW')")
+    @PreAuthorize("hasAuthority('OFFICER_VIEW')")
     public ResponseEntity<ApiResponse<PageResponse<OfficerResponse>>> getAll(
-            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Integer dept,
             @RequestParam(required = false) String status) {
         return ResponseEntity.ok(ApiResponse.success(
                 officerService.getAll(page, size, dept, status),
-                "ទទួលបន្ជីមន្ត្រី"));
+                "ទាញយកបញ្ជីឈ្មោះមន្ត្រីបានដោយជោគជ័យ"));
     }
 
+    // GET /officers/{id}
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('OFFICER_MANAGE','SELF_PROFILE_VIEW')")
+    @PreAuthorize("hasAuthority('OFFICER_VIEW')")
     public ResponseEntity<ApiResponse<OfficerResponse>> getById(
             @PathVariable Integer id) {
         return ResponseEntity.ok(ApiResponse.success(
-                officerService.getById(id), "ទទួលបានមន្ត្រី"));
+                officerService.getById(id), "ទាញយកព័ត៌មានមន្ត្រីបានដោយជោគជ័យ"));
     }
 
+    // POST /officers
     @PostMapping
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('OFFICER_CREATE')")
     public ResponseEntity<ApiResponse<OfficerResponse>> create(
             @Valid @RequestBody OfficerRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         officerService.create(request),
-                        "បង្កើតមន្ត្រីជោគជ័យ"));
+                        "បង្កើតព័ត៌មានមន្ត្រីថ្មីបានដោយជោគជ័យ"));
     }
 
+    // PUT /officers/{id}
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('OFFICER_MANAGE','SELF_PROFILE_EDIT')")
+    @PreAuthorize("hasAuthority('OFFICER_UPDATE')")
     public ResponseEntity<ApiResponse<OfficerResponse>> update(
             @PathVariable Integer id,
             @Valid @RequestBody OfficerRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
-                officerService.update(id, request), "កែប្រែជោគជ័យ"));
+                officerService.update(id, request), "ព័ត៌មានមន្ត្រីត្រូវបានកែប្រែដោយជោគជ័យ"));
     }
 
+    // PATCH /officers/{id}/status
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('OFFICER_MANAGE')")
+    @PreAuthorize("hasAuthority('OFFICER_UPDATE')")
     public ResponseEntity<ApiResponse<OfficerResponse>> updateStatus(
             @PathVariable Integer id,
             @Valid @RequestBody StatusRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
                 officerService.updateStatus(id, request),
-                "ផ្លាស់ប្ដូរស្ថានភាព"));
+                "ស្ថានភាពមន្ត្រីត្រូវបានផ្លាស់ប្តូរដោយជោគជ័យ"));
     }
 
+    // DELETE /officers/{id}
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('USER_DELETE')")
+    @PreAuthorize("hasAuthority('OFFICER_DELETE')")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable Integer id) {
         officerService.delete(id);
         return ResponseEntity.ok(
-                ApiResponse.success(null, "លុបជោគជ័យ"));
+                ApiResponse.success(null, "ព័ត៌មានមន្ត្រីត្រូវបានលុបចេញពីប្រព័ន្ធដោយជោគជ័យ"));
     }
 
+    // GET /officers/near-retirement
     @GetMapping("/near-retirement")
-    @PreAuthorize("hasAnyAuthority('OFFICER_MANAGE','REPORT_EXPORT')")
+    @PreAuthorize("hasAuthority('OFFICER_VIEW')")
     public ResponseEntity<ApiResponse<List<OfficerResponse>>>
     getNearRetirement() {
         return ResponseEntity.ok(ApiResponse.success(
                 officerService.getNearRetirement(),
-                "ទទួលបន្ជីជិតនិវត្តន៍"));
+                "ទាញយកបញ្ជីមន្ត្រីជិតដល់អាយុនិវត្តន៍បានដោយជោគជ័យ"));
     }
 
-
-    @PostMapping(
-            value    = "/{id}/profile-image",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAuthority('ATTACHMENT_UPLOAD')")
-    public ResponseEntity<ApiResponse<AttachmentResponse>>
+    // POST /officers/{id}/profile-image
+    @PostMapping("/{id}/profile-image")
+    @PreAuthorize(
+            "hasAuthority('ATTACHMENT_UPLOAD')")
+    public ResponseEntity<ApiResponse<String>>
     uploadProfileImage(
             @PathVariable
             @Positive Integer id,
-            @RequestParam MultipartFile file) {
+            @RequestParam("file")
+            MultipartFile file) {
 
-        // Validate image only
-        AttachmentValidator.validateImage(file);
+        String url =
+                profileImageService
+                        .uploadOfficerProfileImage(
+                                id, file);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
-                        attachmentService.upload(
-                                file,
-                                // ប្រើ enum code
-                                AttachmentRefType
-                                        .OFFICER.getCode(),
-                                id),
-                        "Upload រូបភាពជោគជ័យ"));
+                        url,
+                        "បានបង្ហោះរូបភាពប្រវត្តិរូបដោយជោគជ័យ"));
     }
+
     @GetMapping("/{id}/profile-image")
-    public ResponseEntity<ApiResponse<AttachmentResponse>>
-    getProfileImage(
+    @PreAuthorize(
+            "hasAuthority('OFFICER_VIEW')")
+    public ResponseEntity<ApiResponse<String>>
+    getProfileImageUrl(
             @PathVariable
             @Positive Integer id) {
 
+
+        String url = userRepository
+                .findByOfficer_OfficerId(id)
+                .map(u ->
+                        profileImageService
+                                .getProfileImageUrl(
+                                        u.getUserId()))
+                .orElseGet(() -> {
+                    Officer o = officerRepository
+                            .findById(id)
+                            .orElseThrow(() ->
+                                    new
+                                            ResourceNotFoundException(
+                                            "មន្ត្រី", id));
+                    return o.getProfileAttachment()
+                            != null
+                            ? minioService
+                            .getPresignedUrl(
+                                    o.getProfileAttachment()
+                                            .getFilePath())
+                            : "/api/v1/static/avatars"
+                              + "/officer.png";
+                });
+
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        attachmentService.getActiveByReference(
-                                id,
-                                AttachmentRefType
-                                        .OFFICER.getCode()),
-                        "ទទួលរូបភាព Profile"));
+                        url, "ទាញយកតំណភ្ជាប់រូបភាពប្រវត្តិរូបបានជោគជ័យ"));
     }
+
+    @DeleteMapping("/{id}/profile-image")
+    @PreAuthorize(
+            "hasAuthority('ATTACHMENT_DELETE')")
+    public ResponseEntity<ApiResponse<Void>>
+    deleteProfileImage(
+            @PathVariable
+            @Positive Integer id) {
+
+        profileImageService
+                .deleteOfficerProfileImage(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        null,
+                        "បានលុបរូបភាពប្រវត្តិរូបដោយជោគជ័យ"));
+    }
+
+
 }

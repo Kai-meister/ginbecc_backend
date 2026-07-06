@@ -7,11 +7,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface LookupMeetingStatusRepository
-        extends JpaRepository<LookupMeetingStatus,
-        String> {
+public interface LookupMeetingStatusRepository extends JpaRepository<LookupMeetingStatus, String> {
 
     List<LookupMeetingStatus> findByIsActiveTrueOrderBySortOrderAsc();
 
-    boolean existsByStatusCode(String statusCode);
+//    boolean existsByStatusCode(String statusCode);
 }

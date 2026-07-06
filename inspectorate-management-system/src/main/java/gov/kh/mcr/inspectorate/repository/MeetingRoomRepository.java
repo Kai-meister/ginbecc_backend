@@ -10,12 +10,9 @@ import java.util.List;
 public interface MeetingRoomRepository
         extends JpaRepository<MeetingRoom, Integer> {
 
-    List<MeetingRoom> findByStatus(
-            RoomStatus status);
+    List<MeetingRoom> findByStatus(RoomStatus status);
 
     boolean existsByRoomCode(String roomCode);
 
-
-    List<MeetingRoom>
-    findAllByOrderByRoomCodeAsc();
+    List<MeetingRoom> findAllByOrderByRoomCodeAsc();
 }

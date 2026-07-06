@@ -108,6 +108,3 @@ cache:
         time-to-live: 3600000   # 1 hour (ms)
         cache-null-values: false
 
-      # Cache names
-      # lookups — LookupService
-      # permissions — RolePermissions

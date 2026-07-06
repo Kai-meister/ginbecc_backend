@@ -10,33 +10,31 @@ import java.time.LocalDate;
 @Builder
 public class OfficerRequest {
 
-    @NotNull(message = "តំណែងចាំបាច់")
+    @NotNull(message = "សូមជ្រើសរើសមុខតំណែង")
     private Integer positionId;
 
-    @NotNull(message = "នាយកដ្ឋានចាំបាច់")
+    @NotNull(message = "សូមជ្រើសរើសនាយកដ្ឋាន")
     private Integer departmentId;
 
-    @NotBlank(message = "លេខកូដចាំបាច់")
-    @Size(max = 50,
-            message = "លេខកូដអតិបរមា 50 តួ")
+    @NotBlank(message = "សូមបញ្ចូលលេខកូដសម្គាល់មន្ត្រី")
+    @Size(max = 50, message = "លេខកូដសម្គាល់មន្ត្រីមិនអាចលើសពី ៥០ តួអក្សរឡើយ")
     @Pattern(regexp = "^[A-Za-z0-9\\-_]+$",
-            message = "លេខកូដអាក្សរឡាតាំង/ខ្ទង់/dash")
+            message = "លេខកូដសម្គាល់មន្ត្រីត្រូវប្រើប្រាស់តែអក្សរឡាតាំង លេខ សញ្ញាដក(-) ឬសញ្ញាកាត់(_)")
     private String officerCode;
 
-    @NotBlank(message = "ឈ្មោះខ្មែរចាំបាច់")
-    @Size(max = 255)
+    @NotBlank(message = "សូមបញ្ចូលនាមត្រកូល និងនាមខ្លួនជាភាសាខ្មែរ")
+    @Size(max = 255, message = "ឈ្មោះជាភាសាខ្មែរមិនអាចលើសពី ២៥៥ តួអក្សរឡើយ")
     private String fullNameKh;
 
-    @Size(max = 255)
+    @Size(max = 255, message = "ឈ្មោះជាភាសាអង់គ្លេសមិនអាចលើសពី ២៥៥ តួអក្សរឡើយ")
     private String fullNameEn;
 
     private Gender gender;
 
-    @Past(message = "ថ្ងៃកំណើតត្រូវជាអតីតកាល")
+    @Past(message = "កាលបរិច្ឆេទកំណើតមិនត្រឹមត្រូវឡើយ (ត្រូវតែជាកាលបរិច្ឆេទក្នុងអតីតកាល)")
     private LocalDate dob;
 
-    @PastOrPresent(
-            message = "ថ្ងៃចូលការងារត្រូវតែបន្ទាប់ ឬថ្ងៃនេះ")
+    @PastOrPresent(message = "កាលបរិច្ឆេទចូលបម្រើការងារត្រូវតែជាថ្ងៃនេះ ឬក្នុងពេលអតីតកាល")
     private LocalDate joinDate;
 
     private String jobDescription;
@@ -47,15 +45,15 @@ public class OfficerRequest {
     private String birthplace;
     private String livingStatus;
 
-    @Size(max = 20)
+    @Size(max = 20, message = "លេខទូរសព្ទមិនអាចលើសពី ២០ ខ្ទង់ឡើយ")
     @Pattern(regexp = "^[0-9+\\-\\s]*$",
-            message = "លេខទូរស័ព្ទមានតែខ្ទង់")
+            message = "លេខទូរសព្ទត្រូវមានតែលេខ និងសញ្ញា (+) (-) ឬចន្លោះមិនឃើញ (Space) ប៉ុណ្ណោះ")
     private String phone;
 
-    @Email(message = "Email មិនត្រឹមត្រូវ")
-    @Size(max = 150)
+    @Email(message = "ទម្រង់អាសយដ្ឋានអ៊ីមែលមិនត្រឹមត្រូវឡើយ")
+    @Size(max = 150, message = "អាសយដ្ឋានអ៊ីមែលមិនអាចលើសពី ១៥០ តួអក្សរឡើយ")
     private String email;
 
-    @NotBlank(message = "ស្ថានភាពចាំបាច់")
+    @NotBlank(message = "សូមជ្រើសរើសស្ថានភាព")
     private String statusCode;
 }

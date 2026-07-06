@@ -7,63 +7,92 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
 @Entity
 @Table(name = "contract_officers",
         indexes = {
-                @Index(name = "idx_co_code",
-                        columnList = "contract_officer_code"),
-                @Index(name = "idx_co_end_date",
-                        columnList = "end_date"),
+                @Index(name = "idx_co_dept",
+                        columnList = "department_id"),
                 @Index(name = "idx_co_status",
-                        columnList = "status_code")
+                        columnList = "status_code"),
+                @Index(name = "idx_co_code",
+                        columnList =
+                                "contract_officer_code"),
+                @Index(name = "idx_co_end_date",
+                        columnList = "end_date")
         })
 @Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class ContractOfficer {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(
+            strategy = GenerationType.IDENTITY)
     @Column(name = "contract_officer_id")
     private Integer contractOfficerId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "department_id")
+    @JoinColumn(name = "department_id",
+            nullable = false)
     private Department department;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "status_code",
+            referencedColumnName = "status_code",
+            nullable = false)
+    private LookupOfficerStatus statusCode;
+
     @Column(name = "contract_officer_code",
-            length = 50, unique = true, nullable = false)
+            length = 50,
+            unique = true, nullable = false)
     private String contractOfficerCode;
 
     @Column(name = "full_name_kh",
             length = 255, nullable = false)
     private String fullNameKh;
 
-    @Column(name = "full_name_en", length = 255)
+    @Column(name = "full_name_en",
+            length = 255)
     private String fullNameEn;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "gender", length = 1)
+    @Column(name = "gender", length = 10)
     private Gender gender;
 
-    @Column(name = "job_level", length = 150)
+    @Column(name = "dob")
+    private LocalDate dob;
+
+    @Column(name = "phone", length = 20)
+    private String phone;
+
+    @Column(name = "email", length = 150)
+    private String email;
+
+    @Column(name = "job_level", length = 50)
     private String jobLevel;
 
-    @Column(name = "job_description",
-            columnDefinition = "TEXT")
+    @Column(name = "job_description ", length = 250)
     private String jobDescription;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "status_code",
-            referencedColumnName = "status_code")
-    private LookupOfficerStatus statusCode;
-
-    @Column(name = "start_date", nullable = false)
+    @Column(name = "start_date",
+            nullable = false)
     private LocalDate startDate;
 
-    @Column(name = "end_date", nullable = false)
+    @Column(name = "end_date",
+            nullable = false)
     private LocalDate endDate;
+
+    @Column(name = "note",columnDefinition = "TEXT")
+    private String note;
+    @Column(name = "accounting_code", length = 50)
+    private String accountingCode;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "profile_attachment_id",
+            nullable = true)
+    private Attachment profileAttachment;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

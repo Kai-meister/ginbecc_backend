@@ -8,12 +8,12 @@ import org.mapstruct.*;
         unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface MeetingMinuteMapper {
 
-    @Mapping(target = "minuteId",       ignore = true)
-    @Mapping(target = "meeting",        ignore = true)
-    @Mapping(target = "attachmentPath", ignore = true)
-    @Mapping(target = "recordedBy",     ignore = true)
-    @Mapping(target = "createdAt",      ignore = true)
-    @Mapping(target = "updatedAt",      ignore = true)
+    @Mapping(target = "minuteId",   ignore = true)
+    @Mapping(target = "meeting",    ignore = true)
+    @Mapping(target = "attachment", ignore = true)
+    @Mapping(target = "recordedBy", ignore = true)
+    @Mapping(target = "createdAt",  ignore = true)
+    @Mapping(target = "updatedAt",  ignore = true)
     MeetingMinute toEntity(MeetingMinuteRequest request);
 
     @Mapping(target = "meetingId",
@@ -23,17 +23,18 @@ public interface MeetingMinuteMapper {
     @Mapping(target = "recordedByName",
             source = "recordedBy.userNameKh")
     @Mapping(target = "attachmentUrl",
-            source = "attachmentPath.filePath")
-    MeetingMinuteResponse toResponse(MeetingMinute entity);
+            source = "attachment.filePath")
+    MeetingMinuteResponse toResponse(
+            MeetingMinute entity);
 
     @BeanMapping(nullValuePropertyMappingStrategy =
             NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "minuteId",       ignore = true)
-    @Mapping(target = "meeting",        ignore = true)
-    @Mapping(target = "attachmentPath", ignore = true)
-    @Mapping(target = "recordedBy",     ignore = true)
-    @Mapping(target = "createdAt",      ignore = true)
-    @Mapping(target = "updatedAt",      ignore = true)
+    @Mapping(target = "minuteId",   ignore = true)
+    @Mapping(target = "meeting",    ignore = true)
+    @Mapping(target = "attachment", ignore = true)
+    @Mapping(target = "recordedBy", ignore = true)
+    @Mapping(target = "createdAt",  ignore = true)
+    @Mapping(target = "updatedAt",  ignore = true)
     void updateEntity(MeetingMinuteRequest request,
                       @MappingTarget MeetingMinute entity);
 }

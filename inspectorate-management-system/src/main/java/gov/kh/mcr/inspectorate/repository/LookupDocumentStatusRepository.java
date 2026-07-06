@@ -11,9 +11,9 @@ public interface LookupDocumentStatusRepository extends JpaRepository<LookupDocu
     List<LookupDocumentStatus> findByIsActiveTrueOrderBySortOrderAsc();
 
 
-    List<LookupDocumentStatus> findByAppliesToAndIsActiveTrueOrderBySortOrderAsc(String appliesTo);
+//    List<LookupDocumentStatus> findByAppliesToAndIsActiveTrueOrderBySortOrderAsc(String appliesTo);
 
     List<LookupDocumentStatus> findByAppliesToInAndIsActiveTrueOrderBySortOrderAsc(List<String> appliesToList);
 
-    boolean existsByStatusCode(String statusCode);
+//    boolean existsByStatusCode(String statusCode);
 }

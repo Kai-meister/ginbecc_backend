@@ -1,368 +1,483 @@
 package gov.kh.mcr.inspectorate.service.impl;
 
-import gov.kh.mcr.inspectorate.dto.request.AttendanceRequest;
-import gov.kh.mcr.inspectorate.dto.request.AttendeeRequest;
-import gov.kh.mcr.inspectorate.dto.request.MeetingRequest;
-import gov.kh.mcr.inspectorate.dto.response.MeetingResponse;
-import gov.kh.mcr.inspectorate.dto.response.PageResponse;
-import gov.kh.mcr.inspectorate.dto.response.RoomAvailabilityResponse;
+import gov.kh.mcr.inspectorate.dto.request.*;
+import gov.kh.mcr.inspectorate.dto.response.*;
 import gov.kh.mcr.inspectorate.entity.*;
 import gov.kh.mcr.inspectorate.enums.AttendanceStatus;
 import gov.kh.mcr.inspectorate.enums.MeetingStatusCode;
-import gov.kh.mcr.inspectorate.enums.MeetingType;
 import gov.kh.mcr.inspectorate.enums.RoomStatus;
-import gov.kh.mcr.inspectorate.exception.BusinessException;
-import gov.kh.mcr.inspectorate.exception.ResourceNotFoundException;
-import gov.kh.mcr.inspectorate.exception.RoomConflictException;
+import gov.kh.mcr.inspectorate.exception.*;
+import gov.kh.mcr.inspectorate.mapper.AttendeeMapper;
 import gov.kh.mcr.inspectorate.mapper.MeetingMapper;
 import gov.kh.mcr.inspectorate.repository.*;
 import gov.kh.mcr.inspectorate.security.SecurityUtils;
-import gov.kh.mcr.inspectorate.service.ActivityLogService;
-import gov.kh.mcr.inspectorate.service.MeetingService;
-import gov.kh.mcr.inspectorate.service.NotificationService;
+import gov.kh.mcr.inspectorate.service.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class MeetingServiceImpl implements MeetingService {
+public class MeetingServiceImpl
+        implements MeetingService {
 
-    private final MeetingRepository meetingRepository;
-    private final MeetingRoomRepository meetingRoomRepository;
-    private final MeetingAttendeeRepository attendeeRepository;
-    private final OfficerRepository officerRepository;
-    private final LookupMeetingStatusRepository lookupStatusRepository;
-    private final MeetingMapper meetingMapper;
-    private final NotificationService notificationService;
-    private final ActivityLogService activityLogService;
-    private final SecurityUtils securityUtils;
-
+    private final MeetingRepository              meetingRepo;
+    private final MeetingRoomRepository          roomRepo;
+    private final LookupMeetingStatusRepository  statusRepo;
+    private final MeetingAttendeeRepository      attendeeRepo;
+    private final MeetingMapper                  meetingMapper;
+    private final SecurityUtils                  securityUtils;
+    private final ActivityLogService             activityLogService;
+    private final AttendeeMapper attendeeMapper;
     @Override
     @Transactional(readOnly = true)
     public PageResponse<MeetingResponse> getAll(
-            int page, int size, String status, Integer roomId) {
+            int page, int size,
+            String status, Integer roomId) {
 
-        Pageable pageable = PageRequest.of(page, size,
-                Sort.by("meetingDate").descending());
+        Pageable pageable = PageRequest.of(
+                page, size,
+                Sort.by("meetingDate").descending()
+                        .and(Sort.by("startTime")
+                                .descending()));
+
+        Integer deptScope =
+                securityUtils
+                        .canBypassDepartmentScope()
+                        ? null
+                        : securityUtils
+                        .getCurrentDepartmentId();
 
         Page<Meeting> result;
-        if (status != null && roomId != null) {
-            result = meetingRepository
-                    .findByRoom_RoomIdAndStatusCode_StatusCode(
-                            roomId, status, pageable);
+
+        if (deptScope != null) {
+
+            result = meetingRepo
+                    .findByOrganizer_Officer_Department_DepartmentId(
+                            deptScope, pageable);
         } else if (status != null) {
-            result = meetingRepository
-                    .findByStatusCode_StatusCode(status, pageable);
+            result = meetingRepo
+                    .findByStatusCode_StatusCode(
+                            status, pageable);
+        } else if (roomId != null) {
+            result = meetingRepo
+                    .findByRoom_RoomId(
+                            roomId, pageable);
         } else {
-            result = meetingRepository.findAll(pageable);
+            result = meetingRepo
+                    .findAll(pageable);
         }
 
-        return PageResponse.of(result.map(meetingMapper::toResponse));
+        return PageResponse.of(
+                result.map(
+                        this::toResponseWithSummary));
     }
-
     @Override
     @Transactional(readOnly = true)
     public MeetingResponse getById(Integer id) {
-        return meetingMapper.toResponse(findMeetingById(id));
-    }
 
+        Meeting meeting = findById(id);
+
+        Integer organizerDeptId =
+                meeting.getOrganizer() != null
+                        && meeting.getOrganizer()
+                        .getOfficer() != null
+                        && meeting.getOrganizer()
+                        .getOfficer()
+                        .getDepartment() != null
+                        ? meeting.getOrganizer()
+                        .getOfficer()
+                        .getDepartment()
+                        .getDepartmentId()
+                        : null;
+
+        securityUtils.validateDepartmentScope(
+                organizerDeptId);
+
+        return toResponseWithSummary(meeting);
+    }
     @Override
     @Transactional(readOnly = true)
-    public List<MeetingResponse> getCalendar(int month, int year) {
-        return meetingRepository.findByMonthAndYear(month, year)
+    public List<MeetingResponse> getCalendar(
+            int month, int year) {
+
+        return meetingRepo
+                .findByMonthAndYear(month, year)
                 .stream()
-                .map(meetingMapper::toResponse)
+                .map(this::toResponseWithSummary)
                 .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public RoomAvailabilityResponse checkAvailability(
-            Integer roomId, LocalDate date,
-            LocalTime startTime, LocalTime endTime) {
-
-        MeetingRoom room = findRoomById(roomId);
-        List<Meeting> allMeetings =
-                meetingRepository.findByRoomAndDate(roomId, date);
-
-        List<Meeting> conflicts = allMeetings.stream()
-                .filter(m -> isOverlap(startTime, endTime,
-                        m.getStartTime(), m.getEndTime()))
-                .toList();
-
-        var conflictInfos = conflicts.stream()
-                .map(m -> RoomAvailabilityResponse.ConflictInfo.builder()
-                        .meetingId(m.getMeetingId())
-                        .title(m.getTitle())
-                        .startTime(m.getStartTime())
-                        .endTime(m.getEndTime())
-                        .organizerName(m.getOrganizer() != null
-                                ? m.getOrganizer().getUserNameKh() : "")
-                        .statusCode(m.getStatusCode() != null
-                                ? m.getStatusCode().getStatusCode() : "")
-                        .build())
-                .toList();
-
-        return RoomAvailabilityResponse.builder()
-                .roomId(room.getRoomId())
-                .roomCode(room.getRoomCode())
-                .roomLocation(room.getLocation())
-                .meetingDate(date)
-                .requestedStart(startTime)
-                .requestedEnd(endTime)
-                .conflicts(conflictInfos)
-                .availableSlots(computeSlots(allMeetings))
-                .build();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<MeetingResponse> getRoomSchedule(
             Integer roomId, LocalDate date) {
-        return meetingRepository.findByRoomAndDate(roomId, date)
+
+        List<String> ignored = ignoredStatuses();
+
+        return meetingRepo
+                .findRoomSchedule(
+                        roomId, date, ignored)
                 .stream()
-                .map(meetingMapper::toResponse)
+                .map(this::toResponseWithSummary)
                 .toList();
     }
 
-    @Override
-    public MeetingResponse create(MeetingRequest request) {
-        validateMeetingRequest(request, null);
 
-        Meeting meeting = meetingMapper.toEntity(request);
+    @Override
+    public MeetingResponse create(
+            MeetingRequest request) {
+
+        validateTime(request);
 
         if (request.getRoomId() != null) {
-            meeting.setRoom(findRoomById(request.getRoomId()));
+            checkConflict(
+                    request.getRoomId(),
+                    request, null);
         }
+
+        Meeting meeting =
+                meetingMapper.toEntity(request);
+
+        if (request.getRoomId() != null) {
+            meeting.setRoom(
+                    findRoom(request.getRoomId()));
+        }
+
         meeting.setStatusCode(
-                findMeetingStatus(request.getStatusCode()));
+                findStatus(request.getStatusCode()));
+
         securityUtils.getCurrentUser()
                 .ifPresent(meeting::setOrganizer);
 
-        Meeting saved = meetingRepository.save(meeting);
-        activityLogService.log("CREATE", "Meeting",
+        Meeting saved =
+                meetingRepo.save(meeting);
+
+        activityLogService.log(
+                "CREATE", "Meeting",
                 saved.getMeetingId(),
-                "បង្កើតប្រជុំ: " + saved.getTitle());
+                "បង្កើត: " + saved.getTitle(),
+                buildContext());
 
-        return meetingMapper.toResponse(saved);
+        return toResponseWithSummary(saved);
     }
-
     @Override
-    public MeetingResponse update(Integer id, MeetingRequest request) {
-        Meeting meeting = findMeetingById(id);
-        validateMeetingRequest(request, id);
+    public MeetingResponse update(
+            Integer id,
+            MeetingRequest request) {
 
-        meeting.setTitle(request.getTitle());
-        meeting.setMeetingDate(request.getMeetingDate());
-        meeting.setStartTime(request.getStartTime());
-        meeting.setEndTime(request.getEndTime());
-        meeting.setMeetingType(request.getMeetingType());
-        meeting.setMeetingLink(request.getMeetingLink());
-        meeting.setAgenda(request.getAgenda());
-        meeting.setNote(request.getNote());
+        Meeting meeting = findById(id);
+        Integer organizerDeptId =
+                meeting.getOrganizer() != null
+                        && meeting.getOrganizer()
+                        .getOfficer() != null
+                        && meeting.getOrganizer()
+                        .getOfficer()
+                        .getDepartment() != null
+                        ? meeting.getOrganizer()
+                        .getOfficer()
+                        .getDepartment()
+                        .getDepartmentId()
+                        : null;
 
+        securityUtils.validateDepartmentScope(
+                organizerDeptId);
+
+        validateCanUpdate(meeting);
+        validateTime(request);
+
+        validateCanUpdate(meeting);
+
+        validateTime(request);
         if (request.getRoomId() != null) {
-            meeting.setRoom(findRoomById(request.getRoomId()));
+            checkConflict(
+                    request.getRoomId(),
+                    request,
+                    id);
+        }
+
+        meetingMapper.updateEntity(
+                request, meeting);
+        if (request.getRoomId() != null) {
+            meeting.setRoom(
+                    findRoom(request.getRoomId()));
+        } else {
+            meeting.setRoom(null);
         }
         meeting.setStatusCode(
-                findMeetingStatus(request.getStatusCode()));
+                findStatus(request.getStatusCode()));
 
-        activityLogService.log("UPDATE", "Meeting", id,
-                "កែប្រែ: " + meeting.getTitle());
+        activityLogService.log(
+                "UPDATE", "Meeting",
+                id, "កែប្រែព័ត៌មានកិច្ចប្រជុំ " + meeting.getTitle(),
+                buildContext());
 
-        return meetingMapper.toResponse(meetingRepository.save(meeting));
+        return toResponseWithSummary(
+                meetingRepo.save(meeting));
     }
 
     @Override
-    public void addAttendeesBulk(Integer meetingId,
-                                 List<AttendeeRequest> requests) {
-        Meeting meeting = findMeetingById(meetingId);
+    public MeetingResponse updateStatus(
+            Integer id, String statusCode) {
 
-        requests.forEach(req -> {
-            Officer officer = officerRepository
-                    .findById(req.getOfficerId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "មន្ត្រី", req.getOfficerId()));
+        Meeting meeting = findById(id);
 
-            boolean exists = attendeeRepository
-                    .findByMeeting_MeetingIdAndOfficer_OfficerId(
-                            meetingId, req.getOfficerId())
-                    .isPresent();
+        String current =
+                meeting.getStatusCode() != null
+                        ? meeting.getStatusCode()
+                          .getStatusCode()
+                        : "";
+        validateStatusTransition(
+                current, statusCode);
 
-            if (!exists) {
-                attendeeRepository.save(
-                        MeetingAttendee.builder()
-                                .meeting(meeting)
-                                .officer(officer)
-                                .role(req.getRole())
-                                .build());
+        meeting.setStatusCode(
+                findStatus(statusCode));
 
-                notificationService.createNotification(
-                        officer.getOfficerId(),
-                        "ការអញ្ជើញប្រជុំ",
-                        "អញ្ជើញ: " + meeting.getTitle(),
-                        "MEETING",
-                        meeting.getMeetingId());
-            }
-        });
-    }
+        activityLogService.log(
+                "UPDATE", "Meeting",
+                id,
+                "ផ្លាស់ប្តូរស្ថានភាពកិច្ចប្រជុំ «" + meeting.getTitle() + "» ទៅជា៖ " + statusCode,
+                buildContext());
 
-    @Override
-    public void updateAttendance(Integer meetingId, Integer attendeeId,
-                                 AttendanceRequest request) {
-        MeetingAttendee attendee = attendeeRepository
-                .findById(attendeeId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "អ្នកចូលរួម", attendeeId));
-
-        if (!attendee.getMeeting().getMeetingId().equals(meetingId)) {
-            throw new ResourceNotFoundException(
-                    "អ្នកចូលរួម", attendeeId);
-        }
-
-        attendee.setAttendanceStatus(request.getAttendanceStatus());
-        attendee.setNote(request.getNote());
-
-        if (request.getAttendanceStatus()
-                == AttendanceStatus.PRESENT) {
-            attendee.setCheckInTime(java.time.LocalDateTime.now());
-        }
-
-        attendeeRepository.save(attendee);
+        return toResponseWithSummary(
+                meetingRepo.save(meeting));
     }
 
     @Override
     public void delete(Integer id) {
-        findMeetingById(id);
-        meetingRepository.deleteById(id);
-        activityLogService.log("DELETE", "Meeting", id, "លុបប្រជុំ");
+
+        Meeting meeting = findById(id);
+
+        Integer organizerDeptId =
+                meeting.getOrganizer() != null
+                        && meeting.getOrganizer()
+                        .getOfficer() != null
+                        && meeting.getOrganizer()
+                        .getOfficer()
+                        .getDepartment() != null
+                        ? meeting.getOrganizer()
+                        .getOfficer()
+                        .getDepartment()
+                        .getDepartmentId()
+                        : null;
+
+        securityUtils.validateDepartmentScope(
+                organizerDeptId);
+
+        String code =
+                meeting.getStatusCode() != null
+                        ? meeting.getStatusCode()
+                        .getStatusCode()
+                        : "";
+
+        if (!MeetingStatusCode.DRAFT
+                .getCode().equals(code)) {
+            throw new BusinessException(
+                    "មិនអាចលុបកិច្ចប្រជុំនេះបានឡើយ ព្រោះកិច្ចប្រជុំដែលអាចលុបបាន លុះត្រាតែស្ថិតក្នុងស្ថានភាព «ឯកសារព្រាង/រក្សាទុកបណ្តោះអាសន្ន» ប៉ុណ្ណោះ "
+                            + "(ស្ថានភាពបច្ចុប្បន្ន: " + code + ")");
+        }
+
+        meetingRepo.deleteById(id);
+
+        activityLogService.log(
+                "DELETE", "Meeting", id,
+                "លុប: " + meeting.getTitle(),
+                buildContext());
     }
 
-    // Private Helpers
-    private void validateMeetingRequest(MeetingRequest req,
-                                        Integer excludeId) {
-        if (!req.getStartTime().isBefore(req.getEndTime())) {
+    private void validateTime(
+            MeetingRequest request) {
+
+        if (request.getEndTime()
+                .isBefore(request.getStartTime())
+                || request.getEndTime()
+                .equals(request.getStartTime())) {
             throw new BusinessException(
-                    "ម៉ោងចាប់ផ្តើម ត្រូវតែមុន ម៉ោងបញ្ចប់");
+                    "កាលបរិច្ឆេទ ឬម៉ោងបញ្ចប់ត្រូវតែនៅក្រោយកាលបរិច្ឆេទ ឬម៉ោងចាប់ផ្ដើម។");
         }
+    }
 
-        if (req.getMeetingType() == MeetingType.ONLINE) {
-            if (!StringUtils.hasText(req.getMeetingLink())) {
-                throw new BusinessException(
-                        "ប្រជុំ Online ត្រូវការ Meeting Link");
-            }
-            return; // No room conflict for ONLINE
-        }
+    private void checkConflict(
+            Integer roomId,
+            MeetingRequest request,
+            Integer excludeId) {
 
-        if (req.getRoomId() == null) return;
+        List<String> ignored = ignoredStatuses();
 
-        MeetingRoom room = findRoomById(req.getRoomId());
-
-        if (room.getStatus() == RoomStatus.MAINTENANCE) {
-            throw new BusinessException(
-                    "បន្ទប់ [" + room.getRoomCode()
-                            + "] កំពុងជួសជុល");
-        }
-        List<String> ignored = List.of(
-                MeetingStatusCode.CANCELLED.getCode(),
-                MeetingStatusCode.COMPLETED.getCode());
-
-        List<Meeting> conflicts = meetingRepository.findConflicts(
-                        req.getRoomId(),
-                        req.getMeetingDate(),
-                        req.getStartTime(),
-                        req.getEndTime(),
+        List<Meeting> conflicts =
+                excludeId != null
+                        ? meetingRepo.findConflictsExclude(
+                        roomId,
+                        request.getMeetingDate(),
+                        request.getStartTime(),
+                        request.getEndTime(),
+                        excludeId, ignored)
+                        : meetingRepo.findConflicts(
+                        roomId,
+                        request.getMeetingDate(),
+                        request.getStartTime(),
+                        request.getEndTime(),
                         ignored);
 
         if (!conflicts.isEmpty()) {
             Meeting c = conflicts.get(0);
-            throw new RoomConflictException(
-                    room.getRoomCode(),
-                    c.getTitle(),
-                    c.getStartTime() + " - " + c.getEndTime());
+            throw new BusinessException(
+                    "មិនអាចកក់បានឡើយ ដោយសារបន្ទប់ប្រជុំ «"
+                            + c.getRoom().getRoomCode()
+                            + "» ត្រូវបានកក់រួចហើយ ចាប់ពីម៉ោង "
+                            + c.getStartTime()
+                            + " ដល់ "
+                            + c.getEndTime()
+                            + " សម្រាប់កិច្ចប្រជុំ៖ «"
+                            + c.getTitle() + "»។");
         }
     }
 
-    private boolean isOverlap(LocalTime s1, LocalTime e1,
-                              LocalTime s2, LocalTime e2) {
-        return s1.isBefore(e2) && e1.isAfter(s2);
+    private void validateCanUpdate(
+            Meeting meeting) {
+
+        String code =
+                meeting.getStatusCode() != null
+                        ? meeting.getStatusCode()
+                          .getStatusCode()
+                        : "";
+
+        if (!MeetingStatusCode.canUpdate(code)) {
+            throw new BusinessException(
+                    "មិនអាចកែប្រែព័ត៌មានបានឡើយ ដោយសារកិច្ចប្រជុំនេះស្ថិតក្នុងស្ថានភាព «"
+                            + code
+                            + "» ដែលត្រូវបានចាក់សោរួចហើយ។");
+        }
     }
 
-    private List<RoomAvailabilityResponse.AvailableSlot>
-    computeSlots(List<Meeting> meetings) {
+    private void validateStatusTransition(
+            String current, String next) {
 
-        LocalTime workStart = LocalTime.of(7, 0);
-        LocalTime workEnd   = LocalTime.of(17, 0);
-        LocalTime cursor    = workStart;
-
-        List<RoomAvailabilityResponse.AvailableSlot> slots =
-                new ArrayList<>();
-
-        List<Meeting> sorted = meetings.stream()
-                .sorted(Comparator.comparing(Meeting::getStartTime))
-                .collect(Collectors.toList());
-
-        for (Meeting m : sorted) {
-            if (cursor.isBefore(m.getStartTime())) {
-                long mins = ChronoUnit.MINUTES
-                        .between(cursor, m.getStartTime());
-                if (mins >= 30) {
-                    slots.add(
-                            RoomAvailabilityResponse.AvailableSlot
-                                    .builder()
-                                    .from(cursor)
-                                    .to(m.getStartTime())
-                                    .durationMinutes(mins)
-                                    .build());
-                }
-            }
-            if (cursor.isBefore(m.getEndTime())) {
-                cursor = m.getEndTime();
-            }
+        if (MeetingStatusCode.isFinal(current)) {
+            throw new BusinessException(
+                    "មិនអាចផ្លាស់ប្តូរបានឡើយ ដោយសារកិច្ចប្រជុំនេះស្ថិតក្នុងស្ថានភាពចុងក្រោយ «"
+                            + current
+                            + "» រួចរាល់ហើយ។");
         }
 
-        if (cursor.isBefore(workEnd)) {
-            long mins = ChronoUnit.MINUTES.between(cursor, workEnd);
-            if (mins >= 30) {
-                slots.add(
-                        RoomAvailabilityResponse.AvailableSlot
-                                .builder()
-                                .from(cursor)
-                                .to(workEnd)
-                                .durationMinutes(mins)
-                                .build());
-            }
+        if (MeetingStatusCode.IN_PROGRESS
+                .getCode().equals(current)
+                && MeetingStatusCode.CANCELLED
+                .getCode().equals(next)) {
+            throw new BusinessException(
+                    "មិនអាចលុបចោលកិច្ចប្រជុំបានឡើយ ដោយសារកិច្ចប្រជុំកំពុងតែប្រព្រឹត្តទៅ");
         }
-        return slots;
     }
 
-    private Meeting findMeetingById(Integer id) {
-        return meetingRepository.findById(id)
+    private Meeting findById(Integer id) {
+        return meetingRepo.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("ការប្រជុំ", id));
+                        new ResourceNotFoundException(
+                                "មិនមានទិន្នន័យកិច្ចប្រជុំដែលមានលេខសម្គាល់ ", id));
     }
 
-    private MeetingRoom findRoomById(Integer id) {
-        return meetingRoomRepository.findById(id)
+    private MeetingRoom findRoom(Integer id) {
+        MeetingRoom room = roomRepo.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("បន្ទប់ប្រជុំ", id));
+                        new ResourceNotFoundException(
+                                "មិនមានទិន្នន័យបន្ទប់ប្រជុំដែលមានលេខសម្គាល់ ", id));
+
+        if (RoomStatus.MAINTENANCE.equals(room.getStatus())
+                || RoomStatus.OCCUPIED.equals(room.getStatus())) {
+            throw new BusinessException(
+                    "មិនអាចកក់បន្ទប់ «"
+                            + room.getRoomCode()
+                            + "» បានឡើយ ដោយសារបន្ទប់នេះ"
+                            + "ស្ថិតក្នុងស្ថានភាព «"
+                            + room.getStatus().getLabelKh()
+                            + "»។");
+        }
+
+        return room;
     }
 
-    private LookupMeetingStatus findMeetingStatus(String code) {
-        return lookupStatusRepository.findById(code)
+    private LookupMeetingStatus findStatus(
+            String code) {
+        return statusRepo.findById(code)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("ស្ថានភាព", code));
+                        new ResourceNotFoundException(
+                                "មិនមានទិន្នន័យស្ថានភាពកិច្ចប្រជុំដែលមានកូដ ", code));
     }
+
+    private List<String> ignoredStatuses() {
+        return List.of(
+                MeetingStatusCode.CANCELLED.getCode(),
+                MeetingStatusCode.COMPLETED.getCode());
+    }
+
+    private MeetingResponse toResponseWithSummary(
+            Meeting meeting) {
+
+        MeetingResponse dto =
+                meetingMapper.toResponse(meeting);
+
+        Integer meetingId = meeting.getMeetingId();
+        List<AttendeeResponse> attendees =
+                attendeeRepo
+                        .findByMeeting_MeetingId(meetingId)
+                        .stream()
+                        .map(attendeeMapper::toResponse)
+                        .toList();
+
+        dto.setAttendees(attendees);
+
+        dto.setTotalAttendees(attendees.size());
+
+        dto.setAttendedCount(
+                (int) attendees.stream()
+                        .filter(a ->
+                                AttendanceStatus.ATTENDED.name()
+                                        .equals(a.getAttendanceStatus()
+                                                .name()))
+                        .count());
+
+        dto.setAbsentCount(
+                (int) attendees.stream()
+                        .filter(a ->
+                                AttendanceStatus.ABSENT.name()
+                                        .equals(a.getAttendanceStatus()
+                                                .name()))
+                        .count());
+
+        dto.setInvitedCount(
+                (int) attendees.stream()
+                        .filter(a ->
+                                AttendanceStatus.INVITED.name()
+                                        .equals(a.getAttendanceStatus()
+                                                .name()))
+                        .count());
+
+        return dto;
+    }
+
+    private ActivityLogContext buildContext() {
+        try {
+            var req =
+                    ((ServletRequestAttributes)
+                            RequestContextHolder
+                                    .currentRequestAttributes())
+                            .getRequest();
+            return securityUtils
+                    .buildLogContext(req);
+        } catch (Exception e) {
+            return ActivityLogContext.builder()
+                    .build();
+        }
+
+
+    }
+
 }

@@ -1,27 +1,39 @@
 package gov.kh.mcr.inspectorate.service;
-
 import gov.kh.mcr.inspectorate.dto.response.AttachmentResponse;
+import gov.kh.mcr.inspectorate.enums.AttachmentRefType;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface AttachmentService {
 
+     AttachmentResponse upload(
+            MultipartFile file,
+            AttachmentRefType refType,
+            Integer refId);
 
-    AttachmentResponse upload(MultipartFile file, String refType, Integer refId);
+     List<AttachmentResponse> getByReference(
+            Integer refId,
+            AttachmentRefType refType);
 
-    List<AttachmentResponse> getByReference(
-            Integer refId, String refType);
-
+    // Get active only
     AttachmentResponse getActiveByReference(
-            Integer refId, String refType);
+            Integer refId,
+            AttachmentRefType refType);
 
+    // Download URL
     String getDownloadUrl(Integer id);
 
+    // Restore archived → active
     AttachmentResponse setActive(Integer id);
 
+    // Delete (MinIO + DB)
     void delete(Integer id);
 
-    int cleanupArchived(Integer refId, String refType);
+    // Delete all archived
+    int cleanupArchived(
+            Integer refId,
+            AttachmentRefType refType);
 
+    // File size display
     String getFileSizeDisplay(Long bytes);
 }

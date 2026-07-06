@@ -19,8 +19,9 @@ public class PermissionController {
 
     private final PermissionService permissionService;
 
+    // GET /permissions
     @GetMapping
-    @PreAuthorize("hasAuthority('ROLE_ASSIGN')")
+    @PreAuthorize("hasAuthority('PERMISSION_VIEW')")
     public ResponseEntity<ApiResponse<
         List<Permission>>>
     getAll() {
@@ -28,11 +29,12 @@ public class PermissionController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         permissionService.getAll(),
-                        "ទទួលបន្ជីសិទ្ធិ"));
+                        "ទាញយកបញ្ជីសិទ្ធិទាំងអស់បានដោយជោគជ័យ"));
     }
 
+    // GET /permissions/{id}
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ASSIGN')")
+    @PreAuthorize("hasAuthority('PERMISSION_VIEW')")
     public ResponseEntity<ApiResponse<Permission>>
     getById(
             @PathVariable
@@ -41,11 +43,12 @@ public class PermissionController {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         permissionService.getById(id),
-                        "ទទួលបានសិទ្ធិ"));
+                        "ទាញយកព័ត៌មានសិទ្ធិបានដោយជោគជ័យិ"));
     }
 
+    // GET /permissions/module/{module}
     @GetMapping("/module/{module}")
-    @PreAuthorize("hasAuthority('ROLE_ASSIGN')")
+    @PreAuthorize("hasAuthority('PERMISSION_VIEW')")
     public ResponseEntity<ApiResponse<
     List<Permission>>>
     getByModule(
@@ -56,6 +59,6 @@ public class PermissionController {
                         permissionService
                                 .getByModule(
                                         module.toUpperCase()),
-                        "ទទួលបន្ជីសិទ្ធិតាម Module"));
+                        "ទាញយកបញ្ជីសិទ្ធិសម្រាប់ម៉ូឌុលនេះបានដោយជោគជ័យ"));
     }
 }

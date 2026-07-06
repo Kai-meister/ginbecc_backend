@@ -1,21 +1,36 @@
 package gov.kh.mcr.inspectorate.service;
+
 import gov.kh.mcr.inspectorate.dto.request.DocumentRequest;
 import gov.kh.mcr.inspectorate.dto.response.DocumentResponse;
 import gov.kh.mcr.inspectorate.dto.response.PageResponse;
-
+import gov.kh.mcr.inspectorate.entity.Document;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface DocumentService {
 
-    PageResponse<DocumentResponse> getAll(int page, int size, Integer officerId, Integer typeId, String status);
+    PageResponse<DocumentResponse> getAll(
+            int page, int size,
+            Integer officerId,
+            Integer typeId,
+            String status);
 
     DocumentResponse getById(Integer id);
 
-    List<DocumentResponse> getExpiring(int withinDays);
+    List<DocumentResponse> getExpiring(
+            int withinDays);
 
-    DocumentResponse create(DocumentRequest request);
+    DocumentResponse create(
+            DocumentRequest request);
 
-    DocumentResponse update(Integer id, DocumentRequest request);
+    DocumentResponse update(
+            Integer id, DocumentRequest request);
 
     void delete(Integer id);
+
+    DocumentResponse uploadAttachment(
+            Integer documentId,
+            MultipartFile file);
+    DocumentResponse submitForApproval(Integer documentId);
+    String getDownloadUrl(Integer documentId);
 }
