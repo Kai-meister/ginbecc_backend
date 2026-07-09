@@ -37,14 +37,7 @@ public interface OfficerMapper {
     @Mapping(target = "statusLabel", source = "statusCode.labelKh")
           @Mapping(target = "profileImageUrl", ignore = true)
     OfficerResponse toResponse( Officer entity);
-             @AfterMapping
-    protected void resolveProfileImageUrl(Officer entity, @MappingTarget OfficerResponse response) {
-        if (entity.getProfileAttachment() != null) {
-            String url = minioService.getPresignedUrl(
-                    entity.getProfileAttachment().getFilePath());
-            response.setProfileImageUrl(url);
-        }
-    }
+ 
 
     @BeanMapping(
             nullValuePropertyMappingStrategy =
