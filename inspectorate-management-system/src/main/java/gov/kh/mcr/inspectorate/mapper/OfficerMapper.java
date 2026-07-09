@@ -36,6 +36,7 @@ public interface OfficerMapper {
     @Mapping(target = "positionId", source = "position" + ".positionId")
     @Mapping(target = "statusCode", source = "statusCode.statusCode")
     @Mapping(target = "statusLabel", source = "statusCode.labelKh")
+    @Mapping(target = "profileImageUrl", ignore = true)
     OfficerResponse toResponse(
             Officer entity);
 
