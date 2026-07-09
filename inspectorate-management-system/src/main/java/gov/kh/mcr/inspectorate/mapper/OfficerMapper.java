@@ -27,8 +27,7 @@ public interface OfficerMapper {
             ignore = true)
     @Mapping(target = "updatedAt",
             ignore = true)
-    Officer toEntity(
-            OfficerRequest request);
+    Officer toEntity(OfficerRequest request);
 
     @Mapping(target = "departmentName", source = "department" + ".departmentName")
     @Mapping(target = "departmentId", source = "department" + ".departmentId")
@@ -36,8 +35,16 @@ public interface OfficerMapper {
     @Mapping(target = "positionId", source = "position" + ".positionId")
     @Mapping(target = "statusCode", source = "statusCode.statusCode")
     @Mapping(target = "statusLabel", source = "statusCode.labelKh")
-    OfficerResponse toResponse(
-            Officer entity);
+          @Mapping(target = "profileImageUrl", ignore = true)
+    OfficerResponse toResponse( Officer entity);
+             @AfterMapping
+    protected void resolveProfileImageUrl(Officer entity, @MappingTarget OfficerResponse response) {
+        if (entity.getProfileAttachment() != null) {
+            String url = minioService.getPresignedUrl(
+                    entity.getProfileAttachment().getFilePath());
+            response.setProfileImageUrl(url);
+        }
+    }
 
     @BeanMapping(
             nullValuePropertyMappingStrategy =
