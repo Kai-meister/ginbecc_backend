@@ -3,20 +3,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface MinioService {
 
-    String uploadFile(MultipartFile file,
-                      String refType,
-                      Integer refId);
+    String upload(MultipartFile file, String path);
 
-    String getPresignedUrl(String objectName);
-
-    String getPresignedUrl(String objectName,
-                           int expiryMinutes);
-
-    void deleteFile(String objectName);
-
+    String getPresignedUrl(String filePath);
+    String getPresignedUrl(String filePath, int expiryMinutes);
+    void delete(String filePath);
     boolean fileExists(String objectName);
 
     long getFileSize(String objectName);
-
+    boolean exists(String filePath);
     void createBucketIfNotExists();
 }
