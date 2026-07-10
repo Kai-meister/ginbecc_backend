@@ -146,9 +146,7 @@ public class OfficerServiceImpl
         return toResponseWithUrl(saved);
     }
 
-    // ─────────────────────────────────────────────
-    // UPDATE
-    // ─────────────────────────────────────────────
+
     @Override
     public OfficerResponse update(
             Integer id,
@@ -199,9 +197,7 @@ public class OfficerServiceImpl
                 officerRepo.save(officer));
     }
 
-    // ─────────────────────────────────────────────
-    // DELETE — Fix: Block if User linked
-    // ─────────────────────────────────────────────
+
     @Override
     public void delete(Integer id) {
 
@@ -234,8 +230,7 @@ public class OfficerServiceImpl
                             + " User Account ជាមុន");
         }
 
-        // Fix — Delete profile image
-        // from MinIO before deleting record
+  
         if (officer.getProfileAttachment()
                 != null) {
             try {
@@ -372,10 +367,7 @@ public class OfficerServiceImpl
         if (officer.getProfileAttachment()
                 == null) {
             throw new BusinessException(
-                    "Officer \""
-                            + officer.getFullNameKh()
-                            + "\" មិនមានរូបភាព Profile"
-                            + " — គ្មានអ្វីត្រូវលុប");
+        "មន្ត្រី «" + officer.getFullNameKh() + "» មិនមានរូបភាពប្រវត្តិរូប (Profile Image) នៅក្នុងប្រព័ន្ធសម្រាប់ធ្វើការលុបឡើយ។");
         }
 
         Integer attId = officer
