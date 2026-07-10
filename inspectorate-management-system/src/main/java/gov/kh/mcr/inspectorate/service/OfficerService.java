@@ -9,9 +9,7 @@ import java.util.List;
 
 public interface OfficerService {
 
-    PageResponse<OfficerResponse> getAll(
-            int page, int size,
-            Integer deptId, String status);
+    PageResponse<OfficerResponse> getAll(int page, int size, Integer deptId, String status);
 
     OfficerResponse getById(Integer id);
 
@@ -20,17 +18,16 @@ public interface OfficerService {
     OfficerResponse update(
             Integer id, OfficerRequest request);
 
-    OfficerResponse updateStatus(
-            Integer id, StatusRequest request);
+//    OfficerResponse updateStatus( Integer id, StatusRequest request);
 
     void delete(Integer id);
 
-    List<OfficerResponse> getNearRetirement();
+//    List<OfficerResponse> getNearRetirement();
 
-    OfficerResponse uploadProfileImage(
-            Integer officerId,
-            MultipartFile file);
+    OfficerResponse uploadProfileImage(Integer officerId, MultipartFile file);
 
     //  Get profile image URL
     String getProfileImageUrl(Integer officerId);
+
+    OfficerResponse deleteProfileImage(Integer officerId);
 }
