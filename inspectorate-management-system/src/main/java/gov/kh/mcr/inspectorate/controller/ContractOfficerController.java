@@ -28,11 +28,12 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class ContractOfficerController {
 
-    private final ContractOfficerService service;
+    private final ContractOfficerService contractOfficerService;
     private final UserProfileImageService profileImageService;
     private final UserRepository userRepository;
     private final ContractOfficerRepository contractOfficerRepository;
     private final MinioService minioService;
+
 
     // GET /contract-officers
     @GetMapping
@@ -53,7 +54,7 @@ public class ContractOfficerController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        service.getAll(
+                        contractOfficerService.getAll(
                                 page, size,
                                 status, dept,
                                 expiring_within),
@@ -71,7 +72,7 @@ public class ContractOfficerController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        service.getById(id),
+                        contractOfficerService.getById(id),
                         "ទទួលបានព័ត៌មានមន្ត្រីកិច្ចសន្យា"));
     }
 
@@ -87,7 +88,7 @@ public class ContractOfficerController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
-                        service.create(req),
+                        contractOfficerService.create(req),
                         "បានបង្កើតមន្ត្រីកិច្ចសន្យាដោយជោគជ័យ"));
     }
     // PUT /contract-officers/{id}
@@ -103,26 +104,26 @@ public class ContractOfficerController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        service.update(id, req),
+                        contractOfficerService.update(id, req),
                         "បានកែប្រែមន្ត្រីកិច្ចសន្យាដោយជោគជ័យ"));
     }
 
     // PATCH /contract-officers/{id}/status
-    @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('CONTRACT_OFFICER_UPDATE')")
-    public ResponseEntity<ApiResponse<
-    ContractOfficerResponse>>
-    updateStatus(
-            @PathVariable
-            @Positive Integer id,
-            @Valid @RequestBody
-            StatusRequest req) {
-
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        service.updateStatus(id, req),
-                        "បានផ្លាស់ប្ដូរស្ថានភាពមន្ត្រីកិច្ចសន្យាដោយជោគជ័យ"));
-    }
+//    @PatchMapping("/{id}/status")
+//    @PreAuthorize("hasAuthority('CONTRACT_OFFICER_UPDATE')")
+//    public ResponseEntity<ApiResponse<
+//    ContractOfficerResponse>>
+//    updateStatus(
+//            @PathVariable
+//            @Positive Integer id,
+//            @Valid @RequestBody
+//            StatusRequest req) {
+//
+//        return ResponseEntity.ok(
+//                ApiResponse.success(
+//                        contractOfficerService.updateStatus(id, req),
+//                        "បានផ្លាស់ប្ដូរស្ថានភាពមន្ត្រីកិច្ចសន្យាដោយជោគជ័យ"));
+//    }
 
     // DELETE /contract-officers/{id}
     @DeleteMapping("/{id}")
@@ -132,90 +133,98 @@ public class ContractOfficerController {
             @PathVariable
             @Positive Integer id) {
 
-        service.delete(id);
+        contractOfficerService.delete(id);
         return ResponseEntity.ok(
                 ApiResponse.success(
                         null, "បានលុបមន្ត្រីកិច្ចសន្យាដោយជោគជ័យ"));
     }
 
-    @PostMapping("/{id}/profile-image")
-    @PreAuthorize(
-            "hasAuthority('ATTACHMENT_UPLOAD')")
-    public ResponseEntity<ApiResponse<String>>
+    @PostMapping(value = "/{id}/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('ATTACHMENT_UPLOAD')")
+    public ResponseEntity<ApiResponse<
+    ContractOfficerResponse>>
     uploadProfileImage(
             @PathVariable
             @Positive Integer id,
             @RequestParam("file")
             MultipartFile file) {
 
-        String url =
-                profileImageService
-                        .uploadContractOfficerProfileImage(
-                                id, file);
-
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
-                        url,
-                        "Upload រូបភាព"
-                                + " Profile ជោគជ័យ"));
+                        contractOfficerService
+                                .uploadProfileImage(
+                                        id, file),
+                        "Upload រូបភាព Profile"
+                                + " ជោគជ័យ"));
     }
 
-    @GetMapping("/{id}/profile-image")
-    @PreAuthorize(
-            "hasAuthority('OFFICER_VIEW')")
-    public ResponseEntity<ApiResponse<String>>
-    getProfileImageUrl(
-            @PathVariable
-            @Positive Integer id) {
-
-        String url = userRepository
-                .findByContractOfficer_ContractOfficerId(
-                        id)
-                .map(u ->
-                        profileImageService
-                                .getProfileImageUrl(
-                                        u.getUserId()))
-                .orElseGet(() -> {
-                    ContractOfficer co =
-                            contractOfficerRepository.findById(id)
-                                    .orElseThrow(() ->
-                                            new
-                                                    ResourceNotFoundException(
-                                                    "មន្ត្រីកិច្ចសន្យា",
-                                                    id));
-                    return co.getProfileAttachment()
-                            != null
-                            ? minioService
-                            .getPresignedUrl(
-                                    co
-                                            .getProfileAttachment()
-                                            .getFilePath())
-                            : "/api/v1/static/avatars"
-                              + "/contract_officer"
-                              + ".png";
-                });
-
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        url, "ទាញយកតំណភ្ជាប់រូបភាពប្រវត្តិរូបបានជោគជ័យ"));
-    }
+//    @GetMapping("/{id}/profile-image")
+//    @PreAuthorize(
+//            "hasAuthority('OFFICER_VIEW')")
+//    public ResponseEntity<ApiResponse<String>>
+//    getProfileImageUrl(
+//            @PathVariable
+//            @Positive Integer id) {
+//
+//        String url = userRepository
+//                .findByContractOfficer_ContractOfficerId(
+//                        id)
+//                .map(u ->
+//                        profileImageService
+//                                .getProfileImageUrl(
+//                                        u.getUserId()))
+//                .orElseGet(() -> {
+//                    ContractOfficer co =
+//                            contractOfficerRepository.findById(id)
+//                                    .orElseThrow(() ->
+//                                            new
+//                                                    ResourceNotFoundException(
+//                                                    "មន្ត្រីកិច្ចសន្យា",
+//                                                    id));
+//                    return co.getProfileAttachment()
+//                            != null
+//                            ? minioService
+//                            .getPresignedUrl(
+//                                    co
+//                                            .getProfileAttachment()
+//                                            .getFilePath())
+//                            : "/api/v1/static/avatars"
+//                              + "/contract_officer"
+//                              + ".png";
+//                });
+//
+//        return ResponseEntity.ok(
+//                ApiResponse.success(
+//                        url, "ទាញយកតំណភ្ជាប់រូបភាពប្រវត្តិរូបបានជោគជ័យ"));
+//    }
 
     @DeleteMapping("/{id}/profile-image")
     @PreAuthorize(
             "hasAuthority('ATTACHMENT_DELETE')")
-    public ResponseEntity<ApiResponse<Void>>
+    public ResponseEntity<ApiResponse<
+    ContractOfficerResponse>>
     deleteProfileImage(
             @PathVariable
             @Positive Integer id) {
 
-        profileImageService
-                .deleteContractOfficerProfileImage(
-                        id);
-
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        null,
-                        "បានលុបរូបភាពប្រវត្តិរូបដោយជោគជ័យ"));
+                        contractOfficerService
+                                .deleteProfileImage(id),
+                        "លុប Profile Image"
+                                + " ជោគជ័យ"));
+    }
+
+    @GetMapping("/{id}/profile-image")
+    @PreAuthorize("hasAuthority('OFFICER_VIEW')")
+    public ResponseEntity<ApiResponse<String>>
+    getProfileImageUrl(@PathVariable @Positive Integer id) {
+
+        String url = contractOfficerService.getProfileImageUrl(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(url,
+                        "ទាញយកតំណភ្ជាប់រូបភាពប្រវត្តិរូបបានជោគជ័យ"));
     }
 }
