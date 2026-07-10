@@ -1,6 +1,5 @@
 package gov.kh.mcr.inspectorate.service.impl;
 
-import gov.kh.mcr.inspectorate.enums.AttachmentRefType;
 import gov.kh.mcr.inspectorate.exception.BusinessException;
 import gov.kh.mcr.inspectorate.service.MinioService;
 import io.minio.*;
@@ -11,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.UUID;
+
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -25,25 +24,16 @@ public class MinioServiceImpl implements MinioService {
     private String bucket;
 
     @Override
-    public String uploadFile(
+    public String upload(
             MultipartFile file,
-            String refTypePrefix,
-            Integer refId) {
+            String path) {
         try {
             createBucketIfNotExists();
-
-            String ext = getExt(
-                    file.getOriginalFilename());
-            String objectName =
-                    refTypePrefix
-                            + "/" + refId
-                            + "/" + UUID.randomUUID()
-                            + "." + ext;
 
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucket)
-                            .object(objectName)
+                            .object(path)
                             .stream(
                                     file.getInputStream(),
                                     file.getSize(), -1)
@@ -51,8 +41,8 @@ public class MinioServiceImpl implements MinioService {
                                     file.getContentType())
                             .build());
 
-            log.info("Uploaded: {}", objectName);
-            return objectName;
+            log.info("Uploaded: {}", path);
+            return path;
 
         } catch (Exception ex) {
             throw new BusinessException(
@@ -61,40 +51,51 @@ public class MinioServiceImpl implements MinioService {
     }
 
     @Override
-    public String getPresignedUrl(String objectName) {
-        return getPresignedUrl(objectName, 60);
+    public String getPresignedUrl(
+            String filePath) {
+        return getPresignedUrl(filePath, 60);
     }
 
     @Override
     public String getPresignedUrl(
-            String objectName, int expiryMinutes) {
+            String filePath,
+            int expiryMinutes) {
+
         try {
-            return minioClient.getPresignedObjectUrl(
-                    GetPresignedObjectUrlArgs.builder()
-                            .method(Method.GET)
-                            .bucket(bucket)
-                            .object(objectName)
-                            .expiry(expiryMinutes,
-                                    TimeUnit.MINUTES)
-                            .build());
-        } catch (Exception ex) {
-            log.error("Presigned URL error", ex);
+            return minioClient
+                    .getPresignedObjectUrl(
+                            GetPresignedObjectUrlArgs
+                                    .builder()
+                                    .method(Method.GET)
+                                    .bucket(bucket)
+                                    .object(filePath)
+                                    .expiry(
+                                            expiryMinutes,
+                                            TimeUnit.MINUTES)
+                                    .build());
+
+        } catch (Exception e) {
+            log.error(
+                    "Presigned URL failed"
+                            + " for path [{}]: {}",
+                    filePath, e.getMessage());
             throw new BusinessException(
-                    "ការទាញយកតំណភ្ជាប់សម្រាប់ទាញយកឯកសារមានបញ្ហា "
-                            + ex.getMessage());
+                    "មិនអាចបង្កើត URL"
+                            + " សម្រាប់ File: "
+                            + filePath);
         }
     }
 
     @Override
-    public void deleteFile(String objectName) {
+    public void delete(String filePath) {
         try {
             minioClient.removeObject(
                     RemoveObjectArgs.builder()
                             .bucket(bucket)
-                            .object(objectName)
+                            .object(filePath)
                             .build());
             log.info("MinIO deleted: {}",
-                    objectName);
+                    filePath);
         } catch (Exception ex) {
             log.error("MinIO delete error", ex);
             throw new BusinessException(
@@ -125,6 +126,11 @@ public class MinioServiceImpl implements MinioService {
                     "ការពិនិត្យវត្តមានឯកសារក្នុងប្រព័ន្ធផ្ទុកទិន្នន័យមានបញ្ហា "
                             + ex.getMessage());
         }
+    }
+
+    @Override
+    public boolean exists(String filePath) {
+        return fileExists(filePath);
     }
 
     @Override
