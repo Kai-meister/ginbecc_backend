@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="0231aa9f-8b13-4b9c-b8a5-f0199b705cf0" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/ginbecc_backend.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/config/FirebaseConfig.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/ActivityLogContext.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/BulkAttendeeRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/DecideRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/DeviceTokenRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/NotificationCreateRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/ActivityLogResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/DepartmentManagerResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/RoomScheduleResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/report/AnnouncementRecipientReportResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/report/AnnouncementReportResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/report/ApprovalReportResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/report/AuditLogReportResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/report/ContractOfficerReportResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/report/DocumentReportResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/report/MeetingMinuteReportResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/report/MeetingReportResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/report/NotificationReportResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/report/OfficerReportResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/report/UserReportResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/DepartmentManager.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/UserDevice.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/MeetingRoomStatus.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/UserType.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/exception/DepartmentScopeException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/exception/PermissionDeniedException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/ActivityLogMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/AttendeeMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/DepartmentManagerMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/DepartmentManagerRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/UserDeviceRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/resolver/NotificationReferenceResolver.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/scheduler/AnnouncementExpireScheduler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/scheduler/MeetingRoomStatusScheduler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/scheduler/MeetingStatusScheduler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/scheduler/NotificationCleanupScheduler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/security/CustomAccessDeniedHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/FcmService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/UserProfileImageService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/FcmServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/UserProfileImageServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/config/AsyncConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/config/AsyncConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/config/AuditConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/config/AuditConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/config/CorsConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/config/CorsConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/config/DataInitializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/config/DataInitializer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/config/OpenApiConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/config/OpenApiConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/AnnouncementController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/AnnouncementController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/ApprovalController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/ApprovalController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/AttachmentController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/AuditLogController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/AuditLogController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/AuthController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/ContractOfficerController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/ContractOfficerController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/DepartmentController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/DepartmentController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/DocumentController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/DocumentController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/DocumentTypeController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/DocumentTypeController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/LookupController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/LookupController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/MeetingAttendeeController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/MeetingAttendeeController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/MeetingController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/MeetingController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/MeetingMinuteController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/MeetingMinuteController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/MeetingRoomController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/MeetingRoomController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/NotificationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/NotificationController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/OfficerController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/OfficerController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/PermissionController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/PermissionController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/PositionController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/PositionController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/ReportController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/ReportController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/RoleController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/RoleController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/controller/UserController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/AnnouncementRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/AnnouncementRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/ApprovalDecisionRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/ApprovalRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/ApprovalRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/AttachmentRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/AttendanceRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/AttendanceUpdateRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/AttendeeRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/AttendeeRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/ChangePasswordRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/ChangePasswordRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/ContractOfficerRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/ContractOfficerRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/DepartmentRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/DepartmentRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/DocumentRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/DocumentRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/DocumentTypeRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/DocumentTypeRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/LoginRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/LoginRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/MeetingMinuteRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/MeetingMinuteRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/MeetingRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/MeetingRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/MeetingRoomRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/MeetingRoomRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/OfficerRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/OfficerRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/PositionRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/PositionRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/RefreshTokenRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/RefreshTokenRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/RoleRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/RoleRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/StatusRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/StatusRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/UserRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/request/UserRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/AnnouncementResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/AnnouncementResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/ApiResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/ApiResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/ApprovalResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/ApprovalResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/AttachmentDownloadResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/AttachmentDownloadResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/AttachmentResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/AttachmentResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/AttendeeResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/AttendeeResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/ContractOfficerResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/ContractOfficerResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/DocumentResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/DocumentResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/LoginResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/LoginResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/LookupResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/LookupResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/MeetingResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/MeetingResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/MeetingRoomResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/MeetingRoomResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/NotificationResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/NotificationResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/PositionResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/PositionResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/ResetPasswordResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/ResetPasswordResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/UserResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/dto/response/UserResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/ActivityLog.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/ActivityLog.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Announcement.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Announcement.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/AnnouncementRecipient.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/AnnouncementRecipient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Approval.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Approval.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Attachment.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Attachment.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/ContractOfficer.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/ContractOfficer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Department.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Department.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Document.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Document.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/LookupDocumentStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/LookupDocumentStatus.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/LookupUserStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/LookupUserStatus.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Meeting.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Meeting.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/MeetingAttendee.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/MeetingAttendee.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/MeetingMinute.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/MeetingMinute.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/MeetingRoom.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/MeetingRoom.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Notification.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Notification.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Officer.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Officer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Permission.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Permission.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Position.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/Position.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/entity/User.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/ActiveStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/ActiveStatus.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/AnnouncementStatusCode.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/AnnouncementStatusCode.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/AttachmentRefType.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/AttachmentRefType.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/AttendanceStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/AttendanceStatus.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/AttendeeRole.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/AttendeeRole.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/DocumentStatusCode.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/DocumentStatusCode.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/Gender.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/Gender.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/MeetingStatusCode.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/MeetingStatusCode.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/MeetingType.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/MeetingType.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/NotificationType.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/NotificationType.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/Priority.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/Priority.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/enums/RoomStatus.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/exception/GlobalExceptionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/exception/GlobalExceptionHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/AnnouncementMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/AnnouncementMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/ApprovalMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/ApprovalMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/AttachmentMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/AttachmentMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/ContractOfficerMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/ContractOfficerMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/DocumentMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/DocumentMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/MeetingAttendeeMapper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/MeetingMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/MeetingMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/MeetingMinuteMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/MeetingMinuteMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/MeetingRoomMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/MeetingRoomMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/NotificationMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/NotificationMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/OfficerMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/OfficerMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/PositionMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/PositionMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/UserMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/mapper/UserMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/ActivityLogRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/ActivityLogRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/AnnouncementRecipientRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/AnnouncementRecipientRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/AnnouncementRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/AnnouncementRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/ApprovalRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/ApprovalRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/AttachmentRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/AttachmentRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/ContractOfficerRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/ContractOfficerRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/DepartmentRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/DepartmentRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/DocumentRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/DocumentRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/DocumentTypeRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/DocumentTypeRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/LookupAnnouncementStatusRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/LookupAnnouncementStatusRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/LookupDocumentStatusRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/LookupDocumentStatusRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/LookupMeetingStatusRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/LookupMeetingStatusRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/LookupOfficerStatusRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/LookupOfficerStatusRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/LookupUserStatusRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/LookupUserStatusRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/MeetingAttendeeRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/MeetingAttendeeRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/MeetingMinuteRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/MeetingMinuteRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/MeetingRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/MeetingRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/MeetingRoomRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/MeetingRoomRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/NotificationRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/NotificationRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/OfficerRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/OfficerRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/PermissionRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/PermissionRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/PositionRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/PositionRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/RolePermissionRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/RolePermissionRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/UserRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/repository/UserRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/scheduler/ContractExpiryScheduler.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/scheduler/ContractExpiryScheduler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/scheduler/DocumentExpiryScheduler.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/scheduler/DocumentExpiryScheduler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/security/JwtAuthenticationFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/security/JwtAuthenticationFilter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/security/JwtTokenProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/security/JwtTokenProvider.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/security/SecurityUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/security/SecurityUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/security/WebSecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/security/WebSecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/ActivityLogService.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/ActivityLogService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/AnnouncementService.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/AnnouncementService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/ApprovalService.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/ApprovalService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/AttachmentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/AttachmentService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/DepartmentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/DepartmentService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/DocumentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/DocumentService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/MeetingAttendeeService.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/MeetingAttendeeService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/MeetingMinuteService.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/MeetingMinuteService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/MeetingRoomService.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/MeetingRoomService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/MeetingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/MeetingService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/NotificationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/NotificationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/OfficerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/OfficerService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/PositionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/PositionService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/ReportService.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/ReportService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/UserService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/ActivityLogServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/ActivityLogServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/AnnouncementServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/AnnouncementServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/ApprovalServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/ApprovalServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/AttachmentServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/AttachmentServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/AuthServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/AuthServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/ContractOfficerServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/ContractOfficerServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/DepartmentServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/DepartmentServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/DocumentServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/DocumentServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/DocumentTypeServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/DocumentTypeServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/MeetingAttendeeServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/MeetingAttendeeServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/MeetingMinuteServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/MeetingMinuteServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/MeetingRoomServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/MeetingRoomServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/MeetingServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/MeetingServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/MinioServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/MinioServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/NotificationServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/NotificationServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/OfficerServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/OfficerServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/PermissionServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/PermissionServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/PositionServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/PositionServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/ReportServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/ReportServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/RoleServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/RoleServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/UserServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/service/impl/UserServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/util/AttachmentValidator.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/util/AttachmentValidator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/util/ExcelUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/util/ExcelUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inspectorate-management-system/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/inspectorate-management-system/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/annotations/gov/kh/mcr/inspectorate/mapper/AnnouncementMapperImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/annotations/gov/kh/mcr/inspectorate/mapper/ApprovalMapperImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/annotations/gov/kh/mcr/inspectorate/mapper/AttachmentMapperImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/annotations/gov/kh/mcr/inspectorate/mapper/ContractOfficerMapperImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/annotations/gov/kh/mcr/inspectorate/mapper/DepartmentMapperImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/annotations/gov/kh/mcr/inspectorate/mapper/DocumentMapperImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/annotations/gov/kh/mcr/inspectorate/mapper/DocumentTypeMapperImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/annotations/gov/kh/mcr/inspectorate/mapper/MeetingAttendeeMapperImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/annotations/gov/kh/mcr/inspectorate/mapper/MeetingMapperImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/annotations/gov/kh/mcr/inspectorate/mapper/MeetingMinuteMapperImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/annotations/gov/kh/mcr/inspectorate/mapper/MeetingRoomMapperImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/annotations/gov/kh/mcr/inspectorate/mapper/NotificationMapperImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/annotations/gov/kh/mcr/inspectorate/mapper/OfficerMapperImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/annotations/gov/kh/mcr/inspectorate/mapper/PositionMapperImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/annotations/gov/kh/mcr/inspectorate/mapper/RoleMapperImpl.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/generated-sources/annotations/gov/kh/mcr/inspectorate/mapper/UserMapperImpl.java" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Interface" />
+        <option value="Enum" />
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3DqP7GGvjbSFOCQV6Ge7lqUGSc7" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;Spring Boot.InspectorateManagementSystemApplication.executor&quot;: &quot;Run&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feature/my-feature&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;A:/Sana2/ginbecc_backend&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="A:\Sana2\ginbecc_backend\inspectorate-management-system\src\main\resources\fonts" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="A:\Sana2\ginbecc_backend\inspectorate-management-system\src\main\resources" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="gov.kh.mcr.inspectorate.dto.response.report" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.25134.95" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.25134.95" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="0231aa9f-8b13-4b9c-b8a5-f0199b705cf0" name="Changes" comment="" />
+      <created>1779006457360</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1779006457360</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <breakpoint enabled="true" type="java-exception">
+          <properties class="org.postgresql.util.PSQLException" package="org.postgresql.util" />
+          <option name="timeStamp" value="1" />
+        </breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/inspectorate-management-system/src/main/java/gov/kh/mcr/inspectorate/resolver/NotificationReferenceResolver.java</url>
+          <line>29</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

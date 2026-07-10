@@ -35,8 +35,12 @@ public class MeetingRoomStatusScheduler {
         LocalDate today = LocalDate.now();
         LocalTime now   = LocalTime.now();
 
+        // Fix — Mark rooms IN_USE
+        // (Meeting started)
         markRoomsInUse(today, now);
 
+        // Fix — Mark rooms AVAILABLE
+        // (Meeting ended or cancelled)
         markRoomsAvailable(today, now);
     }
 
@@ -74,6 +78,8 @@ public class MeetingRoomStatusScheduler {
         }
     }
 
+    // Fix — Mark AVAILABLE: ពេល Meeting
+    // បញ្ចប់ Room Status → AVAILABLE
     private void markRoomsAvailable(
             LocalDate today,
             LocalTime now) {

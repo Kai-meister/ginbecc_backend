@@ -6,6 +6,7 @@ import gov.kh.mcr.inspectorate.enums
 import gov.kh.mcr.inspectorate.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation
         .Scheduled;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,9 @@ public class MeetingStatusScheduler {
     private final LookupMeetingStatusRepository
             statusRepo;
 
+    // ─────────────────────────────────────────────
+    // Run every 1 minute
+    // ─────────────────────────────────────────────
     @Scheduled(fixedDelay = 60_000)
     @Transactional
     public void syncMeetingAndRoomStatus() {
@@ -33,15 +37,26 @@ public class MeetingStatusScheduler {
         LocalDate today = LocalDate.now();
         LocalTime now   = LocalTime.now();
 
+        // Fix ១ — Meeting SCHEDULED/CONFIRMED
+        // → IN_PROGRESS ពេល startTime ដល់
         markMeetingsInProgress(today, now);
 
+        // Fix ២ — Meeting IN_PROGRESS
+        // → COMPLETED ពេល endTime ដល់
         markMeetingsCompleted(today, now);
 
+        // Fix ៣ — Room AVAILABLE
+        // → IN_USE ពេល Meeting ចាប់ផ្ដើម
         markRoomsInUse(today, now);
 
+        // Fix ៤ — Room IN_USE
+        // → AVAILABLE ពេល Meeting បញ្ចប់
         markRoomsAvailable(today, now);
     }
 
+    // ─────────────────────────────────────────────
+    // Fix — Meeting → IN_PROGRESS
+    // ─────────────────────────────────────────────
     private void markMeetingsInProgress(
             LocalDate today,
             LocalTime now) {
@@ -75,6 +90,9 @@ public class MeetingStatusScheduler {
         }
     }
 
+    // ─────────────────────────────────────────────
+    // Fix — Meeting → COMPLETED
+    // ─────────────────────────────────────────────
     private void markMeetingsCompleted(
             LocalDate today,
             LocalTime now) {
@@ -108,6 +126,9 @@ public class MeetingStatusScheduler {
         }
     }
 
+    // ─────────────────────────────────────────────
+    // Fix — Room → IN_USE
+    // ─────────────────────────────────────────────
     private void markRoomsInUse(
             LocalDate today,
             LocalTime now) {
@@ -141,6 +162,10 @@ public class MeetingStatusScheduler {
             }
         }
     }
+
+    // ─────────────────────────────────────────────
+    // Fix — Room → AVAILABLE
+    // ─────────────────────────────────────────────
     private void markRoomsAvailable(
             LocalDate today,
             LocalTime now) {
@@ -178,6 +203,9 @@ public class MeetingStatusScheduler {
         }
     }
 
+    // ─────────────────────────────────────────────
+    // Fix — Midnight Reset
+    // ─────────────────────────────────────────────
     @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void midnightReset() {
@@ -185,6 +213,7 @@ public class MeetingStatusScheduler {
         LocalDate today = LocalDate.now();
         LocalTime now   = LocalTime.now();
 
+        // Reset stuck IN_USE rooms
         List<MeetingRoom> stuckRooms =
                 roomRepo
                         .findRoomsToMarkAvailable(

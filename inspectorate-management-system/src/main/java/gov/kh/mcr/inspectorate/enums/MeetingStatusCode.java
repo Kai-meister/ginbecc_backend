@@ -45,12 +45,12 @@ public enum MeetingStatusCode {
     }
 
 //    //  Can cancel
-    public static boolean canCancel(String code) {
-        return DRAFT.code.equals(code)
-                || SCHEDULED.code.equals(code)
-                || CONFIRMED.code.equals(code)
-                || POSTPONED.code.equals(code);
-    }
+//    public static boolean canCancel(String code) {
+//        return DRAFT.code.equals(code)
+//                || SCHEDULED.code.equals(code)
+//                || CONFIRMED.code.equals(code)
+//                || POSTPONED.code.equals(code);
+//    }
 
     // Is final state
     public static boolean isFinal(String code) {

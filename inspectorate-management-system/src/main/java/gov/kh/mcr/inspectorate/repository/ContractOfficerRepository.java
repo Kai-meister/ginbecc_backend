@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ContractOfficerRepository
@@ -49,4 +50,34 @@ public interface ContractOfficerRepository
     List<ContractOfficer> findExpiring(
             @Param("expiryDate")
             LocalDate expiryDate);
+
+    // Single contract officer with all relations eagerly fetched
+    @Query("""
+    SELECT c FROM ContractOfficer c
+    LEFT JOIN FETCH c.department d
+    LEFT JOIN FETCH c.statusCode s
+    LEFT JOIN FETCH c.profileAttachment a
+    WHERE c.contractOfficerId = :id
+    """)
+    Optional<ContractOfficer> findByIdWithAll(
+            @Param("id") Integer id);
+
+    // Paged list with optional department/status filters
+    @Query(value = """
+    SELECT c FROM ContractOfficer c
+    WHERE (:deptId IS NULL
+           OR c.department.departmentId = :deptId)
+    AND   (:status IS NULL
+           OR c.statusCode.statusCode = :status)
+    """, countQuery = """
+    SELECT COUNT(c) FROM ContractOfficer c
+    WHERE (:deptId IS NULL
+           OR c.department.departmentId = :deptId)
+    AND   (:status IS NULL
+           OR c.statusCode.statusCode = :status)
+    """)
+    Page<ContractOfficer> findAllWithFilters(
+            @Param("deptId") Integer deptId,
+            @Param("status") String status,
+            Pageable pageable);
 }

@@ -63,10 +63,20 @@ public class AttachmentServiceImpl
         archiveExisting(refId, refType);
 
         // ៣. Upload to MinIO
-         String filePath = minioService.uploadFile(
+        String ext = "";
+        String orig = file.getOriginalFilename();
+        if (orig != null && orig.contains(".")) {
+            ext = orig.substring(
+                    orig.lastIndexOf("."));
+        }
+        String filePath = minioService.upload(
                 file,
-                refType.toPathPrefix(),
-                refId);
+                refType.toPathPrefix()
+                        + "/" + refId
+                        + "/" + UUID.randomUUID()
+                        .toString()
+                        .replace("-", "")
+                        + ext);
 
         // ៤. Build + Save entity
         Attachment attachment = Attachment.builder()
@@ -169,7 +179,7 @@ public class AttachmentServiceImpl
         Attachment a = findById(id);
 
         try {
-            minioService.deleteFile(a.getFilePath());
+            minioService.delete(a.getFilePath());
         } catch (Exception ex) {
             log.warn("MinIO delete failed: {}",
                     ex.getMessage());
@@ -197,7 +207,7 @@ public class AttachmentServiceImpl
 
         archived.forEach(a -> {
             try {
-                minioService.deleteFile(
+                minioService.delete(
                         a.getFilePath());
             } catch (Exception ex) {
                 log.warn(

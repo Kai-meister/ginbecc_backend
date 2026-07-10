@@ -37,10 +37,7 @@ public interface ContractOfficerMapper {
             source = "statusCode.statusCode")
     @Mapping(target = "statusLabel",
             source = "statusCode.labelKh")
-    @Mapping(target = "age",
-            expression =
-                    "java(calcAge("
-                            + "entity.getDob()))")
+
     @Mapping(target = "daysUntilExpiry",
             expression =
                     "java(calcDays("
@@ -49,6 +46,14 @@ public interface ContractOfficerMapper {
             expression =
                     "java(calcLabel("
                             + "entity.getEndDate()))")
+    @Mapping(target = "profileAttachmentId",
+            source =
+                    "profileAttachment"
+                            + ".attachmentId")
+    @Mapping(target = "profileImageUrl",
+            source =
+                    "profileAttachment"
+                            + ".filePath")
     ContractOfficerResponse toResponse(
             ContractOfficer entity);
 
@@ -70,11 +75,7 @@ public interface ContractOfficerMapper {
             ContractOfficerRequest request,
             @MappingTarget ContractOfficer entity);
 
-    default Integer calcAge(LocalDate dob) {
-        if (dob == null) return null;
-        return Period.between(
-                dob, LocalDate.now()).getYears();
-    }
+
 
     default Long calcDays(LocalDate endDate) {
         if (endDate == null) return null;

@@ -30,14 +30,30 @@ public interface OfficerMapper {
     Officer toEntity(
             OfficerRequest request);
 
-    @Mapping(target = "departmentName", source = "department" + ".departmentName")
-    @Mapping(target = "departmentId", source = "department" + ".departmentId")
-    @Mapping(target = "positionName", source = "position" + ".positionName")
-    @Mapping(target = "positionId", source = "position" + ".positionId")
-    @Mapping(target = "statusCode", source = "statusCode.statusCode")
-    @Mapping(target = "statusLabel", source = "statusCode.labelKh")
-    OfficerResponse toResponse(
-            Officer entity);
+    @Mapping(target = "departmentId",
+            source =
+                    "department.departmentId")
+    @Mapping(target = "departmentName",
+            source =
+                    "department.departmentName")
+    @Mapping(target = "positionId",
+            source = "position.positionId")
+    @Mapping(target = "positionName",
+            source = "position.positionName")
+    @Mapping(target = "statusCode",
+            source = "statusCode.statusCode")
+    @Mapping(target = "statusLabel",
+            source = "statusCode.labelKh")
+
+    @Mapping(target = "profileAttachmentId",
+            source =
+                    "profileAttachment"
+                            + ".attachmentId")
+    @Mapping(target = "profileImageUrl",
+            source =
+                    "profileAttachment"
+                            + ".filePath")
+    OfficerResponse toResponse(Officer entity); // fix
 
     @BeanMapping(
             nullValuePropertyMappingStrategy =
@@ -60,4 +76,7 @@ public interface OfficerMapper {
     void updateEntity(
             OfficerRequest request,
             @MappingTarget Officer entity);
+
+
+
 }

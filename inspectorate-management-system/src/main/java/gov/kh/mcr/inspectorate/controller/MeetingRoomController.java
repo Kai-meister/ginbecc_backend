@@ -65,6 +65,8 @@ public class MeetingRoomController {
                         "ទទួលបន្ទប់ប្រជុំ"));
     }
 
+    // Fix — NEW: Room booking schedule
+    // (ថ្ងៃ + ម៉ោង ទាំងអស់ ដែលកក់)
     @GetMapping("/{id}/schedule")
     @PreAuthorize("hasAnyAuthority('MEETING_VIEW', 'ROOM_MANAGE')")
     public ResponseEntity<ApiResponse<
@@ -89,7 +91,8 @@ public class MeetingRoomController {
                                 + " បន្ទប់ប្រជុំ"));
     }
 
-
+    // Fix — NEW: Availability for date
+    // (Slots ទំនេរ + Slots កក់)
     @GetMapping("/{id}/availability")
     @PreAuthorize("hasAnyAuthority('MEETING_VIEW', 'ROOM_MANAGE')")
     public ResponseEntity<ApiResponse<
@@ -106,7 +109,8 @@ public class MeetingRoomController {
                 ApiResponse.success(
                         roomService.getAvailability(
                                 id, date),
-                        "ទាញយកព័ត៌មានកាលវិភាគ និងភាពទំនេរនៃបន្ទប់ប្រជុំបានជោគជ័យ"));
+                        "ទទួល Availability"
+                                + " បន្ទប់ប្រជុំ"));
     }
 
     @PostMapping
@@ -160,7 +164,10 @@ public class MeetingRoomController {
                 ApiResponse.success(
                         roomService.updateStatus(
                                 id, status),
-                        "បានកែប្រែស្ថានភាពបន្ទប់ប្រជុំទៅជា «" + status.getLabelKh() + "» ដោយជោគជ័យ"));
+                        "ស្ថានភាពបន្ទប់"
+                                + " ត្រូវបានកែប្រែ"
+                                + " → "
+                                + status.getLabelKh()));
     }
 
     @PostMapping(

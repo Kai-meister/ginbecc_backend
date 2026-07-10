@@ -40,6 +40,8 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     private final MeetingRoomMapper roomMapper;
     private final SecurityUtils securityUtils;
     private final ActivityLogService activityLogService;
+
+    // Fix — Image validation constraints
     private static final List<String> ALLOWED_IMAGE_TYPES =
             List.of("image/jpeg", "image/png", "image/webp");
     private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -205,7 +207,8 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
 
         if (request.getStatus() == MeetingRoomStatus.IN_USE) {
             throw new BusinessException(
-                    "មិនអាចកំណត់ស្ថានភាព «កំពុងប្រើប្រាស់» ដោយផ្ទាល់បានឡើយ។ ស្ថានភាពនេះនឹងត្រូវផ្លាស់ប្តូរដោយស្វ័យប្រវត្តតាមប្រព័ន្ធ នៅពេលកិច្ចប្រជុំចាប់ផ្តើមដំណើរការ។");
+                    "ស្ថានភាព IN_USE ត្រូវបានកំណត់ Auto ពេល Meeting ចាប់ផ្ដើម"
+                            + " — មិនអាចកំណត់ដោយដៃ បានទេ");
         }
 
         if (request.getStatus() == MeetingRoomStatus.MAINTENANCE
@@ -229,8 +232,9 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
 
         if (newStatus == MeetingRoomStatus.IN_USE) {
             throw new BusinessException(
-                    "មិនអាចកំណត់ស្ថានភាព «កំពុងប្រើប្រាស់» ដោយផ្ទាល់បានឡើយ។ ស្ថានភាពនេះនឹងត្រូវផ្លាស់ប្តូរដោយស្វ័យប្រវត្តតាមប្រព័ន្ធ នៅពេលកិច្ចប្រជុំចាប់ផ្តើមដំណើរការ។"
-            );}
+                    "ស្ថានភាព IN_USE ត្រូវបានកំណត់ Auto ដោយប្រព័ន្ធ"
+                            + " — Admin មិនអាច Set ដោយដៃ បានទេ");
+        }
 
         if (newStatus == MeetingRoomStatus.MAINTENANCE
                 || newStatus == MeetingRoomStatus.CLOSED) {
@@ -248,7 +252,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
 
         activityLogService.log(
                 "UPDATE", "MeetingRoom", id,
-                "ស្ថានភាព: " + oldStatus.getLabelKh() + " ទៅ " + newStatus.getLabelKh(),
+                "ស្ថានភាព: " + oldStatus.getLabelKh() + " → " + newStatus.getLabelKh(),
                 buildContext());
 
         return toResponseWithImage(room);
@@ -263,9 +267,10 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
 
         if (room.getStatus() == MeetingRoomStatus.IN_USE) {
             throw new BusinessException(
-                    "មិនអាចលុបបន្ទប់ប្រជុំដែលកំពុងស្ថិតក្នុងស្ថានភាព «កំពុងប្រើប្រាស់» បានឡើយ។ សូមរង់ចាំរហូតដល់កិច្ចប្រជុំត្រូវបានបញ្ចប់។");
+                    "មិនអាចលុប Room ដែល IN_USE — ត្រូវរងចាំ Meeting បញ្ចប់");
         }
 
+        // Fix — Clean up attachment before deleting room (avoid orphaned MinIO object)
         if (room.getAttachment() != null) {
             Integer attachmentId = room.getAttachment().getAttachmentId();
             room.setAttachment(null);
@@ -277,7 +282,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
 
         activityLogService.log(
                 "DELETE", "MeetingRoom", id,
-                "លុបបន្ទប់ប្រជុំ៖ " + room.getRoomCode(), buildContext());
+                "លុប: " + room.getRoomCode(), buildContext());
     }
 
 
@@ -328,6 +333,9 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
 
         Integer attachmentId = room.getAttachment().getAttachmentId();
 
+        // Fix — Clear FK reference first,
+        // then delete attachment record + MinIO object
+        // (avoid FK constraint violation)
         room.setAttachment(null);
         MeetingRoom saved = roomRepo.save(room);
 
@@ -340,6 +348,10 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         return roomMapper.toResponse(saved);
     }
 
+    // ── Private Helpers ───────────────────────────
+
+    // Fix — Resolve attachment filePath → presigned URL
+    // (resolve-on-read pattern, consistent with User profile image)
     private MeetingRoomResponse toResponseWithImage(MeetingRoom room) {
         MeetingRoomResponse resp = roomMapper.toResponse(room);
         if (room.getAttachment() != null) {
@@ -350,20 +362,23 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         return resp;
     }
 
+    // Fix — Validate image file before upload
+    // (type + size check; content-type header can be
+    //  spoofed by client, consider magic-byte check
+    //  via Apache Tika for stronger guarantee)
     private void validateImageFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new BusinessException("សូមជ្រើសរើសរូបភាពប្រវត្តិរូបមកជាមួយដើម្បីបន្ត។");
+            throw new BusinessException("សូមជ្រើសរើសរូបភាពសម្រាប់ Upload");
         }
 
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType)) {
             throw new BusinessException(
-                    "ប្រភេទឯកសារនេះមិនត្រូវបានអនុញ្ញាតក្នុងប្រព័ន្ធឡើយ។ សូមប្រើប្រាស់ទម្រង់ឯកសាររូបភាពជាប្រភេទ JPG, PNG ឬ WEBP ប៉ុណ្ណោះ។");
+                    "ប្រភេទឯកសារមិនត្រូវបានអនុញ្ញាត — សូមប្រើ JPG, PNG ឬ WEBP ប៉ុណ្ណោះ");
         }
 
         if (file.getSize() > MAX_IMAGE_SIZE) {
-            long currentMb = file.getSize() / 1024 / 1024;
-            throw new BusinessException("ទំហំរូបភាពធំលើសការកំណត់។ ប្រព័ន្ធអនុញ្ញាតឱ្យបង្ហោះរូបភាពដែលមានទំហំអតិបរមា 5MB ប៉ុណ្ណោះ (ទំហំបច្ចុប្បន្ន៖ " + currentMb + "MB)។");
+            throw new BusinessException("ទំហំរូបភាពមិនអាចលើសពី 5MB");
         }
     }
 
@@ -441,9 +456,8 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
 
         if (active > 0) {
             throw new BusinessException(
-                    "មិនអាចដំណើរការបានឡើយ ព្រោះបន្ទប់ប្រជុំនេះមានកិច្ចប្រជុំដែលបានរៀបចំទុកជាមុន (Scheduled) ចំនួន "
-                            + active + " កិច្ចប្រជុំ។ សូមមេត្តាលុបចោល ឬផ្លាស់ប្តូរកាលវិភាគកិច្ចប្រជុំទាំងនោះជាមុនសិន។"
-            );
+                    "Room នេះ មាន Meeting ដែល Scheduled " + active + " ខ្នង"
+                            + " — Cancel Meeting ទាំងអស់ជាមុនសិន");
         }
     }
 

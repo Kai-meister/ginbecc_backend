@@ -26,6 +26,7 @@ public class MeetingResponse {
     private String        roomCode;
     private String        roomLocation;
 
+    // Fix — Room current status
     private MeetingRoomStatus roomStatus;
     private String        roomStatusLabel;
 
@@ -34,6 +35,7 @@ public class MeetingResponse {
     private String        statusCode;
     private String        statusLabel;
 
+    // Fix — Meeting duration in minutes
     private Integer       durationMinutes;
 
     // Attendees

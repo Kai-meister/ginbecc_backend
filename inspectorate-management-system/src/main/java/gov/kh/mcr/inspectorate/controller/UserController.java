@@ -159,7 +159,7 @@ public class UserController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        url, "ទាញយកតំណភ្ជាប់រូបភាពប្រវត្តិរូបបានជោគជ័យ"));
+                        url, "Profile Image URL"));
     }
 
     @PostMapping("/{id}/profile-image")
@@ -170,6 +170,17 @@ public class UserController {
             @PathVariable Integer id) {
 
         throw new BusinessException(
-                "លោកអ្នកមិនអាចបង្ហោះរូបភាពប្រវត្តិរូបដោយផ្ទាល់តាមរយៈគណនីប្រើប្រាស់ បានឡើយ។");
+                "User មិនអាច Upload"
+                        + " Profile Image"
+                        + " ដោយផ្ទាល់ — ត្រូវ Upload"
+                        + " តាម:"
+                        + " POST /officers/{id}"
+                        + "/profile-image"
+                        + " (ប្រសិនបើ User ភ្ជាប់"
+                        + " Officer)"
+                        + " ឬ POST /contract-officers"
+                        + "/{id}/profile-image"
+                        + " (ប្រសិនបើ User ភ្ជាប់"
+                        + " ContractOfficer)");
     }
 }

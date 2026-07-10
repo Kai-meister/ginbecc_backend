@@ -152,16 +152,6 @@ public class MeetingServiceImpl
                     findRoom(request.getRoomId()));
         }
 
-        MeetingRoom room = roomRepo.findById(request.getRoomId())
-                .orElseThrow(() -> new ResourceNotFoundException("បន្ទប់ប្រជុំ", request.getRoomId()));
-
-        if (room.getStatus() == MeetingRoomStatus.MAINTENANCE
-                || room.getStatus() == MeetingRoomStatus.CLOSED) {
-            throw new BusinessException(
-                    "បន្ទប់ [" + room.getRoomCode() + "] មិនអាចកក់បានទេ — "
-                            + "ស្ថានភាពបច្ចុប្បន្ន: " + room.getStatus().getLabelKh());
-        }
-
         meeting.setStatusCode(
                 findStatus(request.getStatusCode()));
 
@@ -340,7 +330,8 @@ public class MeetingServiceImpl
     private MeetingResponse toResponseWithSummary(
             Meeting meeting) {
 
-        MeetingResponse dto = meetingMapper.toResponse(meeting);
+        MeetingResponse dto =
+                meetingMapper.toResponse(meeting);
 
         Integer meetingId = meeting.getMeetingId();
         List<AttendeeResponse> attendees =
@@ -405,10 +396,14 @@ public class MeetingServiceImpl
         MeetingRoom room = meeting.getRoom();
         if (room == null) return;
 
+        // Fix — ប្រសិនបើ Cancel ឬ Complete
+        // → Room ត្រូវ AVAILABLE ភ្លាម
         if ("CANCELLED".equals(newStatusCode)
                 || "COMPLETED".equals(
                 newStatusCode)) {
 
+            // ប្រាកដ Room ត្រូវបន្ទប់
+            // Meeting ដែល Cancel/Complete
             if (room.getStatus()
                     == MeetingRoomStatus.IN_USE
                     && room.getCurrentMeeting()
@@ -449,10 +444,22 @@ public class MeetingServiceImpl
         if (!conflicts.isEmpty()) {
             Meeting c = conflicts.get(0);
             throw new BusinessException(
-                    "មិនអាចកក់បន្ទប់ប្រជុំបានឡើយ ព្រោះមានការជាន់ពេលវាលាគ្នាជាមួយកិច្ចប្រជុំ៖ «" + c.getTitle() + "» "
-                            + "ដែលបានកក់ចន្លោះម៉ោង " + c.getStartTime() + " ដល់ " + c.getEndTime() + " "
-                            + "នាថ្ងៃទី " + c.getMeetingDate() + "។ សូមមេត្តាជ្រើសរើសម៉ោង ឬបន្ទប់ប្រជុំផ្សេងវិញ។"
-            );
+                    "បន្ទប់ប្រជុំ"
+                            + " ត្រូវបានកក់ហើយ"
+                            + " — ទំនាស់ជាមួយ:"
+                            + " \""
+                            + c.getTitle()
+                            + "\""
+                            + " ("
+                            + c.getStartTime()
+                            + " - "
+                            + c.getEndTime()
+                            + ")"
+                            + " ថ្ងៃ "
+                            + c.getMeetingDate()
+                            + " — សូមជ្រើស"
+                            + " ម៉ោង ឬ បន្ទប់"
+                            + " ផ្សេង");
         }
     }
 
@@ -479,6 +486,8 @@ public class MeetingServiceImpl
         meeting.setStatusCode(newStatus);
         Meeting saved =
                 meetingRepo.save(meeting);
+
+        // Fix — Real-time Room update
         syncRoomStatusOnDecision(
                 meeting, newStatusCode);
 
@@ -494,13 +503,17 @@ public class MeetingServiceImpl
             String current,
             String target) {
 
+        // Fix — Cannot go back from final states
         if ("COMPLETED".equals(current)
                 || "CANCELLED".equals(current)) {
             throw new BusinessException(
-                    "កិច្ចប្រជុំនេះស្ថិតក្នុងស្ថានភាពចុងក្រោយ («" + current + "») រួចរាល់ហើយ មិនអាចធ្វើការផ្លាស់ប្តូរស្ថានភាពបន្តទៀតបានឡើយ។"
-            );
+                    "ការប្រជុំ Status: "
+                            + current
+                            + " — មិនអាចប្ដូរ Status"
+                            + " ទៀតបានទេ (Final State)");
         }
 
+        // Fix — Valid transitions
         boolean valid = switch (current) {
             case "DRAFT" -> List.of(
                             "SCHEDULED", "CANCELLED")
@@ -527,8 +540,11 @@ public class MeetingServiceImpl
 
         if (!valid) {
             throw new BusinessException(
-                    "មិនអាចផ្លាស់ប្តូរស្ថានភាពកិច្ចប្រជុំពី «" + current + "» ទៅជា «" + target + "» បានឡើយ ព្រោះលំហូរនៃការផ្លាស់ប្តូរនេះមិនត្រឹមត្រូវតាមគោលការណ៍ប្រព័ន្ធ។"
-            );
+                    "មិនអាចប្ដូរ Status"
+                            + " ពី " + current
+                            + " ទៅ " + target
+                            + " — ការប្ដូរ Status"
+                            + " មិនត្រឹមត្រូវ");
         }
     }
 

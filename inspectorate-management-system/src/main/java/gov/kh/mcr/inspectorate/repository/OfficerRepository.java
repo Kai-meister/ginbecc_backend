@@ -112,4 +112,35 @@ public interface OfficerRepository extends JpaRepository<Officer, Integer>,
             @Param("status") String status,
             @Param("from")   LocalDate from,
             @Param("to")     LocalDate to);
+
+    // Single officer with all relations eagerly fetched
+    @Query("""
+    SELECT o FROM Officer o
+    LEFT JOIN FETCH o.department d
+    LEFT JOIN FETCH o.position   p
+    LEFT JOIN FETCH o.statusCode s
+    LEFT JOIN FETCH o.profileAttachment a
+    WHERE o.officerId = :id
+    """)
+    Optional<Officer> findByIdWithAll(
+            @Param("id") Integer id);
+
+    // Paged list with optional department/status filters
+    @Query(value = """
+    SELECT o FROM Officer o
+    WHERE (:deptId IS NULL
+           OR o.department.departmentId = :deptId)
+    AND   (:status IS NULL
+           OR o.statusCode.statusCode = :status)
+    """, countQuery = """
+    SELECT COUNT(o) FROM Officer o
+    WHERE (:deptId IS NULL
+           OR o.department.departmentId = :deptId)
+    AND   (:status IS NULL
+           OR o.statusCode.statusCode = :status)
+    """)
+    Page<Officer> findAllWithFilters(
+            @Param("deptId") Integer deptId,
+            @Param("status") String status,
+            Pageable pageable);
     }
