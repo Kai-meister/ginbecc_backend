@@ -16,11 +16,13 @@ public class ContractOfficerResponse {
     private String        fullNameEn;
     private Gender        gender;
     private LocalDate     dob;
-    private Integer       age;
-    private String        departmentName;
+    @Builder.Default
+    private String        departmentName  = "";
     private Integer       departmentId;
-    private String        statusCode;
-    private String        statusLabel;
+    @Builder.Default
+    private String             statusCode      = "";
+    @Builder.Default
+    private String             statusLabel     = "";
     private String        phone;
     private String        email;
     private String        jobLevel;
@@ -29,8 +31,12 @@ public class ContractOfficerResponse {
     private LocalDate     endDate;
     private String        note;
     private String        accountingCode;
-    private Long          daysUntilExpiry;
-    private String        expiryLabel;
+    @Builder.Default
+    private Long            daysUntilExpiry = 0L;
+    @Builder.Default
+    private String          expiryLabel     = "";
+    private String           profileImageUrl;
+    private Integer          profileAttachmentId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
