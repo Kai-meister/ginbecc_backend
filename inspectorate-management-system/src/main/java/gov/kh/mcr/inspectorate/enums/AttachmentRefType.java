@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum AttachmentRefType {
 
-    OFFICER(
+    OFFICER_PROFILE(
             "OFFICER_PROFILE",
             "មន្ត្រីរាជការ",
             "officers"
@@ -42,24 +42,10 @@ public enum AttachmentRefType {
             "សេចក្តីប្រកាស",
             "announcements"
     );
+
     private final String code;
     private final String labelKh;
     private final String folder;
-
-    public String buildPath(
-            Integer refId) {
-        return folder
-                + "/"
-                + refId
-                + "/"
-                + java.util.UUID
-                .randomUUID()
-                .toString()
-                .replace("-", "");
-    }
-
-
-
 
     public static boolean isValid(String value) {
         if (value == null || value.isBlank()) {
@@ -72,7 +58,6 @@ public enum AttachmentRefType {
         }
         return false;
     }
-
 
     public String toPathPrefix() {
         return this.code
