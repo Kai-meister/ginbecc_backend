@@ -16,12 +16,13 @@ public class OfficerResponse {
     private String        fullNameEn;
     private Gender gender;
     private LocalDate     dob;
-    private Integer       age;
     private LocalDate     joinDate;
     private Integer       positionId;
-    private String        positionName;
+    @Builder.Default
+    private String           positionName   = "";
     private Integer       departmentId;
-    private String        departmentName;
+    @Builder.Default
+    private String        departmentName = "";
     private String        jobDescription;
     private String        educationLevel;
     private String        specialization;
@@ -31,9 +32,13 @@ public class OfficerResponse {
     private String        livingStatus;
     private String        phone;
     private String        email;
-    private String        statusCode;
-    private String        statusLabel;
+    @Builder.Default
+    private String           statusCode     = "";
+    @Builder.Default
+    private String           statusLabel    = "";
     private String        profileImageUrl;
+    // fix
+    private Integer       profileAttachmentId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
