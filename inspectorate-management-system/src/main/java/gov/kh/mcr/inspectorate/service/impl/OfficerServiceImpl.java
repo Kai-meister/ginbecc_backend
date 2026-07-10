@@ -1,65 +1,121 @@
 package gov.kh.mcr.inspectorate.service.impl;
 
-import gov.kh.mcr.inspectorate.dto.request.ActivityLogContext;
-import gov.kh.mcr.inspectorate.dto.request.OfficerRequest;
-import gov.kh.mcr.inspectorate.dto.request.StatusRequest;
-import gov.kh.mcr.inspectorate.dto.response.AttachmentResponse;
-import gov.kh.mcr.inspectorate.dto.response.OfficerResponse;
-import gov.kh.mcr.inspectorate.dto.response.PageResponse;
-import gov.kh.mcr.inspectorate.entity.Department;
-import gov.kh.mcr.inspectorate.entity.LookupOfficerStatus;
-import gov.kh.mcr.inspectorate.entity.Officer;
-import gov.kh.mcr.inspectorate.entity.Position;
-import gov.kh.mcr.inspectorate.enums.ActiveStatus;
-import gov.kh.mcr.inspectorate.enums.AttachmentRefType;
-import gov.kh.mcr.inspectorate.exception.BusinessException;
-import gov.kh.mcr.inspectorate.exception.DuplicateResourceException;
-import gov.kh.mcr.inspectorate.exception.ResourceNotFoundException;
-import gov.kh.mcr.inspectorate.mapper.OfficerMapper;
+import gov.kh.mcr.inspectorate.dto.request.*;
+import gov.kh.mcr.inspectorate.dto.response.*;
+import gov.kh.mcr.inspectorate.entity.*;
+import gov.kh.mcr.inspectorate.enums
+        .ActiveStatus;
+import gov.kh.mcr.inspectorate.enums
+        .AttachmentRefType;
+import gov.kh.mcr.inspectorate.exception.*;
+import gov.kh.mcr.inspectorate.mapper
+        .OfficerMapper;
 import gov.kh.mcr.inspectorate.repository.*;
-import gov.kh.mcr.inspectorate.security.SecurityUtils;
-import gov.kh.mcr.inspectorate.service.ActivityLogService;
-import gov.kh.mcr.inspectorate.service.AttachmentService;
-import gov.kh.mcr.inspectorate.service.MinioService;
-import gov.kh.mcr.inspectorate.service.OfficerService;
-import gov.kh.mcr.inspectorate.util.DateUtils;
-import jakarta.servlet.http.HttpServletRequest;
+import gov.kh.mcr.inspectorate.security
+        .SecurityUtils;
+import gov.kh.mcr.inspectorate.service.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.time.LocalDate;
+import org.springframework.transaction.annotation
+        .Transactional;
+import org.springframework.web.context.request
+        .RequestContextHolder;
+import org.springframework.web.context.request
+        .ServletRequestAttributes;
+import org.springframework.web.multipart
+        .MultipartFile;
+import java.time.*;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class OfficerServiceImpl implements OfficerService {
+public class OfficerServiceImpl
+        implements OfficerService {
 
-    private final OfficerRepository officerRepository;
-    private final DepartmentRepository deptRepository;
-    private final PositionRepository positionRepository;
-    private final LookupOfficerStatusRepository statusRepository;
-    private final OfficerMapper officerMapper;
-    private final SecurityUtils securityUtils;
-    private final ActivityLogService activityLogService;
-    private final AttachmentService attachmentService;
-    private final AttachmentRepository attachmentRepository;
-    private final MinioService minioService;
+    private final OfficerRepository
+            officerRepo;
+    private final UserRepository
+            userRepo;
+    private final DepartmentRepository
+            deptRepo;
+    private final PositionRepository
+            positionRepo;
+    private final LookupOfficerStatusRepository
+            statusRepo;
+    private final AttachmentRepository
+            attachmentRepo;
+    private final AttachmentService
+            attachmentService;
+    private final MinioService
+            minioService;
+    private final OfficerMapper
+            officerMapper;
+    private final SecurityUtils
+            securityUtils;
+    private final ActivityLogService
+            activityLogService;
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<OfficerResponse>
+    getAll(int page, int size,
+           Integer departmentId,
+           String status) {
+
+        Integer resolvedDeptId =
+                resolveDepartmentScope(
+                        departmentId);
+
+        Pageable pageable = PageRequest.of(
+                page, size,
+                Sort.by("fullNameKh")
+                        .ascending());
+
+        Page<Officer> result =
+                officerRepo.findAllWithFilters(
+                        resolvedDeptId,
+                        status, pageable);
+
+        return PageResponse.of(
+                result.map(
+                        this::toResponseWithUrl));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OfficerResponse getById(
+            Integer id) {
+
+        Officer officer = officerRepo
+                .findByIdWithAll(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "មន្ត្រី", id));
+
+        securityUtils.validateDepartmentScope(
+                officer.getDepartment() != null
+                        ? officer.getDepartment()
+                        .getDepartmentId()
+                        : null);
+
+        return toResponseWithUrl(officer);
+    }
 
     @Override
     public OfficerResponse create(
             OfficerRequest request) {
 
-        if (officerRepository.existsByOfficerCode(
+        if (officerRepo.existsByOfficerCode(
                 request.getOfficerCode())) {
-            throw new DuplicateResourceException(
-                    "មិនអាចចុះឈ្មោះមន្ត្រីថ្មីបានឡើយ ព្រោះលេខកូដសម្គាល់មន្ត្រី «"
-                            + request.getOfficerCode() + "» នេះ មាននៅក្នុងប្រព័ន្ធរួចរាល់ហើយ។");
+            throw new
+                    DuplicateResourceException(
+                    "លេខកូដ ["
+                            + request.getOfficerCode()
+                            + "] មានស្ទួន");
         }
 
         securityUtils.validateDepartmentScope(
@@ -74,24 +130,35 @@ public class OfficerServiceImpl implements OfficerService {
         officer.setPosition(
                 findPos(request.getPositionId()));
         officer.setStatusCode(
-                findStatus(request.getStatusCode()));
+                findStatus(
+                        request.getStatusCode()));
 
-        Officer saved = officerRepository.save(officer);
+        Officer saved =
+                officerRepo.save(officer);
 
         activityLogService.log(
                 "CREATE", "Officer",
                 saved.getOfficerId(),
-                "បង្កើត: " + saved.getFullNameKh(),
+                "បង្កើត: "
+                        + saved.getFullNameKh(),
                 buildContext());
 
-        return toResponseWithAge(saved);
+        return toResponseWithUrl(saved);
     }
+
+    // ─────────────────────────────────────────────
+    // UPDATE
+    // ─────────────────────────────────────────────
     @Override
     public OfficerResponse update(
             Integer id,
             OfficerRequest request) {
 
-        Officer officer = findById(id);
+        Officer officer = officerRepo
+                .findByIdWithAll(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "មន្ត្រី", id));
 
         securityUtils.validateDepartmentScope(
                 officer.getDepartment() != null
@@ -104,53 +171,45 @@ public class OfficerServiceImpl implements OfficerService {
 
         if (!officer.getDepartment()
                 .getDepartmentId()
-                .equals(request
-                        .getDepartmentId())) {
+                .equals(
+                        request
+                                .getDepartmentId())) {
             officer.setDepartment(
                     findActiveDept(
-                            request.getDepartmentId()));
+                            request
+                                    .getDepartmentId()));
         }
 
         officer.setPosition(
                 findPos(request.getPositionId()));
         officer.setStatusCode(
-                findStatus(request.getStatusCode()));
+                findStatus(
+                        request.getStatusCode()));
 
         officerMapper.updateEntity(
                 request, officer);
 
         activityLogService.log(
                 "UPDATE", "Officer", id,
-                "កែប្រែ: " + officer.getFullNameKh(),
+                "កែប្រែ: "
+                        + officer.getFullNameKh(),
                 buildContext());
 
-        return toResponseWithAge(
-                officerRepository.save(officer));
+        return toResponseWithUrl(
+                officerRepo.save(officer));
     }
 
-    private Department findActiveDept(Integer id) {
-
-        Department dept =
-                deptRepository.findById(id)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "មិនមានទិន្នន័យនាយកដ្ឋានដែលមានលេខសម្គាល់៖ ", id));
-
-        if (dept.getStatus() != ActiveStatus.ACTIVE) {
-            throw new BusinessException(
-                    "នាយកដ្ឋាន \""
-                            + dept.getDepartmentName()
-                            + "\" មិនអាចប្រើប្រាស់បានឡើយ ដោយសារស្ថានភាពបច្ចុប្បន្នគឺ៖ "
-                            + dept.getStatus().name());
-        }
-
-        return dept;
-    }
-
+    // ─────────────────────────────────────────────
+    // DELETE — Fix: Block if User linked
+    // ─────────────────────────────────────────────
     @Override
     public void delete(Integer id) {
 
-        Officer officer = findById(id);
+        Officer officer = officerRepo
+                .findByIdWithAll(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "មន្ត្រី", id));
 
         securityUtils.validateDepartmentScope(
                 officer.getDepartment() != null
@@ -158,214 +217,395 @@ public class OfficerServiceImpl implements OfficerService {
                         .getDepartmentId()
                         : null);
 
-        officerRepository.deleteById(id);
+        // Fix — Check if Officer linked
+        // to any User Account
+        boolean hasUserLink =
+                userRepo
+                        .existsByOfficer_OfficerId(
+                                id);
+
+        if (hasUserLink) {
+            throw new BusinessException(
+                    "មិនអាចលុបមន្ត្រី \""
+                            + officer.getFullNameKh()
+                            + "\" — មានគណនី User"
+                            + " ភ្ជាប់ — សូម Deactivate"
+                            + " ជំនួស ឬ Unlink"
+                            + " User Account ជាមុន");
+        }
+
+        // Fix — Delete profile image
+        // from MinIO before deleting record
+        if (officer.getProfileAttachment()
+                != null) {
+            try {
+                attachmentService.delete(
+                        officer
+                                .getProfileAttachment()
+                                .getAttachmentId());
+            } catch (Exception e) {
+                log.warn(
+                        "Profile image delete"
+                                + " failed for officer"
+                                + " {}: {}",
+                        id, e.getMessage());
+            }
+        }
+
+        officerRepo.deleteById(id);
 
         activityLogService.log(
                 "DELETE", "Officer", id,
-                "លុប: " + officer.getFullNameKh(),
+                "លុបមន្ត្រី: "
+                        + officer.getFullNameKh(),
                 buildContext());
-    }
-
-    private Integer resolveDepartmentScope(
-            Integer requestedDeptId) {
-
-        if (securityUtils
-                .canBypassDepartmentScope()) {
-            return requestedDeptId;
-        }
-
-        Integer ownDeptId =
-                securityUtils
-                        .getCurrentDepartmentId();
-
-        if (ownDeptId == null) {
-            return requestedDeptId;
-        }
-
-        return ownDeptId;
-    }
-    private ActivityLogContext buildContext() {
-        HttpServletRequest request =
-                getCurrentRequest();
-        return securityUtils.buildLogContext(request);
-    }
-
-    private HttpServletRequest getCurrentRequest() {
-        try {
-            return ((ServletRequestAttributes)
-                    RequestContextHolder
-                            .currentRequestAttributes())
-                    .getRequest();
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public PageResponse<OfficerResponse> getAll(
-            int page, int size,
-            Integer departmentId,
-            String status) {
-
-        Integer resolvedDeptId =
-                resolveDepartmentScope(departmentId);
-
-        Pageable pageable = PageRequest.of(
-                page, size,
-                Sort.by("fullNameKh").ascending());
-
-        Page<Officer> result;
-
-        if (resolvedDeptId != null
-                && status != null) {
-            result = officerRepository
-                    .findByDepartment_DepartmentIdAndStatusCode_StatusCode(
-                            resolvedDeptId, status,
-                            pageable);
-        } else if (resolvedDeptId != null) {
-            result = officerRepository
-                    .findByDepartment_DepartmentId(
-                            resolvedDeptId, pageable);
-        } else if (status != null) {
-            result = officerRepository
-                    .findByStatusCode_StatusCode(
-                            status, pageable);
-        } else {
-            result = officerRepository.findAll(pageable);
-        }
-
-        return PageResponse.of(
-                result.map(this::toResponseWithAge));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public OfficerResponse getById(Integer id) {
-
-        Officer officer = findById(id);
-        securityUtils.validateDepartmentScope(
-                officer.getDepartment() != null
-                        ? officer.getDepartment()
-                        .getDepartmentId()
-                        : null);
-
-        return toResponseWithAge(officer);
-    }
-    @Override
-    public OfficerResponse updateStatus(
-            Integer id, StatusRequest request) {
-        Officer officer = findById(id);
-        officer.setStatusCode(
-                findStatus(request.getStatusCode()));
-
-        activityLogService.log(
-                "UPDATE", "Officer",
-                id,
-                "បានកែសម្រួលស្ថានភាពមន្ត្រីទៅជា៖ " + request.getStatusCode(),
-                buildContext());
-
-        return toResponseWithAge(
-                officerRepository.save(officer));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<OfficerResponse> getNearRetirement() {
-        LocalDate cutoff =
-                LocalDate.now().minusYears(55);
-        return officerRepository
-                .findNearRetirement(cutoff)
-                .stream()
-                .map(this::toResponseWithAge)
-                .toList();
-    }
-
-    private Officer findById(Integer id) {
-        return officerRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "មិនមានទិន្នន័យមន្ត្រីដែលមានលេខសម្គាល់ ", id));
-    }
-
-    private Department findDept(Integer id) {
-        return deptRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "មិនមានទិន្នន័យនាយកដ្ឋានដែលមានលេខសម្គាល់ ", id));
-    }
-
-    private Position findPos(
-            Integer id) {
-        return positionRepository
-                .findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "មិនមានទិន្នន័យតំណែងដែលមានលេខសម្គាល់ ", id));
-    }
-
-    private LookupOfficerStatus findStatus(
-            String code) {
-        return statusRepository.findById(code)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "មិនមានទិន្នន័យស្ថានភាពដែលមានលេខកូដ ", code));
-    }
-
-    private OfficerResponse toResponseWithAge(
-            Officer o) {
-        OfficerResponse dto =
-                officerMapper.toResponse(o);
-        dto.setAge(DateUtils.calculateAge(
-                o.getDob()));
-        return dto;
     }
 
     @Override
     public OfficerResponse uploadProfileImage(
             Integer officerId,
             MultipartFile file) {
-        Officer officer = findById(officerId);
 
-        AttachmentResponse attachmentResponse =
-                attachmentService.upload(
-                        file,
-                        AttachmentRefType.OFFICER,
-                        officerId);
-        attachmentRepository
-                .findById(
-                        attachmentResponse.getAttachmentId())
-                .ifPresent(att -> {
-                    officer.setProfileAttachment(att);
-                    officerRepository.save(officer);
-                });
+        Officer officer = officerRepo
+                .findByIdWithAll(officerId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "មន្ត្រី", officerId));
+
+        securityUtils.validateDepartmentScope(
+                officer.getDepartment() != null
+                        ? officer.getDepartment()
+                        .getDepartmentId()
+                        : null);
+
+        String statusCode =
+                officer.getStatusCode() != null
+                        ? officer.getStatusCode()
+                        .getStatusCode()
+                        : "";
+
+        if (!"ACTIVE".equals(statusCode)) {
+            throw new BusinessException(
+                    "មិនអាចបង្ហោះរូបភាពប្រវត្តិរូបបានឡើយ ព្រោះមន្ត្រីរូបនេះកំពុងស្ថិតក្នុងស្ថានភាព «មិនសកម្ម (INACTIVE)» ឬផ្អាកដំណើរការ។");
+        }
+        validateImageFile(file);
+
+        if (officer.getProfileAttachment()
+                != null) {
+            deleteAttachmentSafely(
+                    officer
+                            .getProfileAttachment()
+                            .getAttachmentId(),
+                    "Officer " + officerId);
+
+            officer.setProfileAttachment(null);
+            officerRepo.save(officer);
+        }
+
+        String filePath =
+                buildFilePath(
+                        AttachmentRefType
+                                .OFFICER_PROFILE,
+                        officerId,
+                        file.getOriginalFilename());
+
+        String uploadedPath =
+                minioService.upload(
+                        file, filePath);
+
+        Attachment attachment =
+                Attachment.builder()
+                        .filePath(uploadedPath)
+                        .originalName(
+                                file.getOriginalFilename())
+                        .fileSize(file.getSize())
+                        .fileType(
+                                file.getContentType())
+                        .referenceType(AttachmentRefType.OFFICER_PROFILE)
+                        .referenceId(officerId)
+                        .uploadedBy(
+                                securityUtils
+                                        .getCurrentUser()
+                                        .orElse(null))
+                        .isActive(true)
+                        .build();
+
+        Attachment saved =
+                attachmentRepo.save(attachment);
+
+        officer.setProfileAttachment(saved);
+        Officer updatedOfficer =
+                officerRepo.save(officer);
 
         activityLogService.log(
                 "UPDATE", "Officer",
                 officerId,
-                "បានបញ្ចូលរូបភាពប្រវត្តិរូបថ្មីឈ្មោះ "
-                        + attachmentResponse.getOriginalName(),
+                "Upload Profile Image: "
+                        + file.getOriginalFilename(),
                 buildContext());
 
-        return toResponseWithAge(
-                officerRepository.save(officer));
+        log.info(
+                "Officer {} profile image"
+                        + " uploaded: {}",
+                officerId, uploadedPath);
+
+        return toResponseWithUrl(
+                updatedOfficer);
+    }
+
+    @Override
+    public OfficerResponse deleteProfileImage(
+            Integer officerId) {
+
+        Officer officer = officerRepo
+                .findByIdWithAll(officerId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "មន្ត្រី", officerId));
+
+        securityUtils.validateDepartmentScope(
+                officer.getDepartment() != null
+                        ? officer.getDepartment()
+                        .getDepartmentId()
+                        : null);
+
+        if (officer.getProfileAttachment()
+                == null) {
+            throw new BusinessException(
+                    "Officer \""
+                            + officer.getFullNameKh()
+                            + "\" មិនមានរូបភាព Profile"
+                            + " — គ្មានអ្វីត្រូវលុប");
+        }
+
+        Integer attId = officer
+                .getProfileAttachment()
+                .getAttachmentId();
+
+        officer.setProfileAttachment(null);
+        officerRepo.save(officer);
+
+        deleteAttachmentSafely(
+                attId, "Officer " + officerId);
+
+        activityLogService.log(
+                "UPDATE", "Officer",
+                officerId,
+                "លុប Profile Image",
+                buildContext());
+
+        return toResponseWithUrl(officer);
+    }
+
+    private OfficerResponse
+    toResponseWithUrl(
+            Officer officer) {
+
+        OfficerResponse resp =
+                officerMapper.toResponse(
+                        officer);
+
+        if (officer.getProfileAttachment()
+                != null
+                && officer.getProfileAttachment()
+                .getFilePath() != null) {
+
+            try {
+                String url =
+                        minioService
+                                .getPresignedUrl(
+                                        officer
+                                                .getProfileAttachment()
+                                                .getFilePath());
+                resp.setProfileImageUrl(url);
+
+            } catch (Exception e) {
+                log.warn(
+                        "Presigned URL failed"
+                                + " officer {}: {}",
+                        officer.getOfficerId(),
+                        e.getMessage());
+                resp.setProfileImageUrl(null);
+            }
+        } else {
+            resp.setProfileImageUrl(null);
+        }
+
+        return resp;
+    }
+
+    private void validateImageFile(
+            MultipartFile file) {
+
+        if (file == null
+                || file.isEmpty()) {
+            throw new BusinessException(
+                    "File ចាំបាច់ — សូម"
+                            + " Upload រូបភាព");
+        }
+
+        String ct = file.getContentType();
+        boolean validType =
+                ct != null
+                        && (ct.equals("image/jpeg")
+                        || ct.equals("image/jpg")
+                        || ct.equals("image/png")
+                        || ct.equals("image/webp"));
+
+        if (!validType) {
+            throw new BusinessException(
+                    "ប្រភេទឯកសារ «" + ct + "» មិនត្រឹមត្រូវតាមគោលការណ៍ប្រព័ន្ធឡើយ។ សូមប្រើប្រាស់ទម្រង់ឯកសាររូបភាពជាប្រភេទ .jpg, .jpeg, .png ឬ .webp ប៉ុណ្ណោះ។"
+            );
+        }
+
+        long maxSize = 5L * 1024 * 1024;
+        if (file.getSize() > maxSize) {
+            double currentMb = file.getSize() / 1024.0 / 1024.0;
+            throw new BusinessException(
+                    "ទំហំឯកសារធំលើសការកំណត់ (ទំហំបច្ចុប្បន្ន៖ "
+                            + String.format("%.2f", currentMb)
+                            + "MB)។ ប្រព័ន្ធអនុញ្ញាតឱ្យបង្ហោះឯកសារដែលមានទំហំអតិបរមា 5MB ប៉ុណ្ណោះ។"
+            );
+        }
+    }
+
+    private String buildFilePath(
+            AttachmentRefType type,
+            Integer refId,
+            String originalName) {
+
+        String ext = "";
+        if (originalName != null
+                && originalName
+                .contains(".")) {
+            ext = originalName.substring(
+                    originalName
+                            .lastIndexOf("."));
+        }
+
+        return type.getFolder()
+                + "/" + refId
+                + "/" + java.util.UUID
+                .randomUUID()
+                .toString()
+                .replace("-", "")
+                + ext;
+    }
+
+    private void deleteAttachmentSafely(
+            Integer attachmentId,
+            String context) {
+        try {
+            Attachment att =
+                    attachmentRepo
+                            .findById(attachmentId)
+                            .orElse(null);
+
+            if (att != null) {
+                minioService.delete(
+                        att.getFilePath());
+                attachmentRepo
+                        .deleteById(
+                                attachmentId);
+            }
+        } catch (Exception e) {
+            log.warn(
+                    "Attachment delete failed"
+                            + " [{}] ctx={}: {}",
+                    attachmentId, context,
+                    e.getMessage());
+        }
+    }
+
+    private Department findActiveDept(
+            Integer id) {
+        Department dept =
+                deptRepo.findById(id)
+                        .orElseThrow(() ->
+                                new
+                                        ResourceNotFoundException(
+                                        "នាយកដ្ឋាន", id));
+
+        if (dept.getStatus() != ActiveStatus.ACTIVE) {
+            throw new BusinessException(
+                    "មិនអាចយកនាយកដ្ឋាន «" + dept.getDepartmentName() + "» មកប្រើប្រាស់បានឡើយ ព្រោះនាយកដ្ឋាននេះកំពុងស្ថិតក្នុងស្ថានភាពមិនសកម្ម ឬផ្អាកដំណើរការ។"
+            );
+        }
+        return dept;
+    }
+
+    private Position findPos(Integer id) {
+        if (id == null) return null;
+        return positionRepo.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "តំណែង", id));
+    }
+
+    private LookupOfficerStatus findStatus(
+            String code) {
+        return statusRepo.findById(code)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "ស្ថានភាព", code));
+    }
+
+    private Integer resolveDepartmentScope(
+            Integer requestedDeptId) {
+        if (securityUtils
+                .canBypassDepartmentScope()) {
+            return requestedDeptId;
+        }
+        Integer ownDeptId =
+                securityUtils
+                        .getCurrentDepartmentId();
+        return ownDeptId != null
+                ? ownDeptId : requestedDeptId;
+    }
+
+    private Officer findById(Integer id) {
+        return officerRepo
+                .findByIdWithAll(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "មន្ត្រី", id));
+    }
+
+    private ActivityLogContext buildContext() {
+        try {
+            var req =
+                    ((ServletRequestAttributes)
+                            RequestContextHolder
+                                    .currentRequestAttributes())
+                            .getRequest();
+            return securityUtils
+                    .buildLogContext(req);
+        } catch (Exception e) {
+            return ActivityLogContext
+                    .builder().build();
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
-    public String getProfileImageUrl(
-            Integer officerId) {
+    public String getProfileImageUrl(Integer officerId) {
 
-        Officer officer = findById(officerId);
+        Officer officer = officerRepo
+                .findByIdWithAll(officerId)   // eager fetch profileAttachment
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "មន្ត្រី", officerId));
 
-        if (officer.getProfileAttachment() == null) {
-            return null;
+        securityUtils.validateDepartmentScope(
+                officer.getDepartment() != null
+                        ? officer.getDepartment().getDepartmentId()
+                        : null);
+
+        if (officer.getProfileAttachment() != null) {
+            return minioService.getPresignedUrl(
+                    officer.getProfileAttachment().getFilePath());
         }
 
-        return minioService.getPresignedUrl(
-                officer.getProfileAttachment()
-                        .getFilePath());
+        return "/api/v1/static/avatars/officer.png";
     }
-
-
 }
