@@ -259,10 +259,29 @@ public class DocumentServiceImpl
             Integer documentId,
             MultipartFile file) {
 
-        Document document =
-                findById(documentId);
+        Document document = findById(documentId);
 
         validateStrictOwnership(document);
+
+        if (document.getAttachment() != null) {
+            Integer oldAttachmentId =
+                    document.getAttachment()
+                            .getAttachmentId();
+
+            document.setAttachment(null);
+            documentRepo.save(document);
+
+            try {
+                attachmentService.delete(
+                        oldAttachmentId);
+            } catch (Exception e) {
+                log.warn(
+                        "Old attachment delete"
+                                + " failed for document"
+                                + " {}: {}",
+                        documentId, e.getMessage());
+            }
+        }
 
         var resp = attachmentService.upload(
                 file,
@@ -571,15 +590,9 @@ public class DocumentServiceImpl
             throw new
                     PermissionDeniedException(
                     "កែប្រែ/លុបឯកសារនេះ",
-                    "ម្ចាស់ឯកសារ"
-                            + " (Document Owner)"
-                            + " ប៉ុណ្ណោះ — ឯកសារនេះ"
-                            + " ជារបស់ User ផ្សេង"
-                            + " — ប្រសិនបើអ្នកជា"
-                            + " Admin សូមប្រើ"
-                            + " Account ដែលមាន"
-                            + " Role ADMIN/"
-                            + "SUPER_ADMIN");
+                    "សិទ្ធិប្រតិបត្តិការត្រូវបានបដិសេធ។ មុខងារកែប្រែ ឬលុបនេះត្រូវបានអនុញ្ញាតជូនតែ «ម្ចាស់ឯកសារ (Document Owner)» ផ្ទាល់ប៉ុណ្ណោះ។ "
+                            + "ករណីលោកអ្នកជាអ្នកគ្រប់គ្រងប្រព័ន្ធ សូមប្រើប្រាស់គណនីដែលមានតួនាទីជា ADMIN ឬ SUPER_ADMIN ដើម្បីបន្ត។"
+            );
         }
     }
 }
