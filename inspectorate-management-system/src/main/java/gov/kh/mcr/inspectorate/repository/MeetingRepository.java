@@ -19,6 +19,13 @@ public interface MeetingRepository
 
     List<Meeting> findByMeetingDate(LocalDate date);
 
+    // Dashboard "today" count, scoped to the viewer's department so the
+    // number matches the meeting list a department user can actually see.
+    List<Meeting>
+    findByMeetingDateAndOrganizer_Officer_Department_DepartmentId(
+            LocalDate date,
+            Integer departmentId);
+
     Page<Meeting> findByRoom_RoomId(
             Integer roomId, Pageable pageable);
 

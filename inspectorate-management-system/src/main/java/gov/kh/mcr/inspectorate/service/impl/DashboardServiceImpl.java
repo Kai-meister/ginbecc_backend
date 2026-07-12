@@ -1,7 +1,9 @@
 package gov.kh.mcr.inspectorate.service.impl;
 
 import gov.kh.mcr.inspectorate.dto.response.DashboardSummaryResponse;
+import gov.kh.mcr.inspectorate.entity.Meeting;
 import gov.kh.mcr.inspectorate.repository.*;
+import gov.kh.mcr.inspectorate.security.SecurityUtils;
 import gov.kh.mcr.inspectorate.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final MeetingRepository meetingRepository;
     private final DocumentRepository documentRepository;
     private final NotificationRepository notificationRepository;
+    private final SecurityUtils securityUtils;
 
     @Override
     public DashboardSummaryResponse getSummary(Integer userId) {
@@ -51,11 +54,21 @@ public class DashboardServiceImpl implements DashboardService {
         // Today's meetings — "today" must be Cambodia-local: the server
         // runs UTC, so plain LocalDate.now() still points at *yesterday*
         // between 00:00 and 07:00 ICT (QA saw yesterday's count when
-        // testing early morning). Cancelled meetings don't count.
-        long todayMeetings = meetingRepository
-                .findByMeetingDate(
-                        LocalDate.now(ZoneId.of("Asia/Phnom_Penh")))
-                .stream()
+        // testing early morning). Cancelled meetings don't count, and the
+        // count is department-scoped like the meeting list, so the number
+        // matches what the viewer can actually see.
+        LocalDate today =
+                LocalDate.now(ZoneId.of("Asia/Phnom_Penh"));
+        Integer deptScope =
+                securityUtils.canBypassDepartmentScope()
+                        ? null
+                        : securityUtils.getCurrentDepartmentId();
+        List<Meeting> todayList = deptScope != null
+                ? meetingRepository
+                        .findByMeetingDateAndOrganizer_Officer_Department_DepartmentId(
+                                today, deptScope)
+                : meetingRepository.findByMeetingDate(today);
+        long todayMeetings = todayList.stream()
                 .filter(m -> m.getStatusCode() == null
                         || !"CANCELLED".equals(
                                 m.getStatusCode().getStatusCode()))
