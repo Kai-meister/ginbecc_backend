@@ -55,6 +55,28 @@ public interface DocumentRepository
             @Param("deptId") Integer departmentId,
             Pageable pageable);
 
+    // Department-scoped + status filter — the mobile Documents tabs send
+    // ?status=, which was ignored for non-admin users (all tabs identical).
+    @Query("""
+    SELECT d FROM Document d
+    LEFT JOIN d.user u
+    LEFT JOIN u.officer o
+    LEFT JOIN o.department od
+    LEFT JOIN u.contractOfficer co
+    LEFT JOIN co.department cod
+    WHERE (
+        od.departmentId = :deptId
+        OR
+        cod.departmentId = :deptId
+    )
+    AND d.statusCode.statusCode = :status
+    """)
+    Page<Document>
+    findByUserDepartmentIdAndStatus(
+            @Param("deptId") Integer departmentId,
+            @Param("status") String status,
+            Pageable pageable);
+
     @Query("""
         SELECT d FROM Document d
         WHERE d.expiryDate <= :expiryDate

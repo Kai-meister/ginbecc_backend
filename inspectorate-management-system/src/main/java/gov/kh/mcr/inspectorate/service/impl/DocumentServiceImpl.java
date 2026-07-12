@@ -118,19 +118,36 @@ public class DocumentServiceImpl
                     securityUtils.hasPermission(
                             "DOCUMENT_VIEW_ALL");
 
+            // Honour the status filter here too — it was only applied in
+            // the canSeeAll branch, so the mobile Documents tabs (?status=)
+            // all returned the same list for non-admin users.
             if (hasViewAll
                     && ownDeptId != null) {
-                result = documentRepo
-                        .findByUserDepartmentId(
-                                ownDeptId, pageable);
+                if (status != null) {
+                    result = documentRepo
+                            .findByUserDepartmentIdAndStatus(
+                                    ownDeptId, status,
+                                    pageable);
+                } else {
+                    result = documentRepo
+                            .findByUserDepartmentId(
+                                    ownDeptId, pageable);
+                }
             } else {
                 Integer currentUserId =
                         securityUtils
                                 .getCurrentUserId();
-                result = documentRepo
-                        .findByUser_UserId(
-                                currentUserId,
-                                pageable);
+                if (status != null) {
+                    result = documentRepo
+                            .findByUser_UserIdAndStatusCode_StatusCode(
+                                    currentUserId,
+                                    status, pageable);
+                } else {
+                    result = documentRepo
+                            .findByUser_UserId(
+                                    currentUserId,
+                                    pageable);
+                }
             }
         }
 
