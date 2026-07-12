@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
@@ -47,9 +48,18 @@ public class DashboardServiceImpl implements DashboardService {
                 .findExpiring(LocalDate.now().plusDays(30))
                 .size();
 
-        // Today's meetings
+        // Today's meetings — "today" must be Cambodia-local: the server
+        // runs UTC, so plain LocalDate.now() still points at *yesterday*
+        // between 00:00 and 07:00 ICT (QA saw yesterday's count when
+        // testing early morning). Cancelled meetings don't count.
         long todayMeetings = meetingRepository
-                .findByMeetingDate(LocalDate.now()).size();
+                .findByMeetingDate(
+                        LocalDate.now(ZoneId.of("Asia/Phnom_Penh")))
+                .stream()
+                .filter(m -> m.getStatusCode() == null
+                        || !"CANCELLED".equals(
+                                m.getStatusCode().getStatusCode()))
+                .count();
 
         // Unread notifications
         long unread = userId != null

@@ -60,9 +60,19 @@ public class MeetingServiceImpl
 
         if (deptScope != null) {
 
-            result = meetingRepo
-                    .findByOrganizer_Officer_Department_DepartmentId(
-                            deptScope, pageable);
+            // Honour the status filter for department-scoped users too —
+            // it was silently dropped, so the mobile app's
+            // ?status=SCHEDULED got cancelled/completed meetings back.
+            if (status != null) {
+                result = meetingRepo
+                        .findByOrganizer_Officer_Department_DepartmentIdAndStatusCode_StatusCode(
+                                deptScope, status,
+                                pageable);
+            } else {
+                result = meetingRepo
+                        .findByOrganizer_Officer_Department_DepartmentId(
+                                deptScope, pageable);
+            }
         } else if (status != null) {
             result = meetingRepo
                     .findByStatusCode_StatusCode(

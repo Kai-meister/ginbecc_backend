@@ -26,6 +26,14 @@ public interface MeetingRepository
     findByOrganizer_Officer_Department_DepartmentId(
             Integer departmentId,
             Pageable pageable);
+
+    // Department-scoped + status — ?status= was ignored for non-admin
+    // users (mobile home "upcoming" showed cancelled/completed meetings).
+    Page<Meeting>
+    findByOrganizer_Officer_Department_DepartmentIdAndStatusCode_StatusCode(
+            Integer departmentId,
+            String status,
+            Pageable pageable);
     @Query("""
         SELECT m FROM Meeting m
         LEFT JOIN FETCH m.room        r
