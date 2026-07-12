@@ -25,6 +25,7 @@ USER appuser
 
 EXPOSE 8080
 
-# 55% heap on a 512MB instance leaves room for metaspace/threads/native;
-# at 75% the RSS grazes the container limit and the JVM wedges (502s).
-ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=55.0", "-XX:MaxMetaspaceSize=128m", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
+# Budget for the 512MB instance: ~230MB heap + 192MB metaspace + stacks/
+# native stays under the container limit. Unbounded heap (75%) wedged the
+# container at 511MB (502s); a 128m metaspace cap OOMed springdoc.
+ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=45.0", "-XX:MaxMetaspaceSize=192m", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
