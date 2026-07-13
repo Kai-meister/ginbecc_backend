@@ -39,6 +39,30 @@ public class SecurityUtils {
                                 "ត្រូវ Login"));
     }
 
+    /** True when {@code userId} is the authenticated user's own id —
+     *  lets endpoints allow self-access without USER_VIEW (the mobile
+     *  profile screen reads the user's own record). */
+    public boolean isSelf(Integer userId) {
+        return userId != null
+                && getCurrentUser()
+                        .map(u -> userId.equals(
+                                u.getUserId()))
+                        .orElse(false);
+    }
+
+    /** True when {@code officerId} is the authenticated user's own
+     *  linked officer — self-access for the officer record and
+     *  profile-image reads without OFFICER_VIEW. */
+    public boolean isOwnOfficer(Integer officerId) {
+        return officerId != null
+                && getCurrentUser()
+                        .map(u -> u.getOfficer() != null
+                                && officerId.equals(
+                                        u.getOfficer()
+                                                .getOfficerId()))
+                        .orElse(false);
+    }
+
     public String getCurrentEmail() {
         Authentication auth = getAuth();
         return isAuthenticated(auth)

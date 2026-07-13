@@ -50,9 +50,11 @@ public class UserController {
                         "ទទួលបានបញ្ជីអ្នកប្រើប្រាស់"));
     }
 
-    // GET /users/{id}
+    // GET /users/{id} — users may always read their own record (mobile
+    // profile screen); USER_VIEW is only needed for other users.
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('USER_VIEW')")
+    @PreAuthorize("hasAuthority('USER_VIEW')"
+            + " or @securityUtils.isSelf(#id)")
     public ResponseEntity<ApiResponse<
     UserResponse>>
     getById(

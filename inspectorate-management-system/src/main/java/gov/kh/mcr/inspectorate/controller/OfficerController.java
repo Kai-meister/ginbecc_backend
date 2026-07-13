@@ -59,9 +59,11 @@ public class OfficerController {
                         "ទទួលបន្ជីមន្ត្រី"));
     }
 
-    // GET /officers/{id}
+    // GET /officers/{id} — users may read their own linked officer
+    // (mobile profile screen); OFFICER_VIEW covers everyone else.
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('OFFICER_VIEW')")
+    @PreAuthorize("hasAuthority('OFFICER_VIEW')"
+            + " or @securityUtils.isOwnOfficer(#id)")
     public ResponseEntity<ApiResponse<
     OfficerResponse>>
     getById(
@@ -199,8 +201,10 @@ public class OfficerController {
 //            ApiResponse.success(url, "ទាញយកតំណភ្ជាប់រូបភាពប្រវត្តិរូបបានជោគជ័យ"));
 //}
 
+    // Users may fetch their own avatar without OFFICER_VIEW.
     @GetMapping("/{id}/profile-image")
-    @PreAuthorize("hasAuthority('OFFICER_VIEW')")
+    @PreAuthorize("hasAuthority('OFFICER_VIEW')"
+            + " or @securityUtils.isOwnOfficer(#id)")
     public ResponseEntity<ApiResponse<String>>
     getProfileImageUrl(@PathVariable @Positive Integer id) {
 
