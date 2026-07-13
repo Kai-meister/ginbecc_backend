@@ -598,6 +598,9 @@ public class OfficerServiceImpl
                     officer.getProfileAttachment().getFilePath());
         }
 
-        return "/api/v1/static/avatars/officer.png";
+        // No uploaded photo: return null so clients show their own
+        // placeholder — the old "/api/v1/static/avatars/officer.png"
+        // path was never actually served (nothing maps /static/**).
+        return null;
     }
 }

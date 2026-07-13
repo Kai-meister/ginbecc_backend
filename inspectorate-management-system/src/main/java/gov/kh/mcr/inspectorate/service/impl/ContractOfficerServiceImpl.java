@@ -586,6 +586,8 @@ public class ContractOfficerServiceImpl
                     co.getProfileAttachment().getFilePath());
         }
 
-        return "/api/v1/static/avatars/contract_officer.png";
+        // No uploaded photo: null → client placeholder (the static
+        // path was never actually served; nothing maps /static/**).
+        return null;
     }
 }

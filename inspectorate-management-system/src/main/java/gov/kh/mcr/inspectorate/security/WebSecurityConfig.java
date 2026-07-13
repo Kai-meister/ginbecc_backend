@@ -34,11 +34,7 @@ public class WebSecurityConfig {
             "/api/v1/auth/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
-            "/actuator/health",
-            // Default avatar placeholder etc. — Image.network in the
-            // mobile app cannot attach the Bearer token, and these
-            // static files hold no user data.
-            "/api/v1/static/**"
+            "/actuator/health"
     };
 
     @Bean
