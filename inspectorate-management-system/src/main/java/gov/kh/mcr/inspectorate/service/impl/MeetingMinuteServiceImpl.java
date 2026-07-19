@@ -143,6 +143,26 @@ public class MeetingMinuteServiceImpl
 
         MeetingMinute minute = findById(minuteId);
 
+                if (minute.getAttachment() != null) {
+            Integer oldAttachmentId =
+                    minute.getAttachment()
+                            .getAttachmentId();
+
+            minute.setAttachment(null);
+            minuteRepo.save(minute);
+
+            try {
+                attachmentService.delete(
+                        oldAttachmentId);
+            } catch (Exception e) {
+                log.warn(
+                        "Old attachment delete"
+                                + " failed for Meeting Minute"
+                                + " {}: {}",
+                        minuteId, e.getMessage());
+            }
+        }
+
         AttachmentResponse resp =
                 attachmentService.upload(
                         file,
