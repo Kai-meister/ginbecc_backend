@@ -17,6 +17,10 @@ WORKDIR /app
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
+RUN apk add --no-cache tzdata
+
+ENV TZ=Asia/Phnom_Penh
+
 COPY --from=builder /app/target/*.jar app.jar
 
 RUN chown appuser:appgroup app.jar
