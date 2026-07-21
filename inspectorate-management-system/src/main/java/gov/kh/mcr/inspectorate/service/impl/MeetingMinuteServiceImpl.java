@@ -19,6 +19,7 @@ import gov.kh.mcr.inspectorate.service.AttachmentService;
 import gov.kh.mcr.inspectorate.service.MeetingMinuteService;
 import gov.kh.mcr.inspectorate.service.MinioService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class MeetingMinuteServiceImpl
         implements MeetingMinuteService {
 
