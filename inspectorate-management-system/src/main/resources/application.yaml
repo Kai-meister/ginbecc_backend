@@ -102,6 +102,15 @@ management:
   endpoint:
     health:
       show-details: always
+      group:
+        # Render polls this path. Redis is deliberately excluded: it is a cache
+        # and token blacklist, not a hard dependency (JwtAuthenticationFilter
+        # fails open when it is unreachable), but including it here meant a
+        # brief Redis outage stalled /actuator/health past Render's 5s health
+        # check timeout and the whole service was restarted.
+        readiness:
+          include: db, ping, readinessState
+          show-details: always
 
 logging:
   level:

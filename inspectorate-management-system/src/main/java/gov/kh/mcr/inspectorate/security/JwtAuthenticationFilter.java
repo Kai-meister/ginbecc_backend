@@ -105,7 +105,7 @@ public class JwtAuthenticationFilter
                 || path.startsWith("/api/v1/auth/refresh")
                 || path.startsWith("/swagger-ui")
                 || path.startsWith("/v3/api-docs")
-                || path.equals("/actuator/health");
+                || path.startsWith("/actuator/health");
     }
     private String getClientIp(
             HttpServletRequest request) {
