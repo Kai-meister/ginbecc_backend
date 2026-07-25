@@ -283,7 +283,38 @@ Part B covers the in-app bell. If you want notifications to appear **outside the
 
 The backend already supports this — `platform` accepts `WEB`. There are currently zero web devices registered.
 
-You need the config from the **same Firebase project the mobile app uses** — ask for `firebaseConfig` and the **VAPID key**.
+**Parts A and B need no configuration at all.** Everything below is only for OS-level push.
+
+### Where the two values come from
+
+Both live in the Firebase Console, and it must be the **same project the mobile app uses**. The backend sends through a single service account, so a different project delivers to nobody — with no error.
+
+**`firebaseConfig`** — Project settings → General → Your apps → Add app → **Web** (`</>`). Registering a web app produces:
+
+```js
+const firebaseConfig = {
+  apiKey: "...",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abc123",
+};
+```
+
+**VAPID key** — Project settings → **Cloud Messaging** → *Web Push certificates* → Generate key pair. Copy the public key.
+
+### These are not secrets
+
+The Firebase **web** config and the VAPID **public** key are designed to ship in browser JavaScript — they're visible in devtools by design, and committing them is fine.
+
+What *is* secret is the service-account JSON in the backend's `FIREBASE_CREDENTIALS` env var. That must never reach the frontend. Similar names, completely different objects.
+
+### Environment limits
+
+- **HTTPS required.** `localhost` is exempt, so dev works; any other origin needs TLS.
+- **iOS Safari requires the site be installed to the home screen** as a PWA. An ordinary Safari tab on iPhone will not receive web push. No workaround.
+- **Permission denial is sticky.** Once blocked, `requestPermission()` returns `denied` forever without prompting — only the user can undo it in site settings. Attach it to a deliberate "Enable notifications" action, never fire it on page load.
 
 ### 1. Service worker
 
@@ -296,6 +327,11 @@ importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-com
 firebase.initializeApp({ /* same firebaseConfig */ });
 firebase.messaging();
 ```
+
+Two things about this file cause most "web push silently does nothing" cases:
+
+- **It must be served from `/firebase-messaging-sw.js`**, not `/static/js/` or any nested path. A service worker only receives push within its own scope or below, so a nested file registers fine and then receives nothing.
+- **It cannot read `process.env` / `import.meta.env`.** It's a static file outside the bundler, so the config has to be inlined literally or templated in at build time.
 
 ### 2. Request permission and register the token
 
