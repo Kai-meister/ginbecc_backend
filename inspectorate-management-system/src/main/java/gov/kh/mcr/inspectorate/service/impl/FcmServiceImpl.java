@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @Service
@@ -24,18 +25,24 @@ public class FcmServiceImpl implements FcmService {
     private final UserDeviceRepository userDeviceRepository;
     private final ObjectProvider<FirebaseMessaging> firebaseMessagingProvider;
 
+    /** Firebase-disabled is a permanent config state — warn once, not on every push. */
+    private final AtomicBoolean firebaseDisabledWarned = new AtomicBoolean(false);
+
     @Async
     @Override
     public void sendToUser(Integer userId, String title, String body, NotificationType type, Integer referenceId) {
         FirebaseMessaging firebaseMessaging = firebaseMessagingProvider.getIfAvailable();
         if (firebaseMessaging == null) {
-            log.debug("Firebase disabled — skipping push for userId={}", userId);
+            if (firebaseDisabledWarned.compareAndSet(false, true)) {
+                log.warn("Firebase not configured (FIREBASE_CREDENTIALS unset)"
+                        + " — all push notifications are disabled");
+            }
             return;
         }
 
         List<UserDevice> devices = userDeviceRepository.findByUserUserId(userId);
         if (devices.isEmpty()) {
-            log.debug("No devices registered for userId={}", userId);
+            log.warn("No devices registered for userId={} — push skipped", userId);
             return;
         }
 
@@ -54,14 +61,22 @@ public class FcmServiceImpl implements FcmService {
                 .addAllTokens(tokens)
                 .build();
 
+        BatchResponse response;
         try {
-            BatchResponse response = firebaseMessaging.sendEachForMulticast(message);
-            pruneDeadTokens(response, tokens);
+            response = firebaseMessaging.sendEachForMulticast(message);
         } catch (FirebaseMessagingException e) {
             log.warn("FCM multicast failed for userId={}: {}", userId, e.getMessage());
+            return;
         } catch (Exception e) {
             log.error("Unexpected FCM error for userId={}: {}", userId, e.getMessage());
+            return;
         }
+
+        log.info("FCM push userId={}: {} delivered, {} failed of {} token(s)",
+                userId, response.getSuccessCount(), response.getFailureCount(), tokens.size());
+
+        // Pruning is bookkeeping — it must never be reported as a send failure.
+        pruneDeadTokens(response, tokens);
     }
 
     private void pruneDeadTokens(BatchResponse response, List<String> tokens) {
@@ -78,9 +93,16 @@ public class FcmServiceImpl implements FcmService {
             }
         }
 
-        if (!deadTokens.isEmpty()) {
-            log.warn("Pruning {} dead FCM token(s)", deadTokens.size());
+        if (deadTokens.isEmpty()) {
+            return;
+        }
+
+        try {
             userDeviceRepository.deleteByTokenIn(deadTokens);
+            log.warn("Pruned {} dead FCM token(s)", deadTokens.size());
+        } catch (Exception e) {
+            log.error("Failed to prune {} dead FCM token(s): {}",
+                    deadTokens.size(), e.getMessage());
         }
     }
 }

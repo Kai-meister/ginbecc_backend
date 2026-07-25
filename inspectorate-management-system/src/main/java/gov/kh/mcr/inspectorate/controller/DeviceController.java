@@ -51,7 +51,10 @@ public class DeviceController {
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> unregisterDevice(
             @RequestParam String token) {
-        userDeviceRepository.deleteByToken(token);
+        // Delete is scoped to the caller: passing someone else's token is a no-op
+        // rather than an error, so this stays idempotent and leaks nothing.
+        userDeviceRepository.deleteOwnedToken(
+                token, securityUtils.getCurrentUserId());
         return ResponseEntity.ok(ApiResponse.success(null, "Device unregistered successfully"));
     }
 }
