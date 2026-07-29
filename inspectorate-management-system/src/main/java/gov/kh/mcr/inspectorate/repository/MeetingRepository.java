@@ -72,15 +72,28 @@ public interface MeetingRepository
      *
      * <p>{@code departmentId} null means no department scoping, matching how
      * the today-count treats a user who can bypass scope.
+     *
+     * <p>The joins are spelled out as LEFT JOINs deliberately. Writing the
+     * condition as an implicit path — {@code m.organizer.officer.department
+     * .departmentId = :departmentId} — makes Hibernate emit INNER JOINs, which
+     * silently drop every meeting whose organizer has no officer or no
+     * department even when {@code :departmentId} is null and no scoping was
+     * intended. That first version returned 13 where 23 meetings were upcoming.
+     * Same reasoning for {@code statusCode}: an implicit path there would
+     * discard meetings with no status rather than counting them.
      */
     @Query("""
         SELECT COUNT(m) FROM Meeting m
+        LEFT JOIN m.organizer    org
+        LEFT JOIN org.officer    off
+        LEFT JOIN off.department dept
+        LEFT JOIN m.statusCode   st
         WHERE (m.meetingDate > :date
                OR (m.meetingDate = :date AND m.startTime >= :time))
-        AND   (m.statusCode IS NULL
-               OR m.statusCode.statusCode NOT IN ('CANCELLED', 'COMPLETED'))
+        AND   (st IS NULL
+               OR st.statusCode NOT IN ('CANCELLED', 'COMPLETED'))
         AND   (:departmentId IS NULL
-               OR m.organizer.officer.department.departmentId = :departmentId)
+               OR dept.departmentId = :departmentId)
         """)
     long countUpcoming(
             @Param("date") LocalDate date,
