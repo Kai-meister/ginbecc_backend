@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
 
@@ -74,6 +75,16 @@ public class DashboardServiceImpl implements DashboardService {
                                 m.getStatusCode().getStatusCode()))
                 .count();
 
+        // Upcoming meetings — same Cambodia-local "now" and the same department
+        // scope as the today count, so the two tiles agree with each other and
+        // with the meeting list. Counted in the database because no listing
+        // endpoint can answer it: /meetings has no date filter and sorts
+        // furthest-future first.
+        long upcomingMeetings = meetingRepository.countUpcoming(
+                today,
+                LocalTime.now(ZoneId.of("Asia/Phnom_Penh")),
+                deptScope);
+
         // Unread notifications
         long unread = userId != null
                 ? notificationRepository
@@ -87,6 +98,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .officersByGender(byGender)
                 .officersByDepartment(byDept)
                 .todayMeetings(todayMeetings)
+                .upcomingMeetings(upcomingMeetings)
                 .expiringDocuments(expiringDocuments)
                 .expiringContracts(expiringContracts)
                 .unreadNotifications(unread)

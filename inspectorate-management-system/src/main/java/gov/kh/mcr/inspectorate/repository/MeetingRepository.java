@@ -55,6 +55,38 @@ public interface MeetingRepository
             @Param("month") int month,
             @Param("year")  int year);
 
+    /**
+     * Meetings still ahead of {@code date}/{@code time}, for the dashboard
+     * "នឹងមកដល់" tile.
+     *
+     * <p>Counted here rather than in the client because no listing endpoint can
+     * answer it: {@code GET /meetings} has no date filter and sorts
+     * furthest-future first, so a client would have to page through everything.
+     * The mobile app previously summed two months of the calendar endpoint and
+     * reported 13 when 23 meetings were actually upcoming.
+     *
+     * <p>Later today counts — a meeting at 16:00 is still upcoming at 15:00 —
+     * hence the time comparison on the current date. Cancelled and completed
+     * meetings are excluded; note that a past meeting left in SCHEDULED is
+     * excluded by date, not by status, so stale statuses cannot inflate this.
+     *
+     * <p>{@code departmentId} null means no department scoping, matching how
+     * the today-count treats a user who can bypass scope.
+     */
+    @Query("""
+        SELECT COUNT(m) FROM Meeting m
+        WHERE (m.meetingDate > :date
+               OR (m.meetingDate = :date AND m.startTime >= :time))
+        AND   (m.statusCode IS NULL
+               OR m.statusCode.statusCode NOT IN ('CANCELLED', 'COMPLETED'))
+        AND   (:departmentId IS NULL
+               OR m.organizer.officer.department.departmentId = :departmentId)
+        """)
+    long countUpcoming(
+            @Param("date") LocalDate date,
+            @Param("time") LocalTime time,
+            @Param("departmentId") Integer departmentId);
+
     @Query("""
         SELECT m FROM Meeting m
         WHERE m.room.roomId = :roomId

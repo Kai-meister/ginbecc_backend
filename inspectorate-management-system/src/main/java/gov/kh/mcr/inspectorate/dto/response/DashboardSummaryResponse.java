@@ -15,6 +15,12 @@ public class DashboardSummaryResponse {
     private Map<String, Long> officersByGender;
     private Map<String, Long> officersByDepartment;
     private Long todayMeetings;
+    /**
+     * Meetings not yet started, from now onward, excluding cancelled and
+     * completed. Department-scoped exactly like {@link #todayMeetings}, so the
+     * number always matches what the viewer could actually open.
+     */
+    private Long upcomingMeetings;
     private Long expiringDocuments;
     private Long expiringContracts;
     private Long  unreadNotifications;
