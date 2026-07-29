@@ -121,11 +121,7 @@ public class MeetingAttendeeServiceImpl
         notificationService.createByUserId(
                 user.getUserId(),
                 "ការអញ្ជើញប្រជុំ",
-                "អញ្ជើញ: "
-                        + meeting.getTitle()
-                        + " ("
-                        + meeting.getMeetingDate()
-                        + ")",
+                buildInviteMessage(meeting),
                 NotificationType.MEETING,
                 meetingId);
 
@@ -190,9 +186,8 @@ public class MeetingAttendeeServiceImpl
                                                 .createByUserId(
                                                         userId,
                                                         "ការអញ្ជើញប្រជុំ",
-                                                        "អញ្ជើញ: "
-                                                                + meeting
-                                                                .getTitle(),
+                                                        buildInviteMessage(
+                                                                meeting),
                                                         NotificationType
                                                                 .MEETING,
                                                         meetingId);
@@ -359,5 +354,41 @@ public class MeetingAttendeeServiceImpl
             return ActivityLogContext.builder()
                     .build();
         }
+    }
+
+    /**
+     * Body for a meeting-invite notification — title, day and time range.
+     *
+     * <p>This is both the in-app message and the FCM push body, so it has to
+     * stand on its own: an invitee reads it on a lock screen and should not
+     * have to open the app to learn when the meeting is.
+     *
+     * <p>Shared by the single-add and bulk paths on purpose. They previously
+     * built their own text and had already drifted — bulk sent only the title,
+     * single-add added the date but never the time. The web admin app papered
+     * over this by posting a second, richer notification of its own, which made
+     * every invitee receive two; that duplicate has since been removed, leaving
+     * this as the only invite text an attendee sees.
+     *
+     * <p>Each part is guarded: a meeting may legitimately have no time set yet.
+     */
+    private String buildInviteMessage(Meeting meeting) {
+        StringBuilder sb = new StringBuilder("អញ្ជើញ: ")
+                .append(meeting.getTitle());
+
+        if (meeting.getMeetingDate() != null) {
+            sb.append(" — ថ្ងៃ ")
+                    .append(meeting.getMeetingDate());
+        }
+
+        if (meeting.getStartTime() != null
+                && meeting.getEndTime() != null) {
+            sb.append(" ម៉ោង ")
+                    .append(meeting.getStartTime())
+                    .append("–")
+                    .append(meeting.getEndTime());
+        }
+
+        return sb.toString();
     }
 }
