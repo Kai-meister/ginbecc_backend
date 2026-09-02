@@ -1,5 +1,6 @@
 package gov.kh.mcr.inspectorate.entity;
 
+import gov.kh.mcr.inspectorate.enums.EducationLevel;
 import gov.kh.mcr.inspectorate.enums.Gender;
 import jakarta.persistence.*;
 import lombok.*;
@@ -73,9 +74,9 @@ public class Officer {
             columnDefinition = "TEXT")
     private String jobDescription;
 
-    @Column(name = "education_level",
-            length = 255)
-    private String educationLevel;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "education_level", length = 50)
+    private EducationLevel educationLevel;
 
     @Column(name = "specialization",
             length = 100)
