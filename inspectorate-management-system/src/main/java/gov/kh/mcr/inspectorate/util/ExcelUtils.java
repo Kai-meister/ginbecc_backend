@@ -50,7 +50,7 @@ public final class ExcelUtils {
             XSSFSheet sh =
                     wb.createSheet("របាយការណ៍មន្ត្រីរាជការ");
             Styles s = new Styles(wb);
-            int cols = 10;
+            int cols = 11;
             int r = 0;
 
             r = orgHeader(sh, wb, r, cols);
@@ -68,6 +68,7 @@ public final class ExcelUtils {
                     "ភេទ",
                     "ថ្ងៃខែឆ្នាំកំណើត",
                     "អាយុ",
+                    "កម្រិតវប្បធម៍",
                     "នាយកដ្ឋាន",
                     "មុខតំណែង",
                     "ថ្ងៃចូលបម្រើការងារ",
@@ -78,17 +79,17 @@ public final class ExcelUtils {
                 Row row = sh.createRow(r++);
                 row.setHeightInPoints(22);
                 CellStyle cs = alt(s, o.getNo());
-                c(row, 0,  o.getNo()+"",          cs);
+               c(row, 0,  o.getNo()+"",          cs);
                 c(row, 1,  nv(o.getOfficerCode()), cs);
                 c(row, 2,  nv(o.getFullNameKh()),  cs);
                 c(row, 3,  nv(o.getGenderLabel()), cs);
                 c(row, 4,  d(o.getDob()),           cs);
-                c(row, 5,  o.getAge() != null
-                        ? o.getAge()+" ឆ្នាំ" : "",  cs);
-                c(row, 6,  nv(o.getDepartmentName()),cs);
-                c(row, 7,  nv(o.getPositionName()), cs);
-                c(row, 8,  d(o.getJoinDate()),      cs);
-                c(row, 9,  nv(o.getStatusLabel()),  cs);
+                c(row, 5,  o.getAge() != null ? o.getAge()+" ឆ្នាំ" : "",  cs);
+                c(row, 6, nv(o.getEducationLevel()),cs);
+                c(row, 7,  nv(o.getDepartmentName()),cs);
+                c(row, 8,  nv(o.getPositionName()), cs);
+                c(row, 9,  d(o.getJoinDate()),      cs);
+                c(row, 10,  nv(o.getStatusLabel()),  cs);
             }
 
             summaryBar(sh, wb, r, cols,
@@ -127,11 +128,16 @@ public final class ExcelUtils {
                     null, null, null);
 
             r = colHeaders(sh, s, r, new String[]{
-                    "ល.រ", "លេខសម្គាល់",
+                  "ល.រ",
+                    "លេខសម្គាល់",
                     "គោត្តនាម និងនាម",
-                    "ភេទ", "ថ្ងៃខែឆ្នាំកំណើត",
-                    "អាយុ", "នាយកដ្ឋាន",
-                    "ថ្ងៃចាប់ផ្ដើម", "ថ្ងៃផុតកំណត់",
+                    "ភេទ",
+                    "ថ្ងៃខែឆ្នាំកំណើត",
+                    "អាយុ",
+                    "កម្រិតវប្បធម៍",
+                    "នាយកដ្ឋាន",
+                    "ថ្ងៃចាប់ផ្ដើម",
+                    "ថ្ងៃផុតកំណត់",
                     "ចំនួនថ្ងៃនៅសល់",
                     "លេខកូដគណនេយ្យ"
             });
@@ -145,19 +151,18 @@ public final class ExcelUtils {
                                 : 0;
                 CellStyle cs = daysLeft <= 7
                         ? s.warn : alt(s, c2.getNo());
-
-                c(row, 0,  c2.getNo()+"",                cs);
+                 c(row, 0,  c2.getNo()+"",                cs);
                 c(row, 1,  nv(c2.getContractOfficerCode()),cs);
                 c(row, 2,  nv(c2.getFullNameKh()),        cs);
                 c(row, 3,  nv(c2.getGenderLabel()),       cs);
                 c(row, 4,  d(c2.getDob()),                cs);
-                c(row, 5,  c2.getAge() != null
-                        ? c2.getAge()+" ឆ្នាំ" : "",      cs);
-                c(row, 6,  nv(c2.getDepartmentName()),    cs);
-                c(row, 7,  d(c2.getStartDate()),          cs);
-                c(row, 8,  d(c2.getEndDate()),            cs);
-                c(row, 9,  nv(c2.getExpiryLabel()),       cs);
-                c(row, 10, nv(c2.getAccountingCode()),    cs);
+                c(row, 5,  c2.getAge() != null ? c2.getAge()+" ឆ្នាំ" : "",      cs);
+                c(row, 6, nv(c2.getEducationLevel()),cs);
+                c(row, 7,  nv(c2.getDepartmentName()),    cs);
+                c(row, 8,  d(c2.getStartDate()),          cs);
+                c(row, 9,  d(c2.getEndDate()),            cs);
+                c(row, 10,  nv(c2.getExpiryLabel()),       cs);
+                c(row, 11, nv(c2.getAccountingCode()),    cs);
             }
 
             summaryBar(sh, wb, r, cols,
@@ -183,12 +188,12 @@ public final class ExcelUtils {
             int cols = 9;
             int r = 0;
 
-            r = orgHeader(sh, wb, r, cols);          // ✅ ជំនួស title()
+            r = orgHeader(sh, wb, r, cols);          
             r = reportTitle(sh, wb, r, cols,
                     "របាយការណ៍ឯកសារ");
             r = filterBar(sh, wb, r, cols,
                     null, null, null, null);
-            r = colHeaders(sh, s, r, new String[]{    // ✅ ជំនួស headers()
+            r = colHeaders(sh, s, r, new String[]{    
                     "ល.រ", "លេខឯកសារ",
                     "ឈ្មោះឯកសារ", "ប្រភេទ",
                     "User", "នាយកដ្ឋាន",
@@ -209,7 +214,7 @@ public final class ExcelUtils {
                 c(row, 3, nv(d.getDocumentTypeName()),cs);
                 c(row, 4, nv(d.getUserName()),        cs);
                 c(row, 5, nv(d.getDepartmentName()),  cs);
-                c(row, 6, d(d.getExpiryDate()),       cs); // ✅ ជំនួស d2()
+                c(row, 6, d(d.getExpiryDate()),       cs); 
                 c(row, 7, nv(d.getStatusLabel()),     cs);
                 c(row, 8, dt(d.getCreatedAt()),       cs);
             }
