@@ -110,7 +110,9 @@ public class ReportServiceImpl
                                 .phone(o.getPhone())
                                 .email(o.getEmail())
                                 .educationLevel(
-                                        o.getEducationLevel())
+                                        o.getEducationLevel() != null
+                                                ? o.getEducationLevel().getLabelKh()
+                                                : "មិនស្គាល់")
                                 .statusCode(
                                         o.getStatusCode() != null
                                                 ? o.getStatusCode()
@@ -190,6 +192,9 @@ public class ReportServiceImpl
                             .expiryLabel(
                                     expiryLabel(daysLeft))
                             .note(c.getNote())
+                            .educationLevel(c.getEducationLevel() != null
+                                            ? c.getEducationLevel().getLabelKh()
+                                            : "មិនស្គាល់")
                             .statusCode(
                                     c.getStatusCode() != null
                                             ? c.getStatusCode()
