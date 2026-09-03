@@ -25,8 +25,9 @@ public class ContractOfficerReportResponse {
     @Builder.Default
     private Long      daysUntilExpiry = 0L;
     @Builder.Default
-    private String    expiryLabel     = "";
+    private String    expiryLabel​= "";
     private String    note;
+    private String    educationLevel;
     @Builder.Default
     private String    statusCode      = "";
     @Builder.Default
