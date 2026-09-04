@@ -20,6 +20,8 @@ public interface ContractOfficerMapper {
             ignore = true)
     @Mapping(target = "department",
             ignore = true)
+    @Mapping(target = "office",
+            ignore = true)
     @Mapping(target = "statusCode",
             ignore = true)
     @Mapping(target = "createdAt",
@@ -33,10 +35,17 @@ public interface ContractOfficerMapper {
             source = "department.departmentName")
     @Mapping(target = "departmentId",
             source = "department.departmentId")
+
+    @Mapping(target = "officeId", source = "office.officeId")
+    @Mapping(target = "officeName", source = "office.officeName")
+
     @Mapping(target = "statusCode",
             source = "statusCode.statusCode")
     @Mapping(target = "statusLabel",
             source = "statusCode.labelKh")
+
+    @Mapping(target = "educationLevel",
+            source = "educationLevel")
 
     @Mapping(target = "daysUntilExpiry",
             expression =
@@ -64,6 +73,8 @@ public interface ContractOfficerMapper {
     @Mapping(target = "contractOfficerId",
             ignore = true)
     @Mapping(target = "department",
+            ignore = true)
+    @Mapping(target = "office",
             ignore = true)
     @Mapping(target = "statusCode",
             ignore = true)
