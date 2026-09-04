@@ -121,12 +121,11 @@ public class OfficerServiceImpl
         securityUtils.validateDepartmentScope(
                 request.getDepartmentId());
 
-        Officer officer =
-                officerMapper.toEntity(request);
+        Officer officer = officerMapper.toEntity(request);
 
         officer.setDepartment(
-                findActiveDept(
-                        request.getDepartmentId()));
+                findActiveDept(request.getDepartmentId()));
+        officer.setOffice(findActiveOffice(request.getOfficeId()));
         officer.setPosition(
                 findPos(request.getPositionId()));
         officer.setStatusCode(
@@ -177,7 +176,7 @@ public class OfficerServiceImpl
                             request
                                     .getDepartmentId()));
         }
-
+        officer.setOffice(findActiveOffice(request.getOfficeId()));
         officer.setPosition(
                 findPos(request.getPositionId()));
         officer.setStatusCode(
@@ -524,6 +523,19 @@ public class OfficerServiceImpl
             );
         }
         return dept;
+    }
+
+    private Office findActiveOffice(
+            Integer id) {
+        Office office = officeRepository.findById(id).orElseThrow(() ->
+                                new ResourceNotFoundException("ការិយាល័យ", id));
+
+        if (office.getStatus() != ActiveStatus.ACTIVE) {
+            throw new BusinessException(
+                    "មិនអាចយកការិយាល័យ «" + office.getOfficeName() + "» មកប្រើប្រាស់បានឡើយ ព្រោះការិយាល័យនេះកំពុងស្ថិតក្នុងស្ថានភាពមិនសកម្ម ឬផ្អាកដំណើរការ។"
+            );
+        }
+        return office;
     }
 
     private Position findPos(Integer id) {
