@@ -275,7 +275,7 @@ public class DataInitializer
     }
 
     private void initPermissions() {
-        if (permissionRepository.count() > 0) return;
+//        if (permissionRepository.count() > 0) return;
         String[][] perms = {
 
                 // User Management
@@ -300,7 +300,9 @@ public class DataInitializer
                 {"CONTRACT_OFFICER_UPDATE", "OFFICER", "កែប្រែកមន្ត្រីកិច្ចសន្យា",   "អនុញ្ញាតឱ្យកែប្រែព័ត៌មានមន្ត្រីកិច្ចសន្យា"},
                 {"CONTRACT_OFFICER_DELETE", "OFFICER", "លុបមន្ត្រីកិច្ចសន្យា",       "អនុញ្ញាតឱ្យលុបកំណត់ត្រាមន្ត្រីកិច្ចសន្យា"},
                 {"DEPARTMENT_VIEW",         "OFFICER", "មើលផ្នែក",               "អនុញ្ញាតឱ្យមើលបញ្ជីផ្នែកទាំងអស់"},
-                {"DEPARTMENT_MANAGE",       "OFFICER", "គ្រប់គ្រងផ្នែក",           "អនុញ្ញាតឱ្យគ្រប់គ្រង បន្ថែម និងកែប្រែផ្នែក"},
+                {"DEPARTMENT_MANAGE",       "OFFICER", "គ្រប់គ្រងផ្នែក",         "អនុញ្ញាតឱ្យគ្រប់គ្រង បន្ថែម និងកែប្រែផ្នែក"},
+                {"OFFICE_VIEW",            "OFFICER", "មើលផ្នែកកិរិយាល័យ",            "អនុញ្ញាតឱ្យមើលបញ្ជីផ្នែកកិរិយាល័យទាំងអស់"},
+                {"OFFICE_MANAGE",          "OFFICER", "គ្រប់គ្រងផ្នែកកិរិយាល័យ",         "អនុញ្ញាតឱ្យគ្រប់គ្រង បន្ថែម និងកែប្រែផ្នែកកិរិយាល័យ"},
                 {"POSITION_VIEW",           "OFFICER", "មើលតំណែង",              "អនុញ្ញាតឱ្យមើលបញ្ជីតំណែងទាំងអស់"},
                 {"POSITION_MANAGE",         "OFFICER", "គ្រប់គ្រងតំណែង",          "អនុញ្ញាតឱ្យគ្រប់គ្រង បន្ថែម និងកែប្រែតំណែង"},
 
@@ -348,6 +350,7 @@ public class DataInitializer
         };
 
         for (String[] p : perms) {
+            if (permissionRepository.findByPermissionName(p[0]).isEmpty()) {
             permissionRepository.save(
                     Permission.builder()
                             .permissionName(p[0])
@@ -356,20 +359,22 @@ public class DataInitializer
                             .description(p[3])
                             .build());
         }
+            }
 
         //ROLE ASSIGNMENTS
         // SUPER_ADMIN Full control
-        roleRepository
-                .findByRoleName("SUPER_ADMIN")
+        roleRepository.findByRoleName("SUPER_ADMIN")
                 .ifPresent(role ->
-                        permissionRepository.findAll()
-                                .forEach(perm ->
-                                        rolePermissionRepository
-                                                .save(
-                                                        RolePermission.builder()
-                                                                .role(role)
-                                                                .permission(perm)
-                                                                .build())));
+                        permissionRepository.findAll().forEach(perm -> {
+                            if (!rolePermissionRepository.existsByRoleAndPermission(role, perm)) {
+                                rolePermissionRepository.save(
+                                        RolePermission.builder()
+                                                .role(role)
+                                                .permission(perm)
+                                                .build());
+                            }
+                        }));
+
 
         // ADMIN
         assignPermsToRole("ADMIN", new String[]{
@@ -389,11 +394,17 @@ public class DataInitializer
                 "CONTRACT_OFFICER_CREATE",
                 "CONTRACT_OFFICER_UPDATE",
                 "CONTRACT_OFFICER_DELETE",
-                "DEPARTMENT_VIEW", "DEPARTMENT_MANAGE",
+                "DEPARTMENT_VIEW",
+                "DEPARTMENT_MANAGE",
+                "OFFICE_VIEW",
+                "OFFICE_MANAGE",
+
                 "POSITION_VIEW", "POSITION_MANAGE",
                 // Document
-                "DOCUMENT_VIEW", "DOCUMENT_VIEW_ALL",
-                "DOCUMENT_CREATE", "DOCUMENT_UPDATE",
+                "DOCUMENT_VIEW",
+                "DOCUMENT_VIEW_ALL",
+                "DOCUMENT_CREATE",
+                "DOCUMENT_UPDATE",
                 "DOCUMENT_DELETE",
                 "DOCUMENT_TYPE_MANAGE",
                 "APPROVAL_REVIEW", "APPROVAL_VIEW",
@@ -405,17 +416,23 @@ public class DataInitializer
                 "MEETING_MINUTE_CREATE",
                 "MEETING_MINUTE_VIEW",
                 "ROOM_VIEW", "ROOM_MANAGE",
+
                 // Announcement
                 "ANNOUNCEMENT_VIEW",
                 "ANNOUNCEMENT_CREATE",
                 "ANNOUNCEMENT_UPDATE",
                 "ANNOUNCEMENT_DELETE",
                 "ANNOUNCEMENT_PUBLISH",
+
                 // Report
-                "REPORT_VIEW", "REPORT_EXPORT",
+                "REPORT_VIEW",
+                "REPORT_EXPORT",
+
                 // System
-                "ATTACHMENT_UPLOAD", "ATTACHMENT_DELETE",
-                "LOG_VIEW", "NOTIFICATION_SEND",
+                "ATTACHMENT_UPLOAD",
+                "ATTACHMENT_DELETE",
+                "LOG_VIEW",
+                "NOTIFICATION_SEND",
                 "LOOKUP_MANAGE",
         });
 
@@ -429,11 +446,15 @@ public class DataInitializer
                 "CONTRACT_OFFICER_CREATE",
                 "CONTRACT_OFFICER_UPDATE",
                 "DEPARTMENT_VIEW",
+                "OFFICE_VIEW",
                 "POSITION_VIEW",
                 // Document
-                "DOCUMENT_VIEW", "DOCUMENT_VIEW_ALL",
-                "DOCUMENT_CREATE", "DOCUMENT_UPDATE",
-                "APPROVAL_REVIEW", "APPROVAL_VIEW",
+                "DOCUMENT_VIEW",
+                "DOCUMENT_VIEW_ALL",
+                "DOCUMENT_CREATE",
+                "DOCUMENT_UPDATE",
+                "APPROVAL_REVIEW",
+                "APPROVAL_VIEW",
                 // Meeting
                 "MEETING_VIEW",
                 "MEETING_CREATE",
@@ -504,13 +525,15 @@ public class DataInitializer
                     for (String permName : permNames) {
                         permissionRepository
                                 .findByPermissionName(permName)
-                                .ifPresent(perm ->
-                                        rolePermissionRepository
-                                                .save(
-                                                        RolePermission.builder()
-                                                                .role(role)
-                                                                .permission(perm)
-                                                                .build()));
+                                .ifPresent(perm -> {
+                                    if (!rolePermissionRepository.existsByRoleAndPermission(role, perm)) {
+                                        rolePermissionRepository.save(
+                                                RolePermission.builder()
+                                                        .role(role)
+                                                        .permission(perm)
+                                                        .build());
+                                    }
+                                });
                     }
                 });
     }
