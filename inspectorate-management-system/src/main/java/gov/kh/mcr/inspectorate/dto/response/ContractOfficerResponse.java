@@ -17,6 +17,9 @@ public class ContractOfficerResponse {
     private Gender        gender;
     private LocalDate     dob;
     @Builder.Default
+    private String officeName = "";
+    private Integer officeId;
+    @Builder.Default
     private String        departmentName  = "";
     private Integer       departmentId;
     @Builder.Default
