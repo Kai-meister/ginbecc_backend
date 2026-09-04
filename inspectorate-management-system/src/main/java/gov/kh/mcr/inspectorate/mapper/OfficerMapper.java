@@ -17,6 +17,8 @@ public interface OfficerMapper {
             ignore = true)
     @Mapping(target = "department",
             ignore = true)
+    @Mapping(target = "office", 
+             ignore = true)
     @Mapping(target = "position",
             ignore = true)
     @Mapping(target = "statusCode",
@@ -34,8 +36,12 @@ public interface OfficerMapper {
             source =
                     "department.departmentId")
     @Mapping(target = "departmentName",
-            source =
-                    "department.departmentName")
+            source = "department.departmentName")
+    @Mapping(target = "officeId", 
+             source = "office.officeId")
+    @Mapping(target = "officeName", 
+             source = "office.officeName")
+        
     @Mapping(target = "positionId",
             source = "position.positionId")
     @Mapping(target = "positionName",
@@ -63,6 +69,8 @@ public interface OfficerMapper {
             ignore = true)
     @Mapping(target = "department",
             ignore = true)
+    @Mapping(target = "office",
+             ignore = true)
     @Mapping(target = "position",
             ignore = true)
     @Mapping(target = "statusCode",
