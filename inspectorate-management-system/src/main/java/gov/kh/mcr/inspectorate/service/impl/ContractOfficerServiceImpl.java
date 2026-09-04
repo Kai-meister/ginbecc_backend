@@ -146,6 +146,7 @@ public class ContractOfficerServiceImpl
         co.setDepartment(
                 findActiveDept(
                         request.getDepartmentId()));
+        co.setOffice(findActiveOffice(request.getOfficeId()));
         co.setStatusCode(
                 findStatus(
                         request.getStatusCode()));
@@ -164,8 +165,7 @@ public class ContractOfficerServiceImpl
     }
 
     @Override
-    public ContractOfficerResponse update(
-            Integer id,
+    public ContractOfficerResponse update(  Integer id,
             ContractOfficerRequest request) {
 
         ContractOfficer co = findById(id);
@@ -191,6 +191,7 @@ public class ContractOfficerServiceImpl
                                     .getDepartmentId()));
         }
 
+        co.setOffice(findActiveOffice(request.getOfficeId()));
         co.setStatusCode(
                 findStatus(
                         request.getStatusCode()));
@@ -523,6 +524,18 @@ public class ContractOfficerServiceImpl
             );
         }
         return dept;
+    }
+
+        private Office findActiveOffice(Integer id) {
+        Office office = officeRepository.findById(id).orElseThrow(() ->
+                new ResourceNotFoundException("ការិយាល័យ", id));
+
+        if (office.getStatus() != ActiveStatus.ACTIVE) {
+            throw new BusinessException(
+                    "មិនអាចយកការិយាល័យ «" + office.getOfficeName() + "» មកប្រើប្រាស់បានឡើយ ព្រោះការិយាល័យកំពុងស្ថិតក្នុងស្ថានភាពមិនសកម្ម ឬផ្អាកដំណើរការ។"
+            );
+        }
+        return office;
     }
 
     private LookupOfficerStatus findStatus(
