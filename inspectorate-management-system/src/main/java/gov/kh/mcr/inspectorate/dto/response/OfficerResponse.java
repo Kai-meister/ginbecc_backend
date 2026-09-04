@@ -19,10 +19,14 @@ public class OfficerResponse {
     private LocalDate     joinDate;
     private Integer       positionId;
     @Builder.Default
-    private String           positionName   = "";
+    private String        positionName   = "";
+    private Integer       officeId;
+    @Builder.Default
+    private String        officeName = "";
     private Integer       departmentId;
     @Builder.Default
     private String        departmentName = "";
+    
     private String        jobDescription;
     private String        educationLevel;
     private String        specialization;
