@@ -11,6 +11,9 @@ import java.time.LocalDate;
 @Builder
 public class ContractOfficerRequest {
 
+    @NotNull(message = "សូមជ្រើសរើសការិយាល័យ")
+    private Integer officeId;
+
     @NotNull(message = "សូមជ្រើសរើសនាយកដ្ឋានសាមីខ្លួន")
     @Positive(message = "លេខសម្គាល់នាយកដ្ឋានត្រូវតែជាលេខវិជ្ជមាន")
     private Integer departmentId;
