@@ -38,6 +38,10 @@ public class Officer {
     private Position position;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "office_id", nullable = true)
+    private Office office;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id",
             nullable = false)
     private Department department;
