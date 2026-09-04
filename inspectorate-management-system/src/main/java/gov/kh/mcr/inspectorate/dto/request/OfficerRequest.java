@@ -13,6 +13,9 @@ public class OfficerRequest {
     @NotNull(message = "សូមជ្រើសរើសមុខតំណែង")
     private Integer positionId;
 
+    @NotNull(message = "សូមជ្រើសរើសការិយាល័យ")
+    private Integer officeId;
+
     @NotNull(message = "សូមជ្រើសរើសនាយកដ្ឋាន")
     private Integer departmentId;
 
