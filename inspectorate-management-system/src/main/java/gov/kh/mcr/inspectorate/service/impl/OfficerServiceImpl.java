@@ -42,6 +42,8 @@ public class OfficerServiceImpl
             userRepo;
     private final DepartmentRepository
             deptRepo;
+    private final OfficeRepository
+            officeRepo;
     private final PositionRepository
             positionRepo;
     private final LookupOfficerStatusRepository
@@ -527,7 +529,7 @@ public class OfficerServiceImpl
 
     private Office findActiveOffice(
             Integer id) {
-        Office office = officeRepository.findById(id).orElseThrow(() ->
+        Office office = officeRepo.findById(id).orElseThrow(() ->
                                 new ResourceNotFoundException("ការិយាល័យ", id));
 
         if (office.getStatus() != ActiveStatus.ACTIVE) {

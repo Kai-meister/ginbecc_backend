@@ -1,5 +1,6 @@
 package gov.kh.mcr.inspectorate.dto.response;
 
+import gov.kh.mcr.inspectorate.enums.EducationLevel;
 import gov.kh.mcr.inspectorate.enums.Gender;
 import lombok.*;
 import java.time.LocalDate;
@@ -30,6 +31,7 @@ public class ContractOfficerResponse {
     private String        email;
     private String        jobLevel;
     private String jobDescription;
+    private EducationLevel educationLevel;
     private LocalDate     startDate;
     private LocalDate     endDate;
     private String        note;

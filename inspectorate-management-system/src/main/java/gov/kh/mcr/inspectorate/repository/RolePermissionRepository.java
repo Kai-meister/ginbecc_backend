@@ -1,6 +1,8 @@
 package gov.kh.mcr.inspectorate.repository;
 
 
+import gov.kh.mcr.inspectorate.entity.Permission;
+import gov.kh.mcr.inspectorate.entity.Role;
 import gov.kh.mcr.inspectorate.entity.RolePermission;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;

@@ -43,6 +43,8 @@ public class ContractOfficerServiceImpl
             userRepo;
     private final DepartmentRepository
             deptRepo;
+    private final OfficeRepository
+            officeRepo;
     private final LookupOfficerStatusRepository
             statusRepo;
     private final AttachmentRepository
@@ -526,8 +528,8 @@ public class ContractOfficerServiceImpl
         return dept;
     }
 
-        private Office findActiveOffice(Integer id) {
-        Office office = officeRepository.findById(id).orElseThrow(() ->
+    private Office findActiveOffice(Integer id) {
+        Office office = officeRepo.findById(id).orElseThrow(() ->
                 new ResourceNotFoundException("ការិយាល័យ", id));
 
         if (office.getStatus() != ActiveStatus.ACTIVE) {
