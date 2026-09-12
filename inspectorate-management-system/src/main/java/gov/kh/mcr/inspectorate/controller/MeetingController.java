@@ -79,8 +79,8 @@ public class MeetingController {
                         "ទទួលបានប្រតិទិនកិច្ចប្រជុំជោគជ័យ"));
     }
 
-    // GET /meetings/rooms/{id}/schedule
-    @GetMapping("/rooms/{id}/schedule")
+    // GET /meetings/rooms/{roomId}/schedule
+    @GetMapping("/rooms/{roomId}/schedule")
     @PreAuthorize("hasAuthority('ROOM_VIEW')")
     public ResponseEntity<ApiResponse<
     List<MeetingResponse>>>

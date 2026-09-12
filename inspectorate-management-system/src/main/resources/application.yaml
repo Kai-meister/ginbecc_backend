@@ -102,6 +102,10 @@ management:
   endpoint:
     health:
       show-details: always
+      # Required so readinessState / livenessState contributors exist when
+      # referenced by the readiness group below (Boot fails startup otherwise).
+      probes:
+        enabled: true
       group:
         # Render polls this path. Redis is deliberately excluded: it is a cache
         # and token blacklist, not a hard dependency (JwtAuthenticationFilter
