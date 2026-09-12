@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 
+import java.util.Locale;
+
 @Getter
 public enum EducationLevel {
 
@@ -22,16 +24,60 @@ public enum EducationLevel {
         return labelKh;
     }
 
+    /**
+     * JSON / API parsing — rejects unknown values.
+     */
     @JsonCreator
     public static EducationLevel fromValue(String value) {
+        EducationLevel level = fromStoredValue(value);
+        if (level == null && value != null && !value.isBlank()) {
+            throw new IllegalArgumentException(
+                    "កម្រិតអប់រំ មិនត្រឹមត្រូវ: " + value);
+        }
+        return level;
+    }
+
+    /**
+     * JPA / DB parsing — tolerates blank and maps legacy English labels.
+     */
+    public static EducationLevel fromStoredValue(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        String trimmed = value.trim();
         for (EducationLevel level : values()) {
-            if (level.labelKh.equals(value)) {
+            if (level.name().equalsIgnoreCase(trimmed)
+                    || level.labelKh.equals(trimmed)) {
                 return level;
             }
         }
 
-        throw new IllegalArgumentException(
-                "កម្រិតអប់រំ មិនត្រឹមត្រូវ: " + value
-        );
+        String normalized = trimmed
+                .toLowerCase(Locale.ROOT)
+                .replace('’', '\'')
+                .replace(".", "")
+                .replace("'", "")
+                .replace("-", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+
+        return switch (normalized) {
+            case "bachelors degree",
+                 "bachelor degree",
+                 "bachelor",
+                 "undergraduate" -> BACHELOR;
+            case "masters degree",
+                 "master degree",
+                 "master",
+                 "msc",
+                 "ma" -> MASTER;
+            case "doctorate",
+                 "doctoral",
+                 "phd",
+                 "ph d",
+                 "doctor" -> DOCTORATE;
+            default -> null;
+        };
     }
 }
