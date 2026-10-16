@@ -81,8 +81,10 @@ public class User {
             nullable = false)
     private Integer failedLoginCount = 0;
         
-        @Column(name = "must_change_password",nullable = false)
     @Builder.Default
+    @Column(name = "must_change_password",
+            nullable = false,
+            columnDefinition = "boolean not null default false")
     private Boolean mustChangePassword = false;
 
     @Column(name = "locked_until")

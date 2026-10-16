@@ -62,6 +62,8 @@ public interface UserMapper {
                         ? user.getStatusCode().getStatusCode() : null)
                 .statusLabel(user.getStatusCode() != null
                         ? user.getStatusCode().getLabelKh() : null)
+                .mustChangePassword(Boolean.TRUE.equals(
+                        user.getMustChangePassword()))
 
                 .officerInfo(resolveOfficerInfo(user))
                 .build();
