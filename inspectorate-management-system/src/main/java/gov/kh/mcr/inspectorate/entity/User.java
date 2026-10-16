@@ -80,6 +80,10 @@ public class User {
     @Column(name = "failed_login_count",
             nullable = false)
     private Integer failedLoginCount = 0;
+        
+        @Column(name = "must_change_password",nullable = false)
+    @Builder.Default
+    private Boolean mustChangePassword = false;
 
     @Column(name = "locked_until")
     private LocalDateTime lockedUntil;
