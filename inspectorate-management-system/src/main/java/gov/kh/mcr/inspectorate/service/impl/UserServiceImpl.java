@@ -40,7 +40,6 @@ public class UserServiceImpl
     private final SecurityUtils              securityUtils;
     private final ActivityLogService         activityLogService;
     private final ContractOfficerRepository  contractOfficerRepository;
-
     @Override
     @Transactional(readOnly = true)
     public PageResponse<UserResponse> getAll(
@@ -102,12 +101,12 @@ public class UserServiceImpl
     public UserResponse create(UserRequest request) {
 
         validateOfficerByType(request);
-
-        if (request.getPassword() == null
-                || request.getPassword().isBlank()) {
-            throw new BusinessException(
-                    "ពាក្យសម្ងាត់ចាំបាច់ត្រូវបញ្ចូល");
-        }
+//
+//        if (request.getPassword() == null
+//                || request.getPassword().isBlank()) {
+//            throw new BusinessException(
+//                    "ពាក្យសម្ងាត់ចាំបាច់ត្រូវបញ្ចូល");
+//        }
 
         if (userRepo.existsByEmail(request.getEmail())) {
             throw new DuplicateResourceException(
@@ -119,11 +118,12 @@ public class UserServiceImpl
 
         User user = userMapper.toEntity(request);
         user.setRole(findRole(request.getRoleId()));
-        user.setStatusCode(
-                findStatus(request.getStatusCode()));
+        user.setStatusCode(findStatus(request.getStatusCode()));
+//        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));user.setFailedLoginCount(0);
         user.setPasswordHash(
-                passwordEncoder.encode(request.getPassword()));user.setFailedLoginCount(0);
-
+                passwordEncoder.encode("Password@1"));
+        user.setMustChangePassword(true);
+        user.setFailedLoginCount(0);
         setOfficerByType(user, request);
 
         if (request.getOfficerId() != null) {
@@ -139,7 +139,6 @@ public class UserServiceImpl
 
             user.setOfficer(officer);
 
-            // Fix — Profile auto-set
             // from Officer (no upload needed)
             log.info(
                     "User linked to Officer {}"
@@ -204,12 +203,12 @@ public class UserServiceImpl
         user.setStatusCode(
                 findStatus(request.getStatusCode()));
 
-        if (request.getPassword() != null
-                && !request.getPassword().isBlank()) {
-            user.setPasswordHash(
-                    passwordEncoder.encode(
-                            request.getPassword()));
-        }
+//        if (request.getPassword() != null
+//                && !request.getPassword().isBlank()) {
+//            user.setPasswordHash(
+//                    passwordEncoder.encode(
+//                            request.getPassword()));
+//        }
 
         setOfficerByType(user, request);
 
@@ -352,10 +351,10 @@ public class UserServiceImpl
             case CONTRACT_OFFICER -> {
                 if (request.getContractOfficerId() == null)
                     throw new BusinessException(
-                            "សូមបញ្ចូលលេខសម្គាល់មន្ត្រីជាប់កិច្ចសន្យា (Contract Officer ID) ឱ្យបានត្រឹមត្រូវ។");
+                            "សូមបញ្ចូលលេខសម្គាល់មន្ត្រីជាប់កិច្ចសន្យា ឱ្យបានត្រឹមត្រូវ។");
                 if (request.getOfficerId() != null)
                     throw new BusinessException(
-                            "ប្រភេទមន្ត្រីជាប់កិច្ចសន្យា (CONTRACT_OFFICER) មិនអាចមានលេខសម្គាល់មន្ត្រីក្របខ័ណ្ឌឡើយ។");
+                            "ប្រភេទមន្ត្រីជាប់កិច្ចសន្យា មិនអាចមានលេខសម្គាល់មន្ត្រីក្របខ័ណ្ឌឡើយ។");
             }
         }
     }
@@ -387,5 +386,7 @@ public class UserServiceImpl
                     "មន្ត្រីជាប់កិច្ចសន្យានេះមានគណនីអ្នកប្រើប្រាស់រួចហើយ");
         }
     }
+
+
 
 }
