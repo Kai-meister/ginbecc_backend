@@ -19,4 +19,6 @@ public class LoginResponse {
     private String email;
     private String  roleName;
     private List<String> permissions;
+    private Boolean mustChangePassword;
+
 }
