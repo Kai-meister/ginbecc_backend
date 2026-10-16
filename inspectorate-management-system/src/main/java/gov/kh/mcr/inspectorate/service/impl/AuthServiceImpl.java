@@ -116,6 +116,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .roleName(user.getRole().getRoleName())
                 .permissions(permissions)
+                .mustChangePassword(
+                        user.getMustChangePassword())
                 .build();
     }
 
@@ -200,6 +202,8 @@ public class AuthServiceImpl implements AuthService {
                 .email(user.getEmail())
                 .roleName(user.getRole().getRoleName())
                 .permissions(permissions)
+                .mustChangePassword(
+                        user.getMustChangePassword())
                 .build();
     }
 
@@ -232,6 +236,7 @@ public class AuthServiceImpl implements AuthService {
         user.setPasswordHash(
                 passwordEncoder.encode(
                         req.getNewPassword()));
+        user.setMustChangePassword(false);
         userRepository.save(user);
 
         activityLogService.log(
@@ -253,6 +258,7 @@ public class AuthServiceImpl implements AuthService {
 
         user.setPasswordHash(
                 passwordEncoder.encode(plainPassword));
+        user.setMustChangePassword(true);
 
         user.setFailedLoginCount(0);
         user.setLockedUntil(null);
