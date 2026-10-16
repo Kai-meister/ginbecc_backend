@@ -26,6 +26,7 @@ public class UserResponse {
 
     private String  statusCode;
     private String  statusLabel;
+    private Boolean mustChangePassword;
 
     private LocalDateTime lastLoginAt;
     private LocalDateTime createdAt;
